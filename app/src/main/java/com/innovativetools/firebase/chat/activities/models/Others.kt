@@ -1,32 +1,13 @@
-package com.innovativetools.firebase.chat.activities.models;
+package com.innovativetools.firebase.chat.activities.models
 
-import java.io.Serializable;
+import java.io.Serializable
 
-public class Others implements Serializable {
+class Others : Serializable {
+    var isTyping = false
+    var typingwith: String? = null
 
-    private boolean typing;
-    private String typingwith;
-
-    public Others() {
-    }
-
-    public Others(boolean typing) {
-        this.typing = typing;
-    }
-
-    public boolean isTyping() {
-        return typing;
-    }
-
-    public void setTyping(boolean typing) {
-        this.typing = typing;
-    }
-
-    public String getTypingwith() {
-        return typingwith;
-    }
-
-    public void setTypingwith(String typingwith) {
-        this.typingwith = typingwith;
+    constructor() {}
+    constructor(typing: Boolean) {
+        isTyping = typing
     }
 }

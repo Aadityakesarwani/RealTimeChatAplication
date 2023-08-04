@@ -1,10 +1,11 @@
-package com.innovativetools.firebase.chat.activities.views.smoothcb;
+package com.innovativetools.firebase.chat.activities.views.smoothcb
 
-import android.content.Context;
+import android.content.Context
 
-public class CompatUtils {
-    public static int dp2px(Context context, float dipValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dipValue * scale + 0.5f);
+object CompatUtils {
+    @JvmStatic
+    fun dp2px(context: Context, dipValue: Float): Int {
+        val scale = context.resources.displayMetrics.density
+        return (dipValue * scale + 0.5f).toInt()
     }
 }

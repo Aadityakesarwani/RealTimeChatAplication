@@ -1,234 +1,64 @@
-package com.innovativetools.firebase.chat.activities.models;
+package com.innovativetools.firebase.chat.activities.models
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_UNSPECIFIED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_PREVIEW;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_OFFLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_EMAIL;
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import java.io.Serializable
+import java.lang.Exception
+import java.net.URLDecoder
 
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-
-import java.io.Serializable;
-import java.net.URLDecoder;
-
-public class User implements Serializable {
-    private String id;
-    private String username;
-    private String email;
-    private String imageURL;
-    private String status;
-    private int isOnline = STATUS_OFFLINE;
-    private String search;
-    private String password;
-    private boolean active;
-    private boolean typing;
-    private String typingwith;
-    private String about;
-    private String gender;
-    private int genders = GEN_UNSPECIFIED;
-    private String lastSeen;
-    private boolean isChecked;
-    private boolean isAdmin;
-    private boolean hideEmail = FALSE;
-    private boolean hideProfilePhoto = FALSE;
-    private String signup_type = TYPE_EMAIL;
-    private String social_token = "";
-
-    public String getId() {
-        return id;
+class User : Serializable {
+    var id: String? = null
+    var username: String? = null
+    var email: String? = null
+    var myImg: String? = null
+        private set
+    var status: String? = null
+    var isOnline = IConstants.STATUS_OFFLINE
+    var search: String? = null
+    var password: String? = null
+    var isActive = false
+    var isTyping = false
+    var typingwith: String? = null
+    var about: String? = null
+    var gender: String? = null
+    var genders = IConstants.GEN_UNSPECIFIED
+    var lastSeen: String? = null
+    var isChecked = false
+    var isAdmin = false
+    var isHideEmail = IConstants.FALSE
+    var isHideProfilePhoto = IConstants.FALSE
+    var signup_type = IConstants.TYPE_EMAIL
+    var social_token = ""
+    fun getImageURL(): String? {
+        return if (isHideProfilePhoto) {
+            IConstants.IMG_PREVIEW
+        } else myImg
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getImageURL() {
-        if (isHideProfilePhoto()) {
-            return IMG_PREVIEW;
-        }
-        return imageURL;
-    }
-
-    public String getMyImg() {
-        return imageURL;
-    }
-
-    public void setImageURL(String imageURL) {
+    fun setImageURL(imageURL: String) {
+        var imageURL = imageURL
         if (imageURL.startsWith("https%3A%2F%2") || imageURL.startsWith("http%3A%2F%2")) {
             try {
-                imageURL = URLDecoder.decode(imageURL, "UTF-8");
-            } catch (Exception e) {
-                Utils.getErrors(e);
+                imageURL = URLDecoder.decode(imageURL, "UTF-8")
+            } catch (e: Exception) {
+                Utils.getErrors(e)
             }
         }
-        this.imageURL = imageURL;
+        myImg = imageURL
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getSearch() {
-        return search;
-    }
-
-    public void setSearch(String search) {
-        this.search = search;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public boolean isTyping() {
-        return typing;
-    }
-
-    public void setTyping(boolean typing) {
-        this.typing = typing;
-    }
-
-    public String getTypingwith() {
-        return typingwith;
-    }
-
-    public void setTypingwith(String typingwith) {
-        this.typingwith = typingwith;
-    }
-
-    public String getAbout() {
-        return about;
-    }
-
-    public void setAbout(String about) {
-        this.about = about;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getLastSeen() {
-        return lastSeen;
-    }
-
-    public void setLastSeen(String lastSeen) {
-        this.lastSeen = lastSeen;
-    }
-
-    public boolean isChecked() {
-        return isChecked;
-    }
-
-    public void setChecked(boolean checked) {
-        isChecked = checked;
-    }
-
-    public boolean isAdmin() {
-        return isAdmin;
-    }
-
-    public void setAdmin(boolean admin) {
-        isAdmin = admin;
-    }
-
-    public boolean isHideEmail() {
-        return hideEmail;
-    }
-
-    public void setHideEmail(boolean hideEmail) {
-        this.hideEmail = hideEmail;
-    }
-
-    public boolean isHideProfilePhoto() {
-        return hideProfilePhoto;
-    }
-
-    public void setHideProfilePhoto(boolean hideProfilePhoto) {
-        this.hideProfilePhoto = hideProfilePhoto;
-    }
-
-    public int getIsOnline() {
-        return isOnline;
-    }
-
-    public void setIsOnline(int isOnline) {
-        this.isOnline = isOnline;
-    }
-
-    public int getGenders() {
-        return genders;
-    }
-
-    public void setGenders(int genders) {
-        this.genders = genders;
-    }
-
-    public String getSignup_type() {
-        return signup_type;
-    }
-
-    public void setSignup_type(String signup_type) {
-        this.signup_type = signup_type;
-    }
-
-    public String getSocial_token() {
-        return social_token;
-    }
-
-    public void setSocial_token(String social_token) {
-        this.social_token = social_token;
-    }
-
-    @Override
-    public String toString() {
+    override fun toString(): String {
         return "User{" +
                 "id='" + id + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
-                ", imageURL='" + imageURL + '\'' +
+                ", imageURL='" + myImg + '\'' +
                 ", status='" + status + '\'' +
                 ", isOnline=" + isOnline +
                 ", search='" + search + '\'' +
                 ", password='" + password + '\'' +
-                ", active=" + active +
-                ", typing=" + typing +
+                ", active=" + isActive +
+                ", typing=" + isTyping +
                 ", typingwith='" + typingwith + '\'' +
                 ", about='" + about + '\'' +
                 ", gender='" + gender + '\'' +
@@ -236,10 +66,10 @@ public class User implements Serializable {
                 ", lastSeen='" + lastSeen + '\'' +
                 ", isChecked=" + isChecked +
                 ", isAdmin=" + isAdmin +
-                ", hideEmail=" + hideEmail +
-                ", hideProfilePhoto=" + hideProfilePhoto +
+                ", hideEmail=" + isHideEmail +
+                ", hideProfilePhoto=" + isHideProfilePhoto +
                 ", signup_type='" + signup_type + '\'' +
                 ", social_token='" + social_token + '\'' +
-                '}';
+                '}'
     }
 }

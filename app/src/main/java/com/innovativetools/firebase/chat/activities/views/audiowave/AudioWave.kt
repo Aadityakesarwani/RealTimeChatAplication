@@ -1,74 +1,74 @@
-package com.innovativetools.firebase.chat.activities.views.audiowave;
+package com.innovativetools.firebase.chat.activities.views.audiowave
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.util.AttributeSet
+import android.view.View
+import com.innovativetools.firebase.chat.activities.views.audiowave.AudioWave
 
-public class AudioWave extends View {
-    final int size = 4;
-    private byte[] mBytes;
-    private float[] mPoints;
-    private final Rect mRect = new Rect();
-    private Config config;
+class AudioWave : View {
+    val size = 4
+    private var mBytes: ByteArray? = null
+    private var mPoints: FloatArray? = null
+    private val mRect = Rect()
+    var config: Config? = null
+        private set
 
-    public AudioWave(Context context) {
-        super(context);
-        init(context, null);
+    constructor(context: Context) : super(context) {
+        init(context, null)
     }
 
-    public AudioWave(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        init(context, attrs)
     }
 
-    public AudioWave(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        init(context, attrs)
     }
 
-    private void init(Context context, AttributeSet attrs) {
-        mBytes = null;
-        config = new Config(context, attrs, this);
+    private fun init(context: Context, attrs: AttributeSet?) {
+        mBytes = null
+        config = Config(context, attrs, this)
     }
 
-    public void updateVisualizer(byte[] bytes) {
-        mBytes = bytes;
-        invalidate();
+    fun updateVisualizer(bytes: ByteArray?) {
+        mBytes = bytes
+        invalidate()
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
         if (mBytes == null) {
-            return;
+            return
         }
-        if (mPoints == null || mPoints.length < mBytes.length * size) {
-            mPoints = new float[mBytes.length * size];
+        if (mPoints == null || mPoints!!.size < mBytes!!.size * size) {
+            mPoints = FloatArray(mBytes!!.size * size)
         }
-        mRect.set(0, 0, getWidth(), getHeight());
-        for (int i = 0; i < mBytes.length - 1; i++) {
-            mPoints[i * size] = mRect.width() * i / (mBytes.length - 1);
-            mPoints[i * size + 1] = mRect.height() / 2 + ((byte) (mBytes[i] + 128)) * (mRect.height() / 2) / 128;
-            mPoints[i * size + 2] = mRect.width() * (i + 1) / (mBytes.length - 1);
-            mPoints[i * size + 3] = mRect.height() / 2 + ((byte) (mBytes[i + 1] + 128)) * (mRect.height() / 2) / 128;
+        mRect[0, 0, width] = height
+        for (i in 0 until mBytes!!.size - 1) {
+            mPoints!![i * size] = (mRect.width() * i / (mBytes!!.size - 1)).toFloat()
+            mPoints!![i * size + 1] =
+                (mRect.height() / 2 + (mBytes!![i] + 128).toByte() * (mRect.height() / 2) / 128).toFloat()
+            mPoints!![i * size + 2] = (mRect.width() * (i + 1) / (mBytes!!.size - 1)).toFloat()
+            mPoints!![i * size + 3] =
+                (mRect.height() / 2 + (mBytes!![i + 1] + 128).toByte() * (mRect.height() / 2) / 128).toFloat()
         }
-        if (config.getColorGradient()) {
-            config.reSetupPaint();
-            config.setGradients(this);
+        if (config!!.colorGradient) {
+            config!!.reSetupPaint()
+            config!!.setGradients(this)
         } else {
-            config.reSetupPaint();
+            config!!.reSetupPaint()
         }
-        canvas.drawLines(mPoints, config.getPaintWave());
+        canvas.drawLines(mPoints!!, config!!.paintWave)
     }
 
-    public Config getConfig() {
-        return config;
-    }
-
-    public AudioWave setConfig(Config config) {
-        this.config = config;
-        return this;
+    fun setConfig(config: Config?): AudioWave {
+        this.config = config
+        return this
     }
 }

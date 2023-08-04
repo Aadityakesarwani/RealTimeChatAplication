@@ -1,134 +1,88 @@
-package com.innovativetools.firebase.chat.activities.models;
+package com.innovativetools.firebase.chat.activities.models
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXT_MP3;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_AUDIO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_DOCUMENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_IMAGE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_LOCATION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_RECORDING;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_VIDEO;
+import android.net.Uri
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes.AttachmentType
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.os.Build
+import android.provider.MediaStore
+import androidx.annotation.IntDef
+import androidx.annotation.RequiresApi
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import java.lang.annotation.Retention
+import java.lang.annotation.RetentionPolicy
 
-import android.net.Uri;
-import android.os.Build;
-import android.provider.MediaStore;
-
-import androidx.annotation.IntDef;
-import androidx.annotation.RequiresApi;
-
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-/**
- * Created by BytesBee
- */
-
-public class AttachmentTypes {
-
-    public static final int IMAGE = 0;
-    public static final int VIDEO = 1;
-    public static final int CONTACT = 2;
-    public static final int AUDIO = 3;
-    public static final int LOCATION = 4;
-    public static final int DOCUMENT = 5;
-    public static final int RECORDING = 6;
-    public static final int NONE_TEXT = 7;
-    public static final int NONE_TYPING = 8;
-
-    @IntDef({IMAGE, VIDEO, CONTACT, AUDIO, LOCATION, DOCUMENT, NONE_TEXT, NONE_TYPING, RECORDING})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface AttachmentType {
-    }
-
-    public static String getTypeName(@AttachmentType int attachmentType) {
-        switch (attachmentType) {
-            case IMAGE:
-                return TYPE_IMAGE;
-            case AUDIO:
-                return TYPE_AUDIO;
-            case VIDEO:
-                return TYPE_VIDEO;
-            case CONTACT:
-                return TYPE_CONTACT;
-            case DOCUMENT:
-                return TYPE_DOCUMENT;
-            case LOCATION:
-                return TYPE_LOCATION;
-            case RECORDING:
-                return TYPE_RECORDING;
-            case NONE_TEXT:
-                return "none_text";
-            case NONE_TYPING:
-                return "none_typing";
-            default:
-                return "none";
+object AttachmentTypes {
+    const val IMAGE = 0
+    const val VIDEO = 1
+    const val CONTACT = 2
+    const val AUDIO = 3
+    const val LOCATION = 4
+    const val DOCUMENT = 5
+    const val RECORDING = 6
+    const val NONE_TEXT = 7
+    const val NONE_TYPING = 8
+    fun getTypeName(@AttachmentType attachmentType: Int): String {
+        return when (attachmentType) {
+            IMAGE -> IConstants.TYPE_IMAGE
+            AUDIO -> IConstants.TYPE_AUDIO
+            VIDEO -> IConstants.TYPE_VIDEO
+            CONTACT -> IConstants.TYPE_CONTACT
+            DOCUMENT -> IConstants.TYPE_DOCUMENT
+            LOCATION -> IConstants.TYPE_LOCATION
+            RECORDING -> IConstants.TYPE_RECORDING
+            NONE_TEXT -> "none_text"
+            NONE_TYPING -> "none_typing"
+            else -> "none"
         }
     }
 
-    public static String getTypeName(String attachmentType) {
-        switch (attachmentType) {
-            case TYPE_IMAGE:
-                return TYPE_IMAGE;
-            case TYPE_AUDIO:
-                return TYPE_AUDIO;
-            case TYPE_VIDEO:
-                return TYPE_VIDEO;
-            case TYPE_CONTACT:
-                return TYPE_CONTACT;
-            case TYPE_DOCUMENT:
-                return TYPE_DOCUMENT;
-            case TYPE_LOCATION:
-                return TYPE_LOCATION;
-            case TYPE_RECORDING:
-                return TYPE_RECORDING;
-//            case NONE_TEXT:
-//                return "none_text";
-//            case NONE_TYPING:
-//                return "none_typing";
-            default:
-                return "none";
+    @JvmStatic
+    fun getTypeName(attachmentType: String?): String {
+        return when (attachmentType) {
+            IConstants.TYPE_IMAGE -> IConstants.TYPE_IMAGE
+            IConstants.TYPE_AUDIO -> IConstants.TYPE_AUDIO
+            IConstants.TYPE_VIDEO -> IConstants.TYPE_VIDEO
+            IConstants.TYPE_CONTACT -> IConstants.TYPE_CONTACT
+            IConstants.TYPE_DOCUMENT -> IConstants.TYPE_DOCUMENT
+            IConstants.TYPE_LOCATION -> IConstants.TYPE_LOCATION
+            IConstants.TYPE_RECORDING -> IConstants.TYPE_RECORDING
+            else -> "none"
         }
     }
 
-    public static String getDirectoryByType(String type) {
-        switch (type) {
-            case TYPE_AUDIO:
-            case TYPE_RECORDING:
-                return Utils.getMusicFolder();
-            case TYPE_VIDEO:
-                return Utils.getMoviesFolder();
-            case TYPE_DOCUMENT:
-            case TYPE_CONTACT:
-                return Utils.getDownloadFolder();
+    @JvmStatic
+    fun getDirectoryByType(type: String?): String {
+        when (type) {
+            IConstants.TYPE_AUDIO, IConstants.TYPE_RECORDING -> return Utils.musicFolder
+            IConstants.TYPE_VIDEO -> return Utils.moviesFolder
+            IConstants.TYPE_DOCUMENT, IConstants.TYPE_CONTACT -> return Utils.downloadFolder
         }
-        return Utils.getDownloadFolder();
+        return Utils.downloadFolder
     }
 
+    @JvmStatic
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    public static Uri getTargetUri(String type) {
-        switch (type) {
-            case TYPE_AUDIO:
-            case TYPE_RECORDING:
-                return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-            case TYPE_VIDEO:
-                return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-            case TYPE_DOCUMENT:
-            case TYPE_CONTACT:
-                return MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+    fun getTargetUri(type: String?): Uri {
+        when (type) {
+            IConstants.TYPE_AUDIO, IConstants.TYPE_RECORDING -> return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            IConstants.TYPE_VIDEO -> return MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            IConstants.TYPE_DOCUMENT, IConstants.TYPE_CONTACT -> return MediaStore.Downloads.EXTERNAL_CONTENT_URI
         }
-        return MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+        return MediaStore.Downloads.EXTERNAL_CONTENT_URI
     }
 
-    public static String getExtension(final String fileExtension, final int attachmentType) {
-
-        switch (attachmentType) {
-            case AUDIO:
-            case RECORDING:
-                if (!fileExtension.endsWith(EXT_MP3))
-                    return EXT_MP3;
+    @JvmStatic
+    fun getExtension(fileExtension: String, attachmentType: Int): String {
+        when (attachmentType) {
+            AUDIO, RECORDING -> if (!fileExtension.endsWith(IConstants.EXT_MP3)) return IConstants.EXT_MP3
         }
-        return fileExtension;
+        return fileExtension
     }
+
+    @IntDef(*[IMAGE, VIDEO, CONTACT, AUDIO, LOCATION, DOCUMENT, NONE_TEXT, NONE_TYPING, RECORDING])
+    @Retention(
+        RetentionPolicy.SOURCE
+    )
+    annotation class AttachmentType
 }

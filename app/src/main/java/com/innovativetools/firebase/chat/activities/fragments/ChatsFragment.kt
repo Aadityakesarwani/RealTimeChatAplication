@@ -1,271 +1,205 @@
-package com.innovativetools.firebase.chat.activities.fragments;
+package com.innovativetools.firebase.chat.activities.fragments
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_FEMALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_MALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_UNSPECIFIED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_DEFAULTS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHATS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_OFFLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TRUE;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.female;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.male;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.notset;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.offline;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.online;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.withPicture;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.withoutPicture;
+import android.widget.RelativeLayout
+import android.os.Bundle
+import android.view.*
+import com.innovativetools.firebase.chat.activities.R
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import com.google.firebase.auth.FirebaseAuth
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.messaging.FirebaseMessaging
+import com.innovativetools.firebase.chat.activities.models.Chat
+import com.innovativetools.firebase.chat.activities.adapters.UserAdapters
+import com.google.firebase.database.*
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.User
+import java.lang.Exception
+import java.util.*
 
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.adapters.UserAdapters;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.messaging.FirebaseMessaging;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
-
-public class ChatsFragment extends BaseFragment {
-
-    private ArrayList<String> userList;
-    private RelativeLayout imgNoMessage;
-    private String currentId;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+class ChatsFragment : BaseFragment() {
+    private var userList: ArrayList<String?>? = null
+    private var imgNoMessage: RelativeLayout? = null
+    private var currentId: String? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_chats, container, false);
+        val view = inflater.inflate(R.layout.fragment_chats, container, false)
 
 //        final FloatingActionButton fabChat = view.findViewById(R.id.fabChat);
-        imgNoMessage = view.findViewById(R.id.imgNoMessage);
-        imgNoMessage.setVisibility(View.GONE);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView = view.findViewById(R.id.recyclerView);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(layoutManager);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(), layoutManager.getOrientation());
-        mRecyclerView.addItemDecoration(dividerItemDecoration);
-
-        final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        currentId = Objects.requireNonNull(firebaseUser).getUid();
-
-        userList = new ArrayList<>();
-
-        Query query = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(currentId);
-//        query.addListenerForSingleValueEvent(new ValueEventListener() {
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                userList.clear();
-                uList.clear();
+        imgNoMessage = view.findViewById(R.id.imgNoMessage)
+        imgNoMessage?.setVisibility(View.GONE)
+        val layoutManager = LinearLayoutManager(activity)
+        mRecyclerView = view.findViewById(R.id.recyclerView)
+        mRecyclerView?.setHasFixedSize(true)
+        mRecyclerView?.setLayoutManager(layoutManager)
+        val dividerItemDecoration =
+            DividerItemDecoration(mRecyclerView?.getContext(), layoutManager.orientation)
+        mRecyclerView?.addItemDecoration(dividerItemDecoration)
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        currentId = Objects.requireNonNull(firebaseUser)?.uid
+        userList = ArrayList()
+        val query: Query = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+            currentId!!
+        )
+        //        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                userList!!.clear()
+                uList.clear()
                 if (dataSnapshot.hasChildren()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        userList.add(snapshot.getKey());
+                    for (snapshot in dataSnapshot.children) {
+                        userList!!.add(snapshot.key)
                     }
                 }
-
-                if (userList.size() > 0) {
-                    sortChats();
+                if (userList!!.size > 0) {
+                    sortChats()
                 } else {
-                    imgNoMessage.setVisibility(View.VISIBLE);
-                    mRecyclerView.setVisibility(View.GONE);
+                    imgNoMessage?.setVisibility(View.VISIBLE)
+                    mRecyclerView?.setVisibility(View.GONE)
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        FirebaseMessaging.getInstance().getToken().addOnSuccessListener(Utils::uploadToken);
-        return view;
-    }
-
-    Map<String, Chat> uList = new HashMap<>();
-
-    private void sortChats() {
-        for (int i = 0; i < userList.size(); i++) {
-            final String key = userList.get(i);
-
-            Query query = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(currentId + SLASH + key).limitToLast(1);
-            query.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.hasChildren()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            uList.put(key, chat);
-                        }
-                    }
-
-                    if (uList.size() == userList.size()) {
-
-                        if (uList.size() > 0) {
-                            uList = Utils.sortByChatDateTime(uList, false);
-                        }
-
-                        userList = new ArrayList(uList.keySet());
-
-                        readChats();
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { referenceToken: String? ->
+            Utils.uploadToken(
+                referenceToken
+            )
         }
-
+        return view
     }
 
-    private void readChats() {
-        mUsers = new ArrayList<>();
+    var uList: MutableMap<String?, Chat?> = HashMap()
+    private fun sortChats() {
+        for (i in userList!!.indices) {
+            val key = userList!![i]
+            val query = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS)
+                .child(currentId + IConstants.SLASH + key).limitToLast(1)
+            query.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (dataSnapshot.hasChildren()) {
+                        for (snapshot in dataSnapshot.children) {
+                            val chat = snapshot.getValue(Chat::class.java)
+                            uList[key] = chat
+                        }
+                    }
+                    if (uList.size == userList!!.size) {
+                        if (uList.size > 0) {
+                            uList = Utils.sortByChatDateTime(uList, false) as MutableMap<String?, Chat?>
+                        }
+                        userList = ArrayList<String?>(uList.keys)
+                        readChats()
+                    }
+                }
 
-        Query reference = Utils.getQuerySortBySearch();
-        reference.keepSynced(true);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mUsers.clear();
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+        }
+    }
+
+    private fun readChats() {
+        mUsers = ArrayList()
+        val reference = Utils.querySortBySearch
+        reference.keepSynced(true)
+        reference.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                mUsers!!.clear()
                 if (dataSnapshot.hasChildren()) {
                     try {
-                        for (String id : userList) {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                User user = snapshot.getValue(User.class);
-                                assert user != null;
-                                if (user.getId().equalsIgnoreCase(id) && user.isActive()) {
-                                    onlineOptionFilter(user);
-                                    break;
+                        for (id in userList!!) {
+                            for (snapshot in dataSnapshot.children) {
+                                val user = snapshot.getValue(
+                                    User::class.java
+                                )!!
+                                if (user.id.equals(id, ignoreCase = true) && user.isActive) {
+                                    onlineOptionFilter(user)
+                                    break
                                 }
                             }
                         }
-                    } catch (Exception e) {
+                    } catch (e: Exception) {
                         //Utils.getErrors(e);
                     }
                 }
-
-                if (mUsers.size() > 0) {
-                    imgNoMessage.setVisibility(View.GONE);
-                    mRecyclerView.setVisibility(View.VISIBLE);
-                    userAdapters = new UserAdapters(getContext(), mUsers, TRUE);
-                    mRecyclerView.setAdapter(userAdapters);
+                if (mUsers!!.size > 0) {
+                    imgNoMessage!!.visibility = View.GONE
+                    mRecyclerView!!.visibility = View.VISIBLE
+                    userAdapters = UserAdapters(context!!, mUsers, IConstants.TRUE)
+                    mRecyclerView!!.adapter = userAdapters
                 } else {
-                    imgNoMessage.setVisibility(View.VISIBLE);
-                    mRecyclerView.setVisibility(View.GONE);
+                    imgNoMessage!!.visibility = View.VISIBLE
+                    mRecyclerView!!.visibility = View.GONE
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void onlineOptionFilter(final User user) {
+    private fun onlineOptionFilter(user: User?) {
         try {
-            if (user.getIsOnline() == STATUS_ONLINE) {
-                if (online)
-                    profileOptionFilter(user);
-            } else if (user.getIsOnline() == STATUS_OFFLINE) {
-                if (offline)
-                    profileOptionFilter(user);
+            if (user!!.isOnline == IConstants.STATUS_ONLINE) {
+                if (Utils.online) profileOptionFilter(user)
+            } else if (user.isOnline == IConstants.STATUS_OFFLINE) {
+                if (Utils.offline) profileOptionFilter(user)
             } else {
-                profileOptionFilter(user);
+                profileOptionFilter(user)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-
-    private void profileOptionFilter(final User user) {
+    private fun profileOptionFilter(user: User?) {
         try {
-            if (!user.getImageURL().equalsIgnoreCase(IMG_DEFAULTS)) {
-                if (withPicture)
-                    levelOptionFilter(user);
-            } else if (user.getImageURL().equalsIgnoreCase(IMG_DEFAULTS)) {
-                if (withoutPicture)
-                    levelOptionFilter(user);
+            if (!user!!.getImageURL().equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
+                if (Utils.withPicture) levelOptionFilter(user)
+            } else if (user.getImageURL().equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
+                if (Utils.withoutPicture) levelOptionFilter(user)
             } else {
-                levelOptionFilter(user);
+                levelOptionFilter(user)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    private void levelOptionFilter(final User user) {
+    private fun levelOptionFilter(user: User?) {
         try {
-            if (user.getGenders() == GEN_UNSPECIFIED) {
-                if (notset)
-                    addNewUserDataToList(user);
+            if (user!!.genders == IConstants.GEN_UNSPECIFIED) {
+                if (Utils.notset) addNewUserDataToList(user)
             } else {
-                if (user.getGenders() == GEN_MALE) {
-                    if (male)
-                        addNewUserDataToList(user);
-                } else if (user.getGenders() == GEN_FEMALE) {
-                    if (female)
-                        addNewUserDataToList(user);
+                if (user.genders == IConstants.GEN_MALE) {
+                    if (Utils.male) addNewUserDataToList(user)
+                } else if (user.genders == IConstants.GEN_FEMALE) {
+                    if (Utils.female) addNewUserDataToList(user)
                 }
             }
-        } catch (Exception e) {
-            addNewUserDataToList(user);
+        } catch (e: Exception) {
+            addNewUserDataToList(user)
         }
     }
 
-    private void addNewUserDataToList(User user) {
-        mUsers.add(user);
+    private fun addNewUserDataToList(user: User?) {
+        mUsers!!.add(user!!)
     }
 
-    @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_filter, menu);
-
-        MenuItem searchItem = menu.findItem(R.id.itemFilter);
-
-        searchItem.setOnMenuItemClickListener(item -> {
-            Utils.filterPopup(getActivity(), this::readChats);
-            return true;
-        });
-
-        super.onCreateOptionsMenu(menu, inflater);
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_filter, menu)
+        val searchItem = menu.findItem(R.id.itemFilter)
+        searchItem.setOnMenuItemClickListener { item: MenuItem? ->
+            Utils.filterPopup(
+                mActivity!!
+            ) { readChats() }
+            true
+        }
+        super.onCreateOptionsMenu(menu, inflater)
     }
-
 }

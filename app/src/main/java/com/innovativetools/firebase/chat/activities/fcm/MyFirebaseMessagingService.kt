@@ -1,188 +1,170 @@
-package com.innovativetools.firebase.chat.activities.fcm;
+package com.innovativetools.firebase.chat.activities.fcm
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_OBJ_GROUP;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USER_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_BODY;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_GROUPS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_ICON;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_SENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_TITLE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_TYPE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_USER;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_USERNAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_IMAGE;
+import com.innovativetools.firebase.chat.activities.fcm.ApplicationLifecycleManager.Companion.isAppVisible
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.innovativetools.firebase.chat.activities.fcm.ApplicationLifecycleManager
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.FirebaseAuth
+import android.graphics.Bitmap
+import com.innovativetools.firebase.chat.activities.R
+import android.os.Bundle
+import android.content.Intent
+import com.innovativetools.firebase.chat.activities.MessageActivity
+import com.innovativetools.firebase.chat.activities.GroupsMessagesActivity
+import com.google.gson.Gson
+import android.app.PendingIntent
+import android.media.RingtoneManager
+import android.app.NotificationManager
+import android.os.Build
+import android.app.NotificationChannel
+import android.graphics.BitmapFactory
+import androidx.core.app.NotificationCompat
+import com.innovativetools.firebase.chat.activities.managers.SessionManager
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.Groups
+import java.lang.Exception
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.*
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-
-import androidx.core.app.NotificationCompat;
-
-import com.innovativetools.firebase.chat.activities.GroupsMessagesActivity;
-import com.innovativetools.firebase.chat.activities.MessageActivity;
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.SessionManager;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.messaging.FirebaseMessagingService;
-import com.google.firebase.messaging.RemoteMessage;
-import com.google.gson.Gson;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Date;
-
-public class MyFirebaseMessagingService extends FirebaseMessagingService {
-
-    private static final String TAG = "MyFirebaseMsgService";
-
-    @Override
-    public void onNewToken(@NotNull String s) {
-        super.onNewToken(s);
-
-        Utils.uploadToken(s);
+class MyFirebaseMessagingService : FirebaseMessagingService() {
+    override fun onNewToken(s: String) {
+        super.onNewToken(s)
+        Utils.uploadToken(s)
     }
 
-    @Override
-    public void onMessageReceived(@NotNull RemoteMessage remoteMessage) {
-        super.onMessageReceived(remoteMessage);
-
-        if (!SessionManager.get().isNotificationOn()) {
-            return;
+    override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        super.onMessageReceived(remoteMessage)
+        if (!SessionManager.get()!!.isNotificationOn) {
+            return
         }
         // Check if message contains a data payload.
-        if (remoteMessage.getData().size() > 0) {
-            String sent = remoteMessage.getData().get(FCM_SENT);
-            if (!ApplicationLifecycleManager.isAppVisible()) {
-                FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (remoteMessage.data.size > 0) {
+            val sent = remoteMessage.data[IConstants.FCM_SENT]
+            if (!isAppVisible) {
+                val firebaseUser = FirebaseAuth.getInstance().currentUser
                 if (firebaseUser != null) {
-                    assert sent != null;
-                    if (sent.equalsIgnoreCase(firebaseUser.getUid())) {
-                        sendNotification(remoteMessage);
+                    assert(sent != null)
+                    if (sent.equals(firebaseUser.uid, ignoreCase = true)) {
+                        sendNotification(remoteMessage)
                     }
                 }
             }
         }
-
     }
 
-    private String strGroups = "";
-    private String type = "";
-    private String username = "";
-
-    private void sendNotification(RemoteMessage remoteMessage) {
-        final String user = remoteMessage.getData().get(FCM_USER);
-        final String icon = remoteMessage.getData().get(FCM_ICON);
-        final String title = remoteMessage.getData().get(FCM_TITLE);
-        final String message = remoteMessage.getData().get(FCM_BODY);
+    private var strGroups: String? = ""
+    private var type: String? = ""
+    private var username: String? = ""
+    private fun sendNotification(remoteMessage: RemoteMessage) {
+        val user = remoteMessage.data[IConstants.FCM_USER]
+        val icon = remoteMessage.data[IConstants.FCM_ICON]
+        val title = remoteMessage.data[IConstants.FCM_TITLE]
+        val message = remoteMessage.data[IConstants.FCM_BODY]
         try {
-            type = remoteMessage.getData().get(FCM_TYPE);
-            username = remoteMessage.getData().get(FCM_USERNAME);
-        } catch (Exception ignored) {
+            type = remoteMessage.data[IConstants.FCM_TYPE]
+            username = remoteMessage.data[IConstants.FCM_USERNAME]
+        } catch (ignored: Exception) {
         }
         try {
-            strGroups = remoteMessage.getData().get(FCM_GROUPS);
-        } catch (Exception ignored) {
+            strGroups = remoteMessage.data[IConstants.FCM_GROUPS]
+        } catch (ignored: Exception) {
         }
-
-        Bitmap bitmap = null;
-
-        String body;
+        var bitmap: Bitmap? = null
+        val body: String?
         if (!Utils.isEmpty(type)) {
-            if (type.equalsIgnoreCase(TYPE_IMAGE)) {
-                bitmap = getBitmapFromURL(message);
-                body = String.format(getString(R.string.strPhotoSent), username);
+            if (type.equals(IConstants.TYPE_IMAGE, ignoreCase = true)) {
+                bitmap = getBitmapFromURL(message)
+                body = String.format(getString(R.string.strPhotoSent), username)
             } else {
-                body = username + ": " + message;
+                body = "$username: $message"
             }
         } else {
-            body = message;
+            body = message
         }
-
-        final Bundle bundle = new Bundle();
-
-        Intent intent;
+        val bundle = Bundle()
+        val intent: Intent
         if (Utils.isEmpty(strGroups)) {
-            intent = new Intent(this, MessageActivity.class);
-            bundle.putString(EXTRA_USER_ID, user);
+            intent = Intent(this, MessageActivity::class.java)
+            bundle.putString(IConstants.EXTRA_USER_ID, user)
         } else {
-            intent = new Intent(this, GroupsMessagesActivity.class);
-            Groups groups = new Gson().fromJson(strGroups, Groups.class);
-            bundle.putSerializable(EXTRA_OBJ_GROUP, groups);
+            intent = Intent(this, GroupsMessagesActivity::class.java)
+            val groups = Gson().fromJson(strGroups, Groups::class.java)
+            bundle.putSerializable(IConstants.EXTRA_OBJ_GROUP, groups)
         }
-
-        intent.putExtras(bundle);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        final PendingIntent pendingIntent;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent, PendingIntent.FLAG_IMMUTABLE);
+        intent.putExtras(bundle)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val pendingIntent: PendingIntent
+        pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.getActivity(
+                this,
+                0 /* Request code */,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE
+            )
         } else {
-            pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent, PendingIntent.FLAG_ONE_SHOT);
+            PendingIntent.getActivity(
+                this,
+                0 /* Request code */,
+                intent,
+                PendingIntent.FLAG_ONE_SHOT
+            )
         }
-
-        final String channelId = getString(R.string.default_notification_channel_id);
-
-        final Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId);
+        val channelId = getString(R.string.default_notification_channel_id)
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
         notificationBuilder
-                .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                .setContentTitle(title)
-                .setContentText(body)
-                .setTicker(body)
-                .setAutoCancel(true)
-                .setSound(defaultSoundUri)
-                .setContentIntent(pendingIntent);
-
+            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setTicker(body)
+            .setAutoCancel(true)
+            .setSound(defaultSoundUri)
+            .setContentIntent(pendingIntent)
         if (bitmap != null) {
-            notificationBuilder.setLargeIcon(bitmap);
-            notificationBuilder.setStyle(new NotificationCompat.BigPictureStyle()
+            notificationBuilder.setLargeIcon(bitmap)
+            notificationBuilder.setStyle(
+                NotificationCompat.BigPictureStyle()
                     .bigPicture(bitmap)
-                    .bigLargeIcon(bitmap));
+                    .bigLargeIcon(bitmap)
+            )
         }
-
-        final NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            final NotificationChannel channel = new NotificationChannel(channelId, "Chat Notification", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setShowBadge(true);
-            notificationManager.createNotificationChannel(channel);
+            val channel = NotificationChannel(
+                channelId,
+                "Chat Notification",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            channel.setShowBadge(true)
+            notificationManager.createNotificationChannel(channel)
         }
-
-        notificationManager.notify((int) new Date().getTime(), notificationBuilder.build());
+        notificationManager.notify(Date().time.toInt(), notificationBuilder.build())
     }
 
     /**
      * Downloading push notification image before displaying it in
      * the notification tray
      */
-    private Bitmap getBitmapFromURL(String strURL) {
-        try {
-            final URL url = new URL(strURL);
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoInput(true);
-            connection.connect();
-            final InputStream input = connection.getInputStream();
-            return BitmapFactory.decodeStream(input);
-        } catch (Exception e) {
-            Utils.getErrors(e);
-            return null;
+    private fun getBitmapFromURL(strURL: String?): Bitmap? {
+        return try {
+            val url = URL(strURL)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.doInput = true
+            connection.connect()
+            val input = connection.inputStream
+            BitmapFactory.decodeStream(input)
+        } catch (e: Exception) {
+            Utils.getErrors(e)
+            null
         }
     }
 
+    companion object {
+        private const val TAG = "MyFirebaseMsgService"
+    }
 }

@@ -1,60 +1,47 @@
-package com.innovativetools.firebase.chat.activities.async;
+package com.innovativetools.firebase.chat.activities.async
 
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Handler
+import android.os.Looper
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import java.lang.Exception
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
-public class TaskRunner {
-
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Executor executor = Executors.newCachedThreadPool();
-
-    public <R> void executeAsync(CustomCallable<R> callable) {
+class TaskRunner {
+    private val handler = Handler(Looper.getMainLooper())
+    private val executor: Executor = Executors.newCachedThreadPool()
+    fun <R> executeAsync(callable: CustomCallable<R?>) {
         try {
-            callable.setUiForLoading();
-            executor.execute(new RunnableTask<>(handler, callable));
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            callable.setUiForLoading()
+            executor.execute(RunnableTask(handler, callable))
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    public static class RunnableTask<R> implements Runnable {
-        private final Handler handler;
-        private final CustomCallable<R> callable;
+    class RunnableTask<R>(private val handler: Handler, callable: CustomCallable<R?>) : Runnable {
+        private val callable: CustomCallable<R?>
 
-        public RunnableTask(Handler handler, CustomCallable<R> callable) {
-            this.handler = handler;
-            this.callable = callable;
+        init {
+            this.callable = callable
         }
 
-        @Override
-        public void run() {
+        override fun run() {
             try {
-                final R result = callable.call();
-                handler.post(new RunnableTaskForHandler(callable, result));
-            } catch (Exception e) {
-                Utils.getErrors(e);
+                val result = callable.call()
+                handler.post(RunnableTaskForHandler<R?>(callable, result))
+            } catch (e: Exception) {
+                Utils.getErrors(e)
             }
         }
     }
 
-    public static class RunnableTaskForHandler<R> implements Runnable {
-
-        private final CustomCallable<R> callable;
-        private final R result;
-
-        public RunnableTaskForHandler(CustomCallable<R> callable, R result) {
-            this.callable = callable;
-            this.result = result;
-        }
-
-        @Override
-        public void run() {
-            callable.setDataAfterLoading(result);
+    class RunnableTaskForHandler<R>(
+        private val callable: CustomCallable<R>,
+        private val result: R
+    ) : Runnable {
+        override fun run() {
+            callable.setDataAfterLoading(result)
         }
     }
 }

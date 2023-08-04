@@ -1,20 +1,22 @@
-package com.innovativetools.firebase.chat.activities.views.voiceplayer;
+package com.innovativetools.firebase.chat.activities.views.voiceplayer
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.lang.Exception
 
-public class FileUtils {
-    public static byte[] fileToBytes(File file) {
-        int size = (int) file.length();
-        byte[] bytes = new byte[size];
+object FileUtils {
+    @JvmStatic
+    fun fileToBytes(file: File): ByteArray {
+        val size = file.length().toInt()
+        val bytes = ByteArray(size)
         try {
-            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
-            buf.read(bytes, 0, bytes.length);
-            buf.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            val buf = BufferedInputStream(FileInputStream(file))
+            buf.read(bytes, 0, bytes.size)
+            buf.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        return bytes;
+        return bytes
     }
 }

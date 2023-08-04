@@ -1,240 +1,232 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ACTIVE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_CREATED_AT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_EMAIL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IMAGEURL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_PASSWORD;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SEARCH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SIGNUP_TYPE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SOCIAL_TOKEN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USERNAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_VERSION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_DEFAULTS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_GOOGLE;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.EditText
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import android.os.Bundle
+import com.innovativetools.firebase.chat.activities.R
+import com.shobhitpuri.custombuttons.GoogleSignInButton
+import android.widget.TextView
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.auth.FirebaseAuth
+import com.innovativetools.firebase.chat.activities.ForgetPasswordActivity
+import android.text.TextUtils
+import com.innovativetools.firebase.chat.activities.RegisterActivity
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.AuthResult
+import com.innovativetools.firebase.chat.activities.MainActivity
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnCanceledListener
+import android.content.Intent
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import android.app.Activity
+import android.view.View
+import android.widget.Button
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.Task
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.lang.Exception
+import java.net.URLEncoder
+import java.util.*
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.shobhitpuri.custombuttons.GoogleSignInButton;
-
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Objects;
-
-public class LoginActivity extends BaseActivity {
-
-    private EditText mTxtEmail;
-    private EditText mTxtPassword;
-
-    private GoogleSignInClient mGoogleSignInClient;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-
-        mTxtEmail = findViewById(R.id.txtEmail);
-        mTxtPassword = findViewById(R.id.txtPassword);
-        final Button mBtnSignUp = findViewById(R.id.btnSignUp);
-        final GoogleSignInButton btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn);
-        final TextView mTxtNewUser = findViewById(R.id.txtNewUser);
-        final TextView txtForgetPassword = findViewById(R.id.txtForgetPassword);
-
+class LoginActivity : BaseActivity() {
+    private var mTxtEmail: EditText? = null
+    private var mTxtPassword: EditText? = null
+    private var mGoogleSignInClient: GoogleSignInClient? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_login)
+        mTxtEmail = findViewById(R.id.txtEmail)
+        mTxtPassword = findViewById(R.id.txtPassword)
+        val mBtnSignUp = findViewById<Button>(R.id.btnSignUp)
+        val btnGoogleSignIn = findViewById<GoogleSignInButton>(R.id.btnGoogleSignIn)
+        val mTxtNewUser = findViewById<TextView>(R.id.txtNewUser)
+        val txtForgetPassword = findViewById<TextView>(R.id.txtForgetPassword)
         try {
             // Configure Google Sign In
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build();
-
-            mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
-
-        auth = FirebaseAuth.getInstance();
-
-        Utils.setHTMLMessage(mTxtNewUser, getString(R.string.strNewSignUp));
-
-        txtForgetPassword.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.showCustomScreen(ForgetPasswordActivity.class);
+        auth = FirebaseAuth.getInstance()
+        Utils.setHTMLMessage(mTxtNewUser, getString(R.string.strNewSignUp))
+        txtForgetPassword.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens!!.showCustomScreen(ForgetPasswordActivity::class.java)
             }
-        });
-
-        mBtnSignUp.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                String strEmail = mTxtEmail.getText().toString().trim();
-                String strPassword = mTxtPassword.getText().toString().trim();
-
+        })
+        mBtnSignUp.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                val strEmail = mTxtEmail?.getText().toString().trim { it <= ' ' }
+                val strPassword = mTxtPassword?.getText().toString().trim { it <= ' ' }
                 if (TextUtils.isEmpty(strEmail) || TextUtils.isEmpty(strPassword)) {
-                    screens.showToast(R.string.strAllFieldsRequired);
+                    screens!!.showToast(R.string.strAllFieldsRequired)
                 } else {
-                    login(strEmail, strPassword);
+                    login(strEmail, strPassword)
                 }
             }
-        });
-        mTxtNewUser.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.showCustomScreen(RegisterActivity.class);
+        })
+        mTxtNewUser.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens!!.showCustomScreen(RegisterActivity::class.java)
             }
-        });
-        btnGoogleSignIn.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                signIn();
+        })
+        btnGoogleSignIn.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                signIn()
             }
-        });
-
+        })
     }
 
-    private void login(String email, String password) {
-        showProgress();
-
-        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
-            hideProgress();
-            if (task.isSuccessful()) {
-                screens.showClearTopScreen(MainActivity.class);
-            } else {
-                screens.showToast(R.string.strInvalidEmailPassword);
-            }
-        }).addOnFailureListener(e -> hideProgress()).addOnCanceledListener(this::hideProgress);
+    private fun login(email: String, password: String) {
+        showProgress()
+        auth!!.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task: Task<AuthResult?> ->
+                hideProgress()
+                if (task.isSuccessful) {
+                    screens!!.showClearTopScreen(MainActivity::class.java)
+                } else {
+                    screens!!.showToast(R.string.strInvalidEmailPassword)
+                }
+            }.addOnFailureListener { e: Exception? -> hideProgress() }
+            .addOnCanceledListener { hideProgress() }
     }
 
     //==========================================================================
     // ===== Google Sign in ====
     //==========================================================================
-    private void signIn() {
+    private fun signIn() {
         try {
-            showProgress();
-            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-            googleSignInLauncher.launch(signInIntent);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            showProgress()
+            val signInIntent = mGoogleSignInClient!!.signInIntent
+            googleSignInLauncher.launch(signInIntent)
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    private void firebaseAuthWithGoogle(String idToken) {
+    private fun firebaseAuthWithGoogle(idToken: String?) {
         try {
-            AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-            auth.signInWithCredential(credential).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {// Sign in success, update UI with the signed-in user's information
-                    FirebaseUser user = auth.getCurrentUser();
-                    Utils.sout("User::: " + user.getPhotoUrl());
-                    final String userId = Objects.requireNonNull(user).getUid();
-                    try {
-                        final String username = Utils.isEmpty(user.getDisplayName()) ? user.getEmail() : user.getDisplayName();
-                        reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-                        reference.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                try {
-                                    Utils.sout("UserID Available::: " + userId + " >> " + dataSnapshot.hasChildren());
-                                    if (dataSnapshot.hasChildren()) {
-                                        hideProgress();
-                                        screens.showClearTopScreen(MainActivity.class);
-                                    } else {
-                                        final HashMap<String, Object> hashMap = new HashMap<>();
-                                        hashMap.put(EXTRA_ID, userId);
-                                        hashMap.put(EXTRA_EMAIL, user.getEmail());
-                                        hashMap.put(EXTRA_USERNAME, Utils.getCapsWord(username));
-                                        hashMap.put(EXTRA_PASSWORD, user.getEmail());
-                                        hashMap.put(EXTRA_IMAGEURL, Utils.isEmpty(user.getPhotoUrl()) ? IMG_DEFAULTS : URLEncoder.encode(user.getPhotoUrl().toString(), "UTF-8"));
-                                        hashMap.put(EXTRA_ACTIVE, true);
-                                        hashMap.put(EXTRA_IS_ONLINE, STATUS_ONLINE);
-                                        hashMap.put(EXTRA_SEARCH, Objects.requireNonNull(username).toLowerCase().trim());
-                                        hashMap.put(EXTRA_CREATED_AT, Utils.getDateTime());
-                                        hashMap.put(EXTRA_VERSION, BuildConfig.VERSION_NAME);
-                                        hashMap.put(EXTRA_SIGNUP_TYPE, TYPE_GOOGLE);
-                                        hashMap.put(EXTRA_SOCIAL_TOKEN, idToken);
-
-                                        reference.setValue(hashMap).addOnCompleteListener(task1 -> {
-                                            try {
-                                                if (task1.isSuccessful()) {
-                                                    hideProgress();
-                                                    screens.showClearTopScreen(MainActivity.class);
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            auth!!.signInWithCredential(credential)
+                .addOnCompleteListener { task: Task<AuthResult?> ->
+                    if (task.isSuccessful) { // Sign in success, update UI with the signed-in user's information
+                        val user = auth!!.currentUser
+                        Utils.sout("User::: " + user!!.photoUrl)
+                        val userId = Objects.requireNonNull(user).uid
+                        try {
+                            val username = if (Utils.isEmpty(
+                                    user.displayName
+                                )
+                            ) user.email else user.displayName
+                            reference =
+                                FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+                                    .child(userId)
+                            reference!!.addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                                    try {
+                                        Utils.sout("UserID Available::: " + userId + " >> " + dataSnapshot.hasChildren())
+                                        if (dataSnapshot.hasChildren()) {
+                                            hideProgress()
+                                            screens!!.showClearTopScreen(MainActivity::class.java)
+                                        } else {
+                                            val hashMap = HashMap<String, Any?>()
+                                            hashMap[IConstants.EXTRA_ID] = userId
+                                            hashMap[IConstants.EXTRA_EMAIL] = user.email
+                                            hashMap[IConstants.EXTRA_USERNAME] =
+                                                Utils.getCapsWord(username)
+                                            hashMap[IConstants.EXTRA_PASSWORD] = user.email
+                                            hashMap[IConstants.EXTRA_IMAGEURL] = if (Utils.isEmpty(
+                                                    user.photoUrl
+                                                )
+                                            ) IConstants.IMG_DEFAULTS else URLEncoder.encode(
+                                                user.photoUrl.toString(), "UTF-8"
+                                            )
+                                            hashMap[IConstants.EXTRA_ACTIVE] = true
+                                            hashMap[IConstants.EXTRA_IS_ONLINE] =
+                                                IConstants.STATUS_ONLINE
+                                            hashMap[IConstants.EXTRA_SEARCH] =
+                                                Objects.requireNonNull(username)?.lowercase(
+                                                    Locale.getDefault()
+                                                )?.trim { it <= ' ' }
+                                            hashMap[IConstants.EXTRA_CREATED_AT] =
+                                                Utils.dateTime
+                                            hashMap[IConstants.EXTRA_VERSION] =
+                                                BuildConfig.VERSION_NAME
+                                            hashMap[IConstants.EXTRA_SIGNUP_TYPE] =
+                                                IConstants.TYPE_GOOGLE
+                                            hashMap[IConstants.EXTRA_SOCIAL_TOKEN] = idToken
+                                            reference!!.setValue(hashMap)
+                                                .addOnCompleteListener { task1: Task<Void?> ->
+                                                    try {
+                                                        if (task1.isSuccessful) {
+                                                            hideProgress()
+                                                            screens!!.showClearTopScreen(
+                                                                MainActivity::class.java
+                                                            )
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        Utils.getErrors(e)
+                                                    }
                                                 }
-                                            } catch (Exception e) {
-                                                Utils.getErrors(e);
-                                            }
-                                        });
+                                        }
+                                    } catch (ignored: Exception) {
                                     }
-                                } catch (Exception ignored) {
                                 }
-                            }
 
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-                                hideProgress();
-                            }
-                        });
-                    } catch (Exception e) {
-                        hideProgress();
-                        Utils.getErrors(e);
+                                override fun onCancelled(databaseError: DatabaseError) {
+                                    hideProgress()
+                                }
+                            })
+                        } catch (e: Exception) {
+                            hideProgress()
+                            Utils.getErrors(e)
+                        }
+                    } else { // If sign in fails, display a message to the user.
+                        hideProgress()
+                        Utils.getErrors(task.exception)
+                        screens!!.showToast(Objects.requireNonNull(task.exception)?.localizedMessage)
                     }
-                } else {// If sign in fails, display a message to the user.
-                    hideProgress();
-                    Utils.getErrors(task.getException());
-                    screens.showToast(Objects.requireNonNull(task.getException()).getLocalizedMessage());
-                }
-            }).addOnFailureListener(e -> {
-                hideProgress();
-                screens.showToast(e.getMessage());
-            }).addOnCanceledListener(this::hideProgress);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+                }.addOnFailureListener { e: Exception ->
+                hideProgress()
+                screens!!.showToast(e.message)
+            }.addOnCanceledListener { hideProgress() }
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    final ActivityResultLauncher<Intent> googleSignInLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-        if (result.getResultCode() == Activity.RESULT_OK) {
-            try {
-                final Intent data = result.getData();
-                assert data != null;
-                Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-                try {// Google Sign In was successful, authenticate with Firebase
-                    GoogleSignInAccount account = task.getResult(ApiException.class);
-                    firebaseAuthWithGoogle(account.getIdToken());
-                } catch (ApiException e) {// Google Sign In failed, update UI appropriately
-                    Utils.getErrors(e);
+    val googleSignInLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK) {
+                try {
+                    val data = result.data!!
+                    val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+                    try { // Google Sign In was successful, authenticate with Firebase
+                        val account = task.getResult(ApiException::class.java)
+                        firebaseAuthWithGoogle(account.idToken)
+                    } catch (e: ApiException) { // Google Sign In failed, update UI appropriately
+                        Utils.getErrors(e)
+                    }
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
-            } catch (Exception e) {
-                Utils.getErrors(e);
             }
         }
-    });
 }

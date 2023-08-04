@@ -1,138 +1,121 @@
-package com.innovativetools.firebase.chat.activities.fragments;
+package com.innovativetools.firebase.chat.activities.fragments
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USER_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_MALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_UNSPECIFIED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_PREVIEW;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.os.Bundle
+import com.innovativetools.firebase.chat.activities.R
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.TextView
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.FirebaseAuth
+import android.content.Intent
+import android.view.View
+import android.widget.ImageView
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import de.hdodenhof.circleimageview.CircleImageView
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import de.hdodenhof.circleimageview.CircleImageView;
-
-
-public class ViewUserProfileFragment extends BaseFragment {
-
-    private CircleImageView imgAvatar;
-
-    private ImageView imgBlurImage;
-    private String strDescription = "", strAvatarImg, strUsername = "";
-    private String viewUserId = "";
-    private int strGender = GEN_UNSPECIFIED;
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+class ViewUserProfileFragment : BaseFragment() {
+    private var imgAvatar: CircleImageView? = null
+    private var imgBlurImage: ImageView? = null
+    private var strDescription = ""
+    private var strAvatarImg: String? = null
+    private var strUsername = ""
+    private var viewUserId: String? = ""
+    private var strGender = IConstants.GEN_UNSPECIFIED
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
-        final View view = inflater.inflate(R.layout.fragment_profile_new, container, false);
-
-        final FloatingActionButton fabChat = view.findViewById(R.id.fabChat);
-        imgAvatar = view.findViewById(R.id.imgAvatar);
-        imgBlurImage = view.findViewById(R.id.imgRelativeBlue);
-        final TextView txtUsername = view.findViewById(R.id.txtUsername);
-        final TextView txtEmail = view.findViewById(R.id.txtEmail);
-        final TextView txtAbout = view.findViewById(R.id.txtAbout);
-        final TextView txtGender = view.findViewById(R.id.txtGender);
-
-        final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        final Intent i = getActivity().getIntent();
-        final String userId = i.getStringExtra(EXTRA_USER_ID);
-
-        if (Utils.isEmpty(userId)) {
-            assert firebaseUser != null;
-            viewUserId = firebaseUser.getUid();
+        val view = inflater.inflate(R.layout.fragment_profile_new, container, false)
+        val fabChat = view.findViewById<FloatingActionButton>(R.id.fabChat)
+        imgAvatar = view.findViewById(R.id.imgAvatar)
+        imgBlurImage = view.findViewById(R.id.imgRelativeBlue)
+        val txtUsername = view.findViewById<TextView>(R.id.txtUsername)
+        val txtEmail = view.findViewById<TextView>(R.id.txtEmail)
+        val txtAbout = view.findViewById<TextView>(R.id.txtAbout)
+        val txtGender = view.findViewById<TextView>(R.id.txtGender)
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        val i = requireActivity().intent
+        val userId = i.getStringExtra(IConstants.EXTRA_USER_ID)
+        viewUserId = if (Utils.isEmpty(userId)) {
+            assert(firebaseUser != null)
+            firebaseUser!!.uid
         } else {
-            viewUserId = userId;
+            userId
         }
-        assert firebaseUser != null;
-        if (viewUserId.equalsIgnoreCase(firebaseUser.getUid())) {
-            fabChat.hide();
+        assert(firebaseUser != null)
+        if (viewUserId.equals(firebaseUser!!.uid, ignoreCase = true)) {
+            fabChat.hide()
         } else {
-            fabChat.show();
+            fabChat.show()
         }
-
-        imgAvatar.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.openFullImageViewActivity(v, strAvatarImg, strUsername);
+        imgAvatar?.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens!!.openFullImageViewActivity(v, strAvatarImg, strUsername)
             }
-        });
-
-        final String lblStatus = mActivity.getString(R.string.strAboutStatus);
-        final String lblUnSpecified = getString(R.string.strUnspecified);
-        final String lblMale = getString(R.string.strMale);
-        final String lblFemale = getString(R.string.strFemale);
-
-        final String msgPrivateEmail = mActivity.getString(R.string.msgPrivateEmail);
-        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(viewUserId);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        })
+        val lblStatus = mActivity!!.getString(R.string.strAboutStatus)
+        val lblUnSpecified = getString(R.string.strUnspecified)
+        val lblMale = getString(R.string.strMale)
+        val lblFemale = getString(R.string.strFemale)
+        val msgPrivateEmail = mActivity!!.getString(R.string.msgPrivateEmail)
+        val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+            viewUserId!!
+        )
+        reference.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
-                    assert user != null;
-                    strUsername = user.getUsername();
-                    txtUsername.setText(strUsername);
-                    String email = user.getEmail();
-                    strAvatarImg = user.getImageURL();
-                    if (!viewUserId.equalsIgnoreCase(firebaseUser.getUid())) {
-                        if (user.isHideEmail()) {
-                            email = msgPrivateEmail;
+                    val user = dataSnapshot.getValue(
+                        User::class.java
+                    )!!
+                    strUsername = user.username.toString()
+                    txtUsername.text = strUsername
+                    var email = user.email
+                    strAvatarImg = user.getImageURL()
+                    if (!viewUserId.equals(firebaseUser.uid, ignoreCase = true)) {
+                        if (user.isHideEmail) {
+                            email = msgPrivateEmail
                         }
-                        if (user.isHideProfilePhoto()) {
-                            strAvatarImg = IMG_PREVIEW;
+                        if (user.isHideProfilePhoto) {
+                            strAvatarImg = IConstants.IMG_PREVIEW
                         }
                     }
-                    strGender = user.getGenders();
-                    strDescription = user.getAbout();
-
-                    txtEmail.setText(email);
-
-                    txtAbout.setText(Utils.isEmpty(strDescription) ? lblStatus : strDescription);
-                    txtGender.setText(strGender == GEN_UNSPECIFIED ? lblUnSpecified : (strGender == GEN_MALE ? lblMale : lblFemale));
-
-                    Utils.setProfileImage(getContext(), strAvatarImg, imgAvatar);
-                    Utils.setProfileBlurImage(getContext(), strAvatarImg, imgBlurImage);
-
+                    strGender = user.genders
+                    strDescription = user.about.toString()
+                    txtEmail.text = email
+                    txtAbout.text = if (Utils.isEmpty(strDescription)) lblStatus else strDescription
+                    txtGender.text =
+                        if (strGender == IConstants.GEN_UNSPECIFIED) lblUnSpecified else if (strGender == IConstants.GEN_MALE) lblMale else lblFemale
+                    strAvatarImg?.let {
+                        Utils.setProfileImage(
+                            context, it, imgAvatar
+                        )
+                    }
+                    strAvatarImg?.let {
+                        Utils.setProfileBlurImage(
+                            context, it, imgBlurImage
+                        )
+                    }
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        fabChat.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens!!.openUserMessageActivity(viewUserId)
             }
-        });
-
-        fabChat.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.openUserMessageActivity(viewUserId);
-            }
-        });
-
-
-        return view;
+        })
+        return view
     }
-
 }

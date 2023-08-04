@@ -1,77 +1,64 @@
-package com.innovativetools.firebase.chat.activities.managers;
+package com.innovativetools.firebase.chat.activities.managers
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TRUE;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
+import android.content.Context
+import android.content.SharedPreferences
+import com.innovativetools.firebase.chat.activities.constants.IConstants
 
 
-/**
- * @author : Prashant Adesara
- * @url https://www.bytesbee.com
- * Manage the data into local storage via SharedPreference
- */
-public class SessionManager {
-    // Shared preferences file name
-    private static final String PREF_NAME = "BytesBeeChatV1";
-    private static final String KEY_ON_OFF_NOTIFICATION = "onOffNotification";
-    private static final String KEY_ON_OFF_RTL = "onOffRTL";
-    private static final String KEY_ONBOARDING = "isOnBoardingDone";
-    private final SharedPreferences pref;
-
-    //============== START
-
-    private static SessionManager mInstance;
-
-    public static SessionManager get() {
-        return mInstance;
-    }
-
-    public static void init(Context ctx) {
-        if (mInstance == null) mInstance = new SessionManager(ctx);
-    }
+class SessionManager(context: Context) {
+    private val pref: SharedPreferences
 
     //============== END
-
-    public SessionManager(final Context context) {
-        pref = context.getSharedPreferences(context.getPackageName() + PREF_NAME, 0);
+    init {
+        pref = context.getSharedPreferences(context.packageName + PREF_NAME, 0)
     }
 
-    public void setOnOffNotification(final boolean value) {
-        final Editor editor = pref.edit();
-        editor.putBoolean(KEY_ON_OFF_NOTIFICATION, value);
-        editor.apply();
+    fun setOnOffNotification(value: Boolean) {
+        val editor = pref.edit()
+        editor.putBoolean(KEY_ON_OFF_NOTIFICATION, value)
+        editor.apply()
     }
 
-    public boolean isNotificationOn() {
-        return pref.getBoolean(KEY_ON_OFF_NOTIFICATION, TRUE);
+    val isNotificationOn: Boolean
+        get() = pref.getBoolean(KEY_ON_OFF_NOTIFICATION, IConstants.TRUE)
+
+    fun setOnOffRTL(value: Boolean) {
+        val editor = pref.edit()
+        editor.putBoolean(KEY_ON_OFF_RTL, value)
+        editor.apply()
     }
 
-    public void setOnOffRTL(final boolean value) {
-        final Editor editor = pref.edit();
-        editor.putBoolean(KEY_ON_OFF_RTL, value);
-        editor.apply();
+    val isRTLOn: Boolean
+        get() = pref.getBoolean(KEY_ON_OFF_RTL, IConstants.FALSE)
+    var isOnBoardingDone: Boolean
+        get() = pref.getBoolean(KEY_ONBOARDING, IConstants.FALSE)
+        set(value) {
+            val editor = pref.edit()
+            editor.putBoolean(KEY_ONBOARDING, value)
+            editor.apply()
+        }
+
+    fun clearAll() {
+        val editor = pref.edit()
+        editor.clear()
+        editor.apply()
     }
 
-    public boolean isRTLOn() {
-        return pref.getBoolean(KEY_ON_OFF_RTL, FALSE);
-    }
+    companion object {
+        // Shared preferences file name
+        private const val PREF_NAME = "BytesBeeChatV1"
+        private const val KEY_ON_OFF_NOTIFICATION = "onOffNotification"
+        private const val KEY_ON_OFF_RTL = "onOffRTL"
+        private const val KEY_ONBOARDING = "isOnBoardingDone"
 
-    public void setOnBoardingDone(final boolean value) {
-        final Editor editor = pref.edit();
-        editor.putBoolean(KEY_ONBOARDING, value);
-        editor.apply();
-    }
+        //============== START
+        private var mInstance: SessionManager? = null
+        fun get(): SessionManager? {
+            return mInstance
+        }
 
-    public boolean isOnBoardingDone() {
-        return pref.getBoolean(KEY_ONBOARDING, FALSE);
-    }
-
-    public void clearAll() {
-        final Editor editor = pref.edit();
-        editor.clear();
-        editor.apply();
+        fun init(ctx: Context) {
+            if (mInstance == null) mInstance = SessionManager(ctx)
+        }
     }
 }

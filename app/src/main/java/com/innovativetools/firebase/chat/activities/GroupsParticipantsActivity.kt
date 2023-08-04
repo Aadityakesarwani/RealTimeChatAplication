@@ -1,405 +1,346 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUPS_IN_BOTH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUP_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_OBJ_GROUP;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUPS_MESSAGES;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUPS_S;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUP_MEMBERS_S;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TRUE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TWO;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import com.google.android.material.appbar.AppBarLayout.OnOffsetChangedListener
+import com.innovativetools.firebase.chat.activities.adapters.GroupsParticipantsAdapters
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import com.innovativetools.firebase.chat.activities.views.profileview.HeaderView
+import com.google.firebase.storage.FirebaseStorage
+import android.os.Bundle
+import com.google.android.material.appbar.AppBarLayout
+import android.content.Intent
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.auth.FirebaseAuth
+import android.widget.RelativeLayout
+import android.widget.LinearLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.cardview.widget.CardView
+import com.innovativetools.firebase.chat.activities.constants.ISendMessage
+import com.innovativetools.firebase.chat.activities.constants.IDialogListener
+import com.google.firebase.database.FirebaseDatabase
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.innovativetools.firebase.chat.activities.models.Chat
+import com.google.firebase.database.DatabaseError
+import android.app.Activity
+import android.renderscript.ScriptGroup.Binding
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.ImageView
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.Toolbar
+import com.google.android.gms.tasks.Task
+import com.innovativetools.firebase.chat.activities.GroupsAddActivity
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.Groups
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.lang.Exception
+import java.util.ArrayList
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+class GroupsParticipantsActivity : BaseActivity(), OnOffsetChangedListener {
+    private var mUsers: ArrayList<User>? = null
+    private var userAdapters: GroupsParticipantsAdapters? = null
+    private var mRecyclerView: RecyclerView? = null
+    private var mineUser = User()
+    private var groupId: String? = null
+    private var groups: Groups? = null
+    private var groupName = ""
+    private var lblParticipants: TextView? = null
+    private var imgGroupBackground: ImageView? = null
+    private var toolbarHeaderView: HeaderView? = null
+    private var floatHeaderView: HeaderView? = null
+    private var isHideToolbarView = false
+    private var storage: FirebaseStorage? = null
+    private var setting = 0
 
-import com.innovativetools.firebase.chat.activities.adapters.GroupsParticipantsAdapters;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.innovativetools.firebase.chat.activities.views.profileview.HeaderView;
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
 
-import java.util.ArrayList;
-import java.util.List;
 
-public class GroupsParticipantsActivity extends BaseActivity implements AppBarLayout.OnOffsetChangedListener {
-
-    private ArrayList<User> mUsers;
-    private GroupsParticipantsAdapters userAdapters;
-    private RecyclerView mRecyclerView;
-    private User mineUser = new User();
-    private String groupId;
-    private Groups groups;
-    private String groupName = "";
-    private TextView lblParticipants;
-    private ImageView imgGroupBackground;
-
-    private HeaderView toolbarHeaderView;
-    private HeaderView floatHeaderView;
-    private boolean isHideToolbarView = false;
-    private FirebaseStorage storage;
-    private int setting;
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_group_participants);
-        toolbarHeaderView = findViewById(R.id.toolbar_header_view);
-        floatHeaderView = findViewById(R.id.float_header_view);
-        final AppBarLayout appBarLayout = findViewById(R.id.appbar);
-        final Toolbar mToolbar = findViewById(R.id.toolbar);
-
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("");
-        mToolbar.setNavigationOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                onBackPressed();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_group_participants)
+        toolbarHeaderView = findViewById(R.id.toolbar_header_view)
+        floatHeaderView = findViewById(R.id.float_header_view)
+        val appBarLayout = findViewById<AppBarLayout>(R.id.appbar)
+        val mToolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(mToolbar)
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        supportActionBar!!.setTitle("")
+        mToolbar.setNavigationOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                onBackPressed()
             }
-        });
-
-        lblParticipants = findViewById(R.id.lblParticipants);
-        final TextView txtExitGroup = findViewById(R.id.txtExitGroup);
-
-        final Intent intent = getIntent();
-        groups = (Groups) intent.getSerializableExtra(EXTRA_OBJ_GROUP);
-        groupName = groups.getGroupName();
-        groupId = groups.getId();
-
-        storage = FirebaseStorage.getInstance();
+        })
+        lblParticipants = findViewById(R.id.lblParticipants)
+        val txtExitGroup = findViewById<TextView>(R.id.txtExitGroup)
+        val intent = intent
+        groups = intent.getSerializableExtra(IConstants.EXTRA_OBJ_GROUP) as Groups?
+        groupName = groups!!.groupName.toString()
+        groupId = groups!!.id
+        storage = FirebaseStorage.getInstance()
         //final StorageReference storageReference = storage.getReference(REF_GROUP_PHOTO_UPLOAD + SLASH + groupId);
-
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        imgGroupBackground = findViewById(R.id.imgGroupBackground);
-        Utils.setGroupParticipateImage(mActivity, groups.getGroupImg(), imgGroupBackground);
-        imgGroupBackground.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
+        firebaseUser = FirebaseAuth.getInstance().currentUser
+        imgGroupBackground = findViewById(R.id.imgGroupBackground)
+        groups!!.groupImg?.let { Utils.setGroupParticipateImage(mActivity, it, imgGroupBackground) }
+        imgGroupBackground?.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
                 //final Screens screens = new Screens(mActivity);
-                screens.openFullImageViewActivity(v, groups.getGroupImg(), groupName, "");
+                screens!!.openFullImageViewActivity(v, groups!!.groupImg, groupName, "")
             }
-        });
-
-        final RelativeLayout imgNoMessage = findViewById(R.id.imgNoMessage);
-        imgNoMessage.setVisibility(View.GONE);
-        mRecyclerView = findViewById(R.id.recyclerView);
-        LinearLayout layoutGroupAdminSetting = findViewById(R.id.layoutGroupAdminSetting);
-        final TextView lblSettingOption = findViewById(R.id.lblSettingOption);
-
-        final LinearLayoutManager layoutManager = new LinearLayoutManager(mActivity);
-        final DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(), layoutManager.getOrientation());
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(layoutManager);
-        mRecyclerView.setNestedScrollingEnabled(false);
-        mRecyclerView.addItemDecoration(dividerItemDecoration);
-
-        appBarLayout.addOnOffsetChangedListener(this);
-
-        readGroupTitle();
+        })
+        val imgNoMessage = findViewById<RelativeLayout>(R.id.imgNoMessage)
+        imgNoMessage.visibility = View.GONE
+        mRecyclerView = findViewById(R.id.recyclerView)
+        val layoutGroupAdminSetting = findViewById<LinearLayout>(R.id.layoutGroupAdminSetting)
+        val lblSettingOption = findViewById<TextView>(R.id.lblSettingOption)
+        val layoutManager = LinearLayoutManager(mActivity)
+        val dividerItemDecoration =
+            DividerItemDecoration(mRecyclerView?.getContext(), layoutManager.orientation)
+        mRecyclerView?.setHasFixedSize(true)
+        mRecyclerView?.setLayoutManager(layoutManager)
+        mRecyclerView?.setNestedScrollingEnabled(false)
+        mRecyclerView?.addItemDecoration(dividerItemDecoration)
+        appBarLayout.addOnOffsetChangedListener(this)
+        readGroupTitle()
 
         //Admin Message
-        CardView cardView = findViewById(R.id.cardViewSendMessage);
-
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (groups.getAdmin().equalsIgnoreCase(firebaseUser.getUid())) {
-            cardView.setVisibility(View.VISIBLE);
+        val cardView = findViewById<CardView>(R.id.cardViewSendMessage)
+        firebaseUser = FirebaseAuth.getInstance().currentUser
+        if (groups!!.admin.equals(firebaseUser!!.uid, ignoreCase = true)) {
+            cardView.visibility = View.VISIBLE
         } else {
-            cardView.setVisibility(View.GONE);
+            cardView.visibility = View.GONE
         }
-
-        setting = groups.getSendMessageSetting();
-
-        lblSettingOption.setText(Utils.getSettingString(mActivity, setting));
-
-        layoutGroupAdminSetting.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                Utils.selectSendMessages(mActivity, groupId, setting, value -> {
-                    lblSettingOption.setText(value);
-                    setting = Utils.getSettingValue(mActivity, value);
-                    groups.setSendMessageSetting(setting);
-                });
+        setting = groups!!.sendMessageSetting
+        lblSettingOption.text = Utils.getSettingString(mActivity!!, setting)
+        layoutGroupAdminSetting.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                Utils.selectSendMessages(mActivity!!, groupId, setting) { value: String? ->
+                    lblSettingOption.text = value
+                    setting = Utils.getSettingValue(mActivity!!, value)
+                    groups!!.sendMessageSetting = setting
+                }
             }
-        });
-
-        txtExitGroup.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-
-                Utils.showYesNoDialog(mActivity, R.string.strLeave, R.string.strLeaveFromGroup, () -> {
-                    showProgress();
-                    if (isAdmin()) {
-
-                        if (groups.getMembers().size() >= TWO) {//Make other Person to Admin for this group cause more than 2 person available.
-
-                            String newAdminId = groups.getMembers().get(1);//Default set from 1st position to Make as Admin.
-                            for (int i = 0; i < groups.getMembers().size(); i++) {
-                                if (!groups.getMembers().get(i).equalsIgnoreCase(firebaseUser.getUid())) {
-                                    newAdminId = groups.getMembers().get(i);//Assign Admin Role to next USER.
-                                    break;
+        })
+        txtExitGroup.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                Utils.showYesNoDialog(mActivity!!, R.string.strLeave, R.string.strLeaveFromGroup) {
+                    showProgress()
+                    if (isAdmin) {
+                        if (groups!!.members?.size!!  >= IConstants.TWO) { //Make other Person to Admin for this group cause more than 2 person available.
+                            var newAdminId =
+                                groups!!.members?.get(1) //Default set from 1st position to Make as Admin.
+                            for (i in groups!!.members?.indices!!) {
+                                if (!groups!!.members?.get(i)?.equals(
+                                        firebaseUser!!.uid,
+                                        ignoreCase = true
+                                    )!!
+                                ) {
+                                    newAdminId = groups?.members!![i]//Assign Admin Role to next USER.
+                                    break
                                 }
                             }
-
-                            groups.setAdmin(newAdminId);
-
-                            groups.getMembers().remove(firebaseUser.getUid());
-
-                            leaveFromGroup(TRUE);//True means close current screen, cause first we leave from group and than delete own chats
-
-                        } else {//You are alone in this Groups. So Delete group and its DATA.
-
-                            deleteWholeGroupsData(); // In this case only groups have Single User and can delete whole groups data.
-
+                            groups!!.admin = newAdminId
+                            groups!!.members?.remove(firebaseUser!!.uid)
+                            leaveFromGroup(IConstants.TRUE) //True means close current screen, cause first we leave from group and than delete own chats
+                        } else { //You are alone in this Groups. So Delete group and its DATA.
+                            deleteWholeGroupsData() // In this case only groups have Single User and can delete whole groups data.
                         }
-
                     } else {
-
-                        List<String> removeId = groups.getMembers();
-                        removeId.remove(firebaseUser.getUid());
-                        groups.setMembers(removeId);
-
-                        leaveFromGroup(TRUE);//True means close current screen, cause first we leave from group and than delete own chats
-
+                        val removeId = groups!!.members
+                        removeId?.remove(firebaseUser!!.uid)
+                        groups!!.members = removeId
+                        leaveFromGroup(IConstants.TRUE) //True means close current screen, cause first we leave from group and than delete own chats
                     }
-                });
-
+                }
             }
-        });
+        })
     }
 
-    private void leaveFromGroup(final boolean isFinishActivity) {
+    private fun leaveFromGroup(isFinishActivity: Boolean) {
         //Remove from Main Group info /groupId/members/<removeId>
-        FirebaseDatabase.getInstance().getReference().child(REF_GROUPS_S + groupId).setValue(groups).addOnCompleteListener(task -> {
+        FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUPS_S + groupId)
+            .setValue(groups).addOnCompleteListener { task: Task<Void?>? ->
 
             //Remove from MembersGroup/groupsIn/<groupId>
-            FirebaseDatabase.getInstance().getReference().child(REF_GROUP_MEMBERS_S + firebaseUser.getUid() + EXTRA_GROUPS_IN_BOTH + groupId).removeValue()
-                    .addOnCompleteListener(task1 -> {
-                        deleteOwnChats(isFinishActivity);//True means close current screen, cause first we leave from group and than delete own chats
-                    });
-        }).addOnFailureListener(e -> hideProgress());
+            FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUP_MEMBERS_S + firebaseUser!!.uid + IConstants.EXTRA_GROUPS_IN_BOTH + groupId)
+                .removeValue()
+                .addOnCompleteListener { task1: Task<Void?>? ->
+                    deleteOwnChats(isFinishActivity) //True means close current screen, cause first we leave from group and than delete own chats
+                }
+        }.addOnFailureListener { e: Exception? -> hideProgress() }
     }
 
     /**
      * False means don't close current screen, just delete my own chats
      * True  means close current screen, cause first we leave from group and than delete own chats
      */
-    private void deleteOwnChats(final boolean isFinishActivity) {
-        FirebaseDatabase.getInstance().getReference().child(REF_GROUPS_MESSAGES + SLASH + groupId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                try {
-                    if (dataSnapshot.exists()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
-                            if (chat.getSender().equalsIgnoreCase(firebaseUser.getUid())) {
-                                Utils.deleteUploadedFilesFromCloud(storage, chat);
-                                snapshot.getRef().removeValue();
-                            }
-                        }
-                    }
-
-                } catch (Exception ignored) {
-                }
-                hideProgress();
-                if (isFinishActivity) {
-                    goBack();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-    }
-
-    private void goBack() {
-        Intent data = new Intent();
-        data.putExtra(EXTRA_OBJ_GROUP, groups);
-        setResult(RESULT_FIRST_USER, data);
-        finish();
-    }
-
-    private void deleteWholeGroupsData() {
-        final int members = groups.getMembers().size();
-        FirebaseDatabase.getInstance().getReference().child(REF_GROUPS_S + groupId).removeValue().addOnCompleteListener(task -> {
-            for (int i = 0; i < members; i++) {
-                FirebaseDatabase.getInstance().getReference().child(REF_GROUP_MEMBERS_S + groups.getMembers().get(i) + EXTRA_GROUPS_IN_BOTH + groupId).removeValue().addOnCompleteListener(task12 -> {
-
-                });
-                if (i == (members - 1)) {
-                    hideProgress();
-                    goBack();
-                }
-            }
-            FirebaseDatabase.getInstance().getReference().child(REF_GROUPS_MESSAGES + SLASH + groupId).removeValue().addOnCompleteListener(task1 -> {
-
-            });
-        });
-    }
-
-    @Override
-    public void onOffsetChanged(AppBarLayout appBarLayout, int offset) {
-        int maxScroll = appBarLayout.getTotalScrollRange();
-        float percentage = (float) Math.abs(offset) / (float) maxScroll;
-
-        if (percentage == 1f && isHideToolbarView) {
-            toolbarHeaderView.setVisibility(View.VISIBLE);
-            isHideToolbarView = !isHideToolbarView;
-
-        } else if (percentage < 1f && !isHideToolbarView) {
-            toolbarHeaderView.setVisibility(View.GONE);
-            isHideToolbarView = !isHideToolbarView;
-        }
-    }
-
-    private void readUsers() {
-        mUsers = new ArrayList<>();
-        mineUser = new User();
-
-        Query reference = Utils.getQuerySortBySearch();
-        reference.keepSynced(true);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mUsers.clear();
-                if (dataSnapshot.hasChildren()) {
+    private fun deleteOwnChats(isFinishActivity: Boolean) {
+        FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUPS_MESSAGES + IConstants.SLASH + groupId)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
                     try {
-
-                        for (String id : groups.getMembers()) {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                User user = snapshot.getValue(User.class);
-                                assert user != null;
-                                if (user.getId().equalsIgnoreCase(id) && user.isActive()) {
-
-                                    if (groups.getAdmin().equalsIgnoreCase(user.getId())) {
-                                        user.setAdmin(TRUE);
-                                    } else {
-                                        user.setAdmin(FALSE);
-                                    }
-                                    if (!user.getId().equalsIgnoreCase(firebaseUser.getUid())) {
-                                        mUsers.add(user);
-                                    } else {
-                                        user.setUsername(getString(R.string.strYou));
-                                        mineUser = user;
-                                    }
-                                    break;
+                        if (dataSnapshot.exists()) {
+                            for (snapshot in dataSnapshot.children) {
+                                val chat = snapshot.getValue(Chat::class.java)!!
+                                if (chat.sender.equals(firebaseUser!!.uid, ignoreCase = true)) {
+                                    storage?.let { Utils.deleteUploadedFilesFromCloud(it, chat) }
+                                    snapshot.ref.removeValue()
                                 }
                             }
                         }
-                    } catch (Exception ignored) {
+                    } catch (ignored: Exception) {
                     }
+                    hideProgress()
+                    if (isFinishActivity) {
+                        goBack()
+                    }
+                }
 
-                    if (mUsers.size() > 0) {
-                        mUsers = Utils.sortByUser(mUsers);
-//                        if (mineUser.isAdmin()) {
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+    }
+
+    private fun goBack() {
+        val data = Intent()
+        data.putExtra(IConstants.EXTRA_OBJ_GROUP, groups)
+        setResult(RESULT_FIRST_USER, data)
+        finish()
+    }
+
+    private fun deleteWholeGroupsData() {
+        val members = groups!!.members?.size!!
+        FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUPS_S + groupId)
+            .removeValue().addOnCompleteListener { task: Task<Void?>? ->
+            for (i in 0 until members) {
+                FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUP_MEMBERS_S + (groups!!.members?.get(i)) + IConstants.EXTRA_GROUPS_IN_BOTH + groupId)
+                    .removeValue().addOnCompleteListener { task12: Task<Void?>? -> }
+                if (i == members - 1) {
+                    hideProgress()
+                    goBack()
+                }
+            }
+            FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUPS_MESSAGES + IConstants.SLASH + groupId)
+                .removeValue().addOnCompleteListener { task1: Task<Void?>? -> }
+        }
+    }
+
+    override fun onOffsetChanged(appBarLayout: AppBarLayout, offset: Int) {
+        val maxScroll = appBarLayout.totalScrollRange
+        val percentage = Math.abs(offset).toFloat() / maxScroll.toFloat()
+        if (percentage == 1f && isHideToolbarView) {
+            toolbarHeaderView!!.visibility = View.VISIBLE
+            isHideToolbarView = !isHideToolbarView
+        } else if (percentage < 1f && !isHideToolbarView) {
+            toolbarHeaderView!!.visibility = View.GONE
+            isHideToolbarView = !isHideToolbarView
+        }
+    }
+
+    private fun readUsers() {
+        mUsers = ArrayList()
+        mineUser = User()
+        val reference = Utils.querySortBySearch
+        reference.keepSynced(true)
+        reference.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                mUsers!!.clear()
+                if (dataSnapshot.hasChildren()) {
+                    try {
+                        for (id in groups!!.members!!) {
+                            for (snapshot in dataSnapshot.children) {
+                                val user = snapshot.getValue(
+                                    User::class.java
+                                )!!
+                                if (user.id.equals(id, ignoreCase = true) && user.isActive) {
+                                    if (groups!!.admin.equals(user.id, ignoreCase = true)) {
+                                        user.isAdmin = IConstants.TRUE
+                                    } else {
+                                        user.isAdmin = IConstants.FALSE
+                                    }
+                                    if (!user.id.equals(firebaseUser!!.uid, ignoreCase = true)) {
+                                        mUsers!!.add(user)
+                                    } else {
+                                        user.username = getString(R.string.strYou)
+                                        mineUser = user
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    } catch (ignored: Exception) {
+                    }
+                    if (mUsers!!.size > 0) {
+                        mUsers = Utils.sortByUser(mUsers!!)
+                        //                        if (mineUser.isAdmin()) {
 //                            mUsers.add(0, mineUser);
 //                        } else {
-                        mUsers.add(mineUser);
-//                        }
+                        (mUsers as ArrayList<User>?)?.add(mineUser)
+                        //                        }
                     }
-
-                    userAdapters = new GroupsParticipantsAdapters(mActivity, mUsers);
-                    mRecyclerView.setAdapter(userAdapters);
+                    userAdapters = GroupsParticipantsAdapters(mActivity!!, mUsers)
+                    mRecyclerView!!.adapter = userAdapters
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_group_add, menu);
-        MenuItem item = menu.findItem(R.id.itemGroupSave);
-        item.setIcon(R.drawable.ic_group_add);
-        return true;
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_group_add, menu)
+        val item = menu.findItem(R.id.itemGroupSave)
+        item.setIcon(R.drawable.ic_group_add)
+        return true
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.itemGroupSave) {
-            if (isAdmin()) {
-                final Intent intent = new Intent(mActivity, GroupsAddActivity.class);
-                intent.putExtra(EXTRA_GROUP_ID, groupId);
-                intent.putExtra(EXTRA_OBJ_GROUP, groups);
-                intentLauncher.launch(intent);
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.itemGroupSave) {
+            if (isAdmin) {
+                val intent = Intent(mActivity, GroupsAddActivity::class.java)
+                intent.putExtra(IConstants.EXTRA_GROUP_ID, groupId)
+                intent.putExtra(IConstants.EXTRA_OBJ_GROUP, groups)
+                intentLauncher.launch(intent)
             } else {
-                screens.showToast(R.string.msgOnlyAdminEdit);
+                screens!!.showToast(R.string.msgOnlyAdminEdit)
             }
         }
-        return true;
+        return true
     }
 
-    private void readGroupTitle() {
-        final String lastSeen = String.format(getString(R.string.strCreatedOn), Utils.formatDateTime(mActivity, groups.getLastMsgTime()));
-        groupName = groups.getGroupName();
-
-        toolbarHeaderView.bindTo(groupName, lastSeen);
-        floatHeaderView.bindTo(groupName, lastSeen);
-        lblParticipants.setText(String.format(getString(R.string.strParticipants), groups.getMembers().size()));
-
-        Utils.setGroupParticipateImage(mActivity, groups.getGroupImg(), imgGroupBackground);
-
-        readUsers();
+    private fun readGroupTitle() {
+        val lastSeen = String.format(
+            getString(R.string.strCreatedOn),
+            Utils.formatDateTime(mActivity, groups!!.lastMsgTime)
+        )
+        groupName = groups!!.groupName.toString()
+        toolbarHeaderView!!.bindTo(groupName, lastSeen)
+        floatHeaderView!!.bindTo(groupName, lastSeen)
+        lblParticipants!!.text =
+            groups!!.members?.let { String.format(getString(R.string.strParticipants), it.size) }
+        groups!!.groupImg?.let { Utils.setGroupParticipateImage(mActivity, it, imgGroupBackground) }
+        readUsers()
     }
 
     /*
      * Intent launcher to get Image Uri from storage
      * */
-    final ActivityResultLauncher<Intent> intentLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            if (result.getResultCode() == Activity.RESULT_OK) {
-                final Intent data = result.getData();
-                groups = (Groups) data.getSerializableExtra(EXTRA_OBJ_GROUP);
-                readGroupTitle();
+    val intentLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val data = result.data
+                groups = data!!.getSerializableExtra(IConstants.EXTRA_OBJ_GROUP) as Groups?
+                readGroupTitle()
             }
         }
-    });
-
-    private boolean isAdmin() {
-        if (groups.getAdmin().equalsIgnoreCase(firebaseUser.getUid())) {
-            return TRUE;
-        }
-        return FALSE;
-    }
+    private val isAdmin: Boolean
+        private get() = if (groups!!.admin.equals(firebaseUser!!.uid, ignoreCase = true)) {
+            IConstants.TRUE
+        } else IConstants.FALSE
 }

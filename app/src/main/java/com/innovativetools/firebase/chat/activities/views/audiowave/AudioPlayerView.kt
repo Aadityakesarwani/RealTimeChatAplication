@@ -1,539 +1,583 @@
-package com.innovativetools.firebase.chat.activities.views.audiowave;
+package com.innovativetools.firebase.chat.activities.views.audiowave
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.convertSecondsToHMmSs;
+import com.innovativetools.firebase.chat.activities.managers.Utils.isEmpty
+import com.innovativetools.firebase.chat.activities.managers.Utils.convertSecondsToHMmSs
+import com.innovativetools.firebase.chat.activities.managers.Utils.getErrors
+import com.innovativetools.firebase.chat.activities.managers.Utils.sout
+import android.graphics.drawable.GradientDrawable
+import com.innovativetools.firebase.chat.activities.views.audiowave.AudioWave
+import android.media.audiofx.Visualizer
+import android.media.MediaPlayer
+import com.innovativetools.firebase.chat.activities.views.voiceplayer.PlayerVisualizerSeekbar
+import android.content.res.TypedArray
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.view.LayoutInflater
+import android.graphics.PorterDuff
+import com.innovativetools.firebase.chat.activities.views.audiowave.MyDrawableCompat
+import android.media.AudioManager
+import android.media.MediaPlayer.OnPreparedListener
+import android.media.MediaPlayer.OnCompletionListener
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import android.media.audiofx.Visualizer.OnDataCaptureListener
+import android.widget.SeekBar.OnSeekBarChangeListener
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
+import android.os.Build
+import android.os.Handler
+import android.os.StrictMode.VmPolicy
+import android.os.StrictMode
+import android.os.Looper
+import android.util.AttributeSet
+import android.widget.*
+import com.innovativetools.firebase.chat.activities.views.voiceplayer.FileUtils
+import java.io.File
+import java.io.IOException
+import java.lang.Exception
+import java.net.URLConnection
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.GradientDrawable;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.audiofx.Visualizer;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.StrictMode;
-import android.util.AttributeSet;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.SeekBar;
-import android.widget.TextView;
+class AudioPlayerView : LinearLayout {
+    private var headsetBackgroundColor = 0
+    var playPauseBackgroundColor = 0
+    var playPauseIconColor = 0
+    private var pauseBackgroundColor = 0
+    private var pauseIconColor = 0
+    private var downloadBackgroundColor = 0
+    private var downloadIconColor = 0
+    var shareBackgroundColor = 0
+    var viewBackgroundColor = 0
+    var seekBarProgressColor = 0
+    var seekBarThumbColor = 0
+    var progressTimeColor = 0
+    var timingBackgroundColor = 0
+    var visualizationPlayedColor = 0
+    var visualizationNotPlayedColor = 0
+    var playProgressbarColor = 0
+    private var headsetDirection = 0
+    var viewCornerRadius = 0f
+    private var headsetCornerRadius = 0f
+    var playCornerRadius = 0f
+    private var pauseCornerRadius = 0f
+    private var downloadCornerRadius = 0f
+    var shareCornerRadius = 0f
+    var isShowShareButton = false
+    var isShowTiming = false
+    var isEnableVirtualizer = false
+    var playShape: GradientDrawable? = null
+    private var pauseShape: GradientDrawable? = null
+    private var downloadShape: GradientDrawable? = null
+    var shareShape: GradientDrawable? = null
+    var viewShape: GradientDrawable? = null
+    private var headsetShape: GradientDrawable? = null
+//    private lateinit var context: Context? = null
+    var path: String? = null
+    var shareTitle: String? = "Share Voice"
+    var main_layout: LinearLayout? = null
+    var padded_layout: LinearLayout? = null
+    var imgPlay: ImageView? = null
+    var imgPause: ImageView? = null
+    var imgShare: ImageView? = null
+    var imgDownload: ImageView? = null
+    private var imgHeadset: ImageView? = null
+    private var audioHeadsetLayout: RelativeLayout? = null
+    var container_layout: RelativeLayout? = null
+    private var audioWave: AudioWave? = null
+    private var mVisualizer: Visualizer? = null
+    var seekBar: SeekBar? = null
+    var progressBar: ProgressBar? = null
+    var txtProcess: TextView? = null
+    private var txtAudioFileName: TextView? = null
+    var mediaPlayer: MediaPlayer? = null
+    var playProgressbar: ProgressBar? = null
+        get() = field
+        set
+    var seekbarV: PlayerVisualizerSeekbar? = null
 
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.views.voiceplayer.FileUtils;
-import com.innovativetools.firebase.chat.activities.views.voiceplayer.PlayerVisualizerSeekbar;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URLConnection;
-
-
-public class AudioPlayerView extends LinearLayout {
-
-    private int headsetBackgroundColor, playBackgroundColor, playIconColor, pauseBackgroundColor, pauseIconColor,
-            downloadBackgroundColor, downloadIconColor, shareBackgroundColor, viewBackgroundColor,
-            seekBarProgressColor, seekBarThumbColor, progressTimeColor, timingBackgroundColor,
-            visualizationPlayedColor, visualizationNotPlayedColor, playProgressbarColor;
-
-    private int headsetDirection;
-
-    private float viewCornerRadius, headsetCornerRadius, playCornerRadius, pauseCornerRadius, downloadCornerRadius, shareCornerRadius;
-    private boolean showShareButton, showTiming, enableVirtualizer;
-    private GradientDrawable playShape, pauseShape, downloadShape, shareShape, viewShape, headsetShape;
-    private Context context;
-    private String path;
-    private String shareTitle = "Share Voice";
-
-    private LinearLayout main_layout, padded_layout;
-    private ImageView imgPlay, imgPause, imgShare, imgDownload, imgHeadset;
-    private RelativeLayout audioHeadsetLayout, container_layout;
-    private AudioWave audioWave;
-    private Visualizer mVisualizer;
-    private SeekBar seekBar;
-    private ProgressBar progressBar;
-    private TextView txtProcess, txtAudioFileName;
-    private MediaPlayer mediaPlayer;
-    private ProgressBar pb_play;
-
-    private PlayerVisualizerSeekbar seekbarV;
-
-    public AudioPlayerView(Context context) {
-        super(context);
-        this.context = context;
+    constructor(context: Context) : super(context) {
+        this.context = context
     }
 
-    public AudioPlayerView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initViews(context, attrs);
-        this.context = context;
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initViews(context, attrs)
+        this.context = context
     }
 
-    public AudioPlayerView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initViews(context, attrs);
-        this.context = context;
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        initViews(context, attrs)
+        this.context = context
     }
 
-    private void initViews(Context context, AttributeSet attrs) {
-
-        TypedArray typedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.VoicePlayerView, 0, 0);
-
-        viewShape = new GradientDrawable();
-        playShape = new GradientDrawable();
-        pauseShape = new GradientDrawable();
-        downloadShape = new GradientDrawable();
-        shareShape = new GradientDrawable();
-        headsetShape = new GradientDrawable();
-
+    private fun initViews(context: Context, attrs: AttributeSet?) {
+        val typedArray =
+            context.theme.obtainStyledAttributes(attrs, R.styleable.VoicePlayerView, 0, 0)
+        viewShape = GradientDrawable()
+        playShape = GradientDrawable()
+        pauseShape = GradientDrawable()
+        downloadShape = GradientDrawable()
+        shareShape = GradientDrawable()
+        headsetShape = GradientDrawable()
         try {
-            showShareButton = typedArray.getBoolean(R.styleable.VoicePlayerView_showShareButton, false);
-            showTiming = typedArray.getBoolean(R.styleable.VoicePlayerView_showTiming, true);
-            viewCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_viewCornerRadius, 0);
-            playCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_playPauseCornerRadius, 0);
-            pauseCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_playPauseCornerRadius, 0);
-            downloadCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_playPauseCornerRadius, 0);
-            shareCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_shareCornerRadius, 0);
-            playBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_playPauseBackgroundColor, getResources().getColor(R.color.colorAccent));
-            playIconColor = typedArray.getColor(R.styleable.VoicePlayerView_playPauseIconColor, getResources().getColor(R.color.colorAccent));
-            pauseBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_playPauseBackgroundColor, getResources().getColor(R.color.colorAccent));
-            pauseIconColor = typedArray.getColor(R.styleable.VoicePlayerView_playPauseIconColor, getResources().getColor(R.color.colorAccent));
-            downloadBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_playPauseBackgroundColor, getResources().getColor(R.color.colorAccent));
-            downloadIconColor = typedArray.getColor(R.styleable.VoicePlayerView_playPauseIconColor, getResources().getColor(R.color.colorAccent));
-            shareBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_shareBackgroundColor, getResources().getColor(R.color.colorAccent));
-            viewBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_viewBackground, getResources().getColor(R.color.white));
-            seekBarProgressColor = typedArray.getColor(R.styleable.VoicePlayerView_seekBarProgressColor, getResources().getColor(R.color.colorAccent));
-            seekBarThumbColor = typedArray.getColor(R.styleable.VoicePlayerView_seekBarThumbColor, getResources().getColor(R.color.colorAccent));
-            progressTimeColor = typedArray.getColor(R.styleable.VoicePlayerView_progressTimeColor, Color.GRAY);
-            shareTitle = typedArray.getString(R.styleable.VoicePlayerView_shareText);
-            enableVirtualizer = typedArray.getBoolean(R.styleable.VoicePlayerView_enableVisualizer, false);
-            timingBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_timingBackgroundColor, getResources().getColor(android.R.color.transparent));
-            visualizationNotPlayedColor = typedArray.getColor(R.styleable.VoicePlayerView_visualizationNotPlayedColor, getResources().getColor(R.color.gray));
-            visualizationPlayedColor = typedArray.getColor(R.styleable.VoicePlayerView_visualizationPlayedColor, getResources().getColor(R.color.colorAccent));
-            playProgressbarColor = typedArray.getColor(R.styleable.VoicePlayerView_playProgressbarColor, getResources().getColor(R.color.colorAccent));
-            headsetBackgroundColor = typedArray.getColor(R.styleable.VoicePlayerView_headsetBackgroundColor, getResources().getColor(R.color.colorAccent));
-            headsetCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_headsetCornerRadius, 0);
-
-            headsetDirection = typedArray.getInt(R.styleable.VoicePlayerView_headsetDirection, ZERO);
-
+            isShowShareButton =
+                typedArray.getBoolean(R.styleable.VoicePlayerView_showShareButton, false)
+            isShowTiming = typedArray.getBoolean(R.styleable.VoicePlayerView_showTiming, true)
+            viewCornerRadius = typedArray.getFloat(R.styleable.VoicePlayerView_viewCornerRadius, 0f)
+            playCornerRadius =
+                typedArray.getFloat(R.styleable.VoicePlayerView_playPauseCornerRadius, 0f)
+            pauseCornerRadius =
+                typedArray.getFloat(R.styleable.VoicePlayerView_playPauseCornerRadius, 0f)
+            downloadCornerRadius =
+                typedArray.getFloat(R.styleable.VoicePlayerView_playPauseCornerRadius, 0f)
+            shareCornerRadius =
+                typedArray.getFloat(R.styleable.VoicePlayerView_shareCornerRadius, 0f)
+            playPauseBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playPauseBackgroundColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            playPauseIconColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playPauseIconColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            pauseBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playPauseBackgroundColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            pauseIconColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playPauseIconColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            downloadBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playPauseBackgroundColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            downloadIconColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playPauseIconColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            shareBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_shareBackgroundColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            viewBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_viewBackground,
+                resources.getColor(R.color.white)
+            )
+            seekBarProgressColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_seekBarProgressColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            seekBarThumbColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_seekBarThumbColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            progressTimeColor =
+                typedArray.getColor(R.styleable.VoicePlayerView_progressTimeColor, Color.GRAY)
+            shareTitle = typedArray.getString(R.styleable.VoicePlayerView_shareText)
+            isEnableVirtualizer =
+                typedArray.getBoolean(R.styleable.VoicePlayerView_enableVisualizer, false)
+            timingBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_timingBackgroundColor,
+                resources.getColor(android.R.color.transparent)
+            )
+            visualizationNotPlayedColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_visualizationNotPlayedColor,
+                resources.getColor(R.color.gray)
+            )
+            visualizationPlayedColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_visualizationPlayedColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            playProgressbarColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_playProgressbarColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            headsetBackgroundColor = typedArray.getColor(
+                R.styleable.VoicePlayerView_headsetBackgroundColor,
+                resources.getColor(R.color.colorAccent)
+            )
+            headsetCornerRadius =
+                typedArray.getFloat(R.styleable.VoicePlayerView_headsetCornerRadius, 0f)
+            headsetDirection =
+                typedArray.getInt(R.styleable.VoicePlayerView_headsetDirection, IConstants.ZERO)
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
 
         //0 = Right, 1 = Left
-        if (headsetDirection == ZERO) {//RIGHT
-            LayoutInflater.from(context).inflate(R.layout.vp_audio_view_right, this);
+        if (headsetDirection == IConstants.ZERO) { //RIGHT
+            LayoutInflater.from(context).inflate(R.layout.vp_audio_view_right, this)
         } else {
-            LayoutInflater.from(context).inflate(R.layout.vp_audio_view_left, this);
+            LayoutInflater.from(context).inflate(R.layout.vp_audio_view_left, this)
         }
-
-        main_layout = this.findViewById(R.id.collectorLinearLayout);
-        padded_layout = this.findViewById(R.id.paddedLinearLayout);
-        container_layout = this.findViewById(R.id.containerLinearLayout);
-        imgPlay = this.findViewById(R.id.imgPlay);
-        imgPause = this.findViewById(R.id.imgPause);
-        imgShare = this.findViewById(R.id.imgShare);
-        seekBar = this.findViewById(R.id.seekBar);
-        txtAudioFileName = this.findViewById(R.id.txtAudioFileName);
-        progressBar = this.findViewById(R.id.progressBar);
-        txtProcess = this.findViewById(R.id.txtTime);
-        seekbarV = this.findViewById(R.id.seekBarV);
-        pb_play = this.findViewById(R.id.pb_play);
-        imgDownload = this.findViewById(R.id.imgDownload);
-
-        audioHeadsetLayout = this.findViewById(R.id.audioHeadsetLayout);
-        audioWave = this.findViewById(R.id.audioWave);
-        imgHeadset = this.findViewById(R.id.imgHeadset);
-
-        pb_play.setVisibility(GONE);
-        imgDownload.setVisibility(GONE);
-        audioWave.setVisibility(GONE);
-        txtAudioFileName.setVisibility(GONE);
-        imgHeadset.setVisibility(VISIBLE);
-
-        viewShape.setColor(viewBackgroundColor);
-        viewShape.setCornerRadius(viewCornerRadius);
-        playShape.setColor(playBackgroundColor);
-        playShape.setCornerRadius(playCornerRadius);
-        pauseShape.setColor(pauseBackgroundColor);
-        pauseShape.setCornerRadius(pauseCornerRadius);
-        downloadShape.setColor(downloadBackgroundColor);
-        downloadShape.setCornerRadius(downloadCornerRadius);
-        shareShape.setColor(shareBackgroundColor);
-        shareShape.setCornerRadius(shareCornerRadius);
-        headsetShape.setColor(headsetBackgroundColor);
-        headsetShape.setCornerRadius(headsetCornerRadius);
-
-        imgPause.setBackground(playShape);
-        imgPause.setColorFilter(playIconColor, PorterDuff.Mode.SRC_IN);
-        imgPlay.setBackground(pauseShape);
-        imgPlay.setColorFilter(pauseIconColor, PorterDuff.Mode.SRC_IN);
-        imgDownload.setBackground(downloadShape);
-        imgDownload.setColorFilter(downloadIconColor, PorterDuff.Mode.SRC_IN);
-        audioHeadsetLayout.setBackground(headsetShape);
-        imgHeadset.setBackground(playShape);
-        imgHeadset.setColorFilter(playIconColor, PorterDuff.Mode.SRC_IN);
-//        imgHeadset.setColorFilter(ContextCompat.getColor(context, playPauseIconColor), PorterDuff.Mode.SRC_IN);
-        audioWave.getConfig().setColor(playIconColor);
-
-        imgShare.setBackground(shareShape);
-        main_layout.setBackground(viewShape);
-
-        MyDrawableCompat.setColorFilter(seekBar.getProgressDrawable(), seekBarProgressColor);
-        MyDrawableCompat.setColorFilter(seekBar.getThumb(), seekBarThumbColor);
-//        seekBar.getProgressDrawable().setColorFilter(seekBarProgressColor, PorterDuff.Mode.SRC_IN);
+        main_layout = findViewById(R.id.collectorLinearLayout)
+        padded_layout = findViewById(R.id.paddedLinearLayout)
+        container_layout = findViewById(R.id.containerLinearLayout)
+        imgPlay = findViewById(R.id.imgPlay)
+        imgPause = findViewById(R.id.imgPause)
+        imgShare = findViewById(R.id.imgShare)
+        seekBar = findViewById(R.id.seekBar)
+        txtAudioFileName = findViewById(R.id.txtAudioFileName)
+        progressBar = findViewById(R.id.progressBar)
+        txtProcess = findViewById(R.id.txtTime)
+        seekbarV = findViewById(R.id.seekBarV)
+        playProgressbar = findViewById(R.id.pb_play)
+        imgDownload = findViewById(R.id.imgDownload)
+        audioHeadsetLayout = findViewById(R.id.audioHeadsetLayout)
+        audioWave = findViewById(R.id.audioWave)
+        imgHeadset = findViewById(R.id.imgHeadset)
+        playProgressbar?.setVisibility(GONE)
+        imgDownload?.setVisibility(GONE)
+        audioWave?.setVisibility(GONE)
+        txtAudioFileName?.setVisibility(GONE)
+        imgHeadset?.setVisibility(VISIBLE)
+        viewShape!!.setColor(viewBackgroundColor)
+        viewShape!!.cornerRadius = viewCornerRadius
+        playShape!!.setColor(playPauseBackgroundColor)
+        playShape!!.cornerRadius = playCornerRadius
+        pauseShape!!.setColor(pauseBackgroundColor)
+        pauseShape!!.cornerRadius = pauseCornerRadius
+        downloadShape!!.setColor(downloadBackgroundColor)
+        downloadShape!!.cornerRadius = downloadCornerRadius
+        shareShape!!.setColor(shareBackgroundColor)
+        shareShape!!.cornerRadius = shareCornerRadius
+        headsetShape!!.setColor(headsetBackgroundColor)
+        headsetShape!!.cornerRadius = headsetCornerRadius
+        imgPause?.setBackground(playShape)
+        imgPause?.setColorFilter(playPauseIconColor, PorterDuff.Mode.SRC_IN)
+        imgPlay?.setBackground(pauseShape)
+        imgPlay?.setColorFilter(pauseIconColor, PorterDuff.Mode.SRC_IN)
+        imgDownload?.setBackground(downloadShape)
+        imgDownload?.setColorFilter(downloadIconColor, PorterDuff.Mode.SRC_IN)
+        audioHeadsetLayout?.setBackground(headsetShape)
+        imgHeadset?.setBackground(playShape)
+        imgHeadset?.setColorFilter(playPauseIconColor, PorterDuff.Mode.SRC_IN)
+        //        imgHeadset.setColorFilter(ContextCompat.getColor(context, playPauseIconColor), PorterDuff.Mode.SRC_IN);
+        audioWave?.config?.color = playPauseIconColor
+        imgShare?.setBackground(shareShape)
+        main_layout?.setBackground(viewShape)
+        seekBar?.getProgressDrawable()
+            ?.let { MyDrawableCompat.setColorFilter(it, seekBarProgressColor) }
+        seekBar?.getThumb()?.let { MyDrawableCompat.setColorFilter(it, seekBarThumbColor) }
+        //        seekBar.getProgressDrawable().setColorFilter(seekBarProgressColor, PorterDuff.Mode.SRC_IN);
 //        seekBar.getThumb().setColorFilter(seekBarThumbColor, PorterDuff.Mode.SRC_IN);
-
-        GradientDrawable timingBackground = new GradientDrawable();
-        timingBackground.setColor(timingBackgroundColor);
-        timingBackground.setCornerRadius(25);
-        txtProcess.setBackground(timingBackground);
-        txtProcess.setPadding(6, 0, 6, 0);
-        txtProcess.setTextColor(progressTimeColor);
-
-        MyDrawableCompat.setColorFilter(pb_play.getIndeterminateDrawable(), playProgressbarColor);
-//        pb_play.getIndeterminateDrawable().setColorFilter(playProgressbarColor, PorterDuff.Mode.SRC_IN);
-
-
-        if (!showShareButton)
-            imgShare.setVisibility(GONE);
-        if (!showTiming)
-            txtProcess.setVisibility(INVISIBLE);
-
-        if (enableVirtualizer) {
-            seekbarV.setVisibility(VISIBLE);
-            seekBar.setVisibility(GONE);
-            MyDrawableCompat.setColorFilter(seekbarV.getProgressDrawable(), getResources().getColor(android.R.color.transparent));
-            MyDrawableCompat.setColorFilter(seekbarV.getThumb(), getResources().getColor(android.R.color.transparent));
-//            seekbarV.getProgressDrawable().setColorFilter(getResources().getColor(android.R.color.transparent), PorterDuff.Mode.SRC_IN);
-//            seekbarV.getThumb().setColorFilter(getResources().getColor(android.R.color.transparent), PorterDuff.Mode.SRC_IN);
-            seekbarV.setColors(visualizationPlayedColor, visualizationNotPlayedColor);
+        val timingBackground = GradientDrawable()
+        timingBackground.setColor(timingBackgroundColor)
+        timingBackground.cornerRadius = 25f
+        txtProcess?.setBackground(timingBackground)
+        txtProcess?.setPadding(6, 0, 6, 0)
+        txtProcess?.setTextColor(progressTimeColor)
+        playProgressbar?.getIndeterminateDrawable()?.let {
+            MyDrawableCompat.setColorFilter(
+                it,
+                playProgressbarColor
+            )
         }
-
+        //        pb_play.getIndeterminateDrawable().setColorFilter(playProgressbarColor, PorterDuff.Mode.SRC_IN);
+        if (!isShowShareButton) imgShare?.setVisibility(GONE)
+        if (!isShowTiming) txtProcess?.setVisibility(INVISIBLE)
+        if (isEnableVirtualizer) {
+            seekbarV?.setVisibility(VISIBLE)
+            seekBar?.setVisibility(GONE)
+            seekbarV?.getProgressDrawable()?.let {
+                MyDrawableCompat.setColorFilter(
+                    it,
+                    resources.getColor(android.R.color.transparent)
+                )
+            }
+            seekbarV?.getThumb()?.let {
+                MyDrawableCompat.setColorFilter(
+                    it,
+                    resources.getColor(android.R.color.transparent)
+                )
+            }
+            //            seekbarV.getProgressDrawable().setColorFilter(getResources().getColor(android.R.color.transparent), PorterDuff.Mode.SRC_IN);
+//            seekbarV.getThumb().setColorFilter(getResources().getColor(android.R.color.transparent), PorterDuff.Mode.SRC_IN);
+            seekbarV?.setColors(visualizationPlayedColor, visualizationNotPlayedColor)
+        }
     }
 
-    public void setFileName(String str) {
-        if (!Utils.isEmpty(str)) {
-            txtAudioFileName.setVisibility(VISIBLE);
-            txtAudioFileName.setText(str);
+    fun setFileName(str: String?) {
+        if (!isEmpty(str)) {
+            txtAudioFileName!!.visibility = VISIBLE
+            txtAudioFileName!!.text = str
         } else {
-            txtAudioFileName.setVisibility(GONE);
+            txtAudioFileName!!.visibility = GONE
         }
     }
 
     //Set the audio source and prepare mediaPlayer
-    public void setAudio(String audioPath) {
-        path = audioPath;
-        mediaPlayer = new MediaPlayer();
+    fun setAudio(audioPath: String?) {
+        path = audioPath
+        mediaPlayer = MediaPlayer()
         if (path != null) {
             try {
-                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-//                mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                mediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
+                //                mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
 //                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
 //                        .build());
-                mediaPlayer.setDataSource(path);
-                mediaPlayer.prepare();
-                prepareVisualizer();
-                mediaPlayer.setVolume(10, 10);
+                mediaPlayer!!.setDataSource(path)
+                mediaPlayer!!.prepare()
+                prepareVisualizer()
+                mediaPlayer!!.setVolume(10f, 10f)
                 //START and PAUSE are in other listeners
-                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        seekBar.setMax(mp.getDuration());
-                        if (seekbarV.getVisibility() == VISIBLE) {
-                            seekbarV.setMax(mp.getDuration());
-                        }
-//                        txtProcess.setText(DEFAULT_ZERO + " / " + convertSecondsToHMmSs(mp.getDuration()));
-                        txtProcess.setText(convertSecondsToHMmSs(mp.getDuration()));
+                mediaPlayer!!.setOnPreparedListener { mp ->
+                    seekBar!!.max = mp.duration
+                    if (seekbarV!!.visibility == VISIBLE) {
+                        seekbarV!!.max = mp.duration
                     }
-                });
-                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        try {
-                            mVisualizer.setEnabled(false);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        imgPause.setVisibility(View.GONE);
-                        audioWave.setVisibility(GONE);
-                        imgPlay.setVisibility(View.VISIBLE);
-                        imgHeadset.setVisibility(VISIBLE);
-                        imgDownload.setVisibility(GONE);
-                        pb_play.setVisibility(GONE);
+                    //                        txtProcess.setText(DEFAULT_ZERO + " / " + convertSecondsToHMmSs(mp.getDuration()));
+                    txtProcess!!.text = convertSecondsToHMmSs(mp.duration.toLong())
+                }
+                mediaPlayer!!.setOnCompletionListener {
+                    try {
+                        mVisualizer!!.enabled = false
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                });
-
-            } catch (IOException e) {
-                e.printStackTrace();
+                    imgPause!!.visibility = GONE
+                    audioWave!!.visibility = GONE
+                    imgPlay!!.visibility = VISIBLE
+                    imgHeadset!!.visibility = VISIBLE
+                    imgDownload!!.visibility = GONE
+                    playProgressbar!!.visibility = GONE
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
 
 //            seekBar.setOnSeekBarChangeListener(seekBarListener);
 //            imgPlay.setOnClickListener(imgPlayClickListener);
 //            imgPause.setOnClickListener(imgPauseClickListener);
-            imgShare.setOnClickListener(imgShareClickListener);
-            if (seekbarV.getVisibility() == VISIBLE) {
-                seekbarV.updateVisualizer(FileUtils.fileToBytes(new File(path)));
+            imgShare!!.setOnClickListener(imgShareClickListener)
+            if (seekbarV!!.visibility == VISIBLE) {
+                seekbarV!!.updateVisualizer(FileUtils.fileToBytes(File(path)))
             }
-            seekbarV.setOnSeekBarChangeListener(seekBarListener);
-            seekbarV.updateVisualizer(FileUtils.fileToBytes(new File(path)));
+            seekbarV!!.setOnSeekBarChangeListener(seekBarListener)
+            seekbarV!!.updateVisualizer(FileUtils.fileToBytes(File(path)))
         } else {
-            imgPlay.setOnClickListener(imgPlayNoFileClickListener);
+            imgPlay!!.setOnClickListener(imgPlayNoFileClickListener)
         }
     }
 
     //Components' listeners
-
-    OnClickListener imgPlayClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            imgPause.setVisibility(View.VISIBLE);
-            audioWave.setVisibility(VISIBLE);
-            imgPlay.setVisibility(View.GONE);
-            imgHeadset.setVisibility(INVISIBLE);
-            imgDownload.setVisibility(GONE);
-            pb_play.setVisibility(GONE);
-
-            try {
-                mVisualizer.setEnabled(true);
-            } catch (Exception e) {
+    var imgPlayClickListener = OnClickListener {
+        imgPause!!.visibility = VISIBLE
+        audioWave!!.visibility = VISIBLE
+        imgPlay!!.visibility = GONE
+        imgHeadset!!.visibility = INVISIBLE
+        imgDownload!!.visibility = GONE
+        playProgressbar!!.visibility = GONE
+        try {
+            mVisualizer!!.enabled = true
+        } catch (e: Exception) {
 //                    Utils.getErrors(e);
-                prepareVisualizer();
-            }
-            mediaPlayer.start();
-            try {
-                update(mediaPlayer, txtProcess, seekBar, context);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+            prepareVisualizer()
         }
-    };
-
-    OnClickListener imgPauseClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            imgPlay.setVisibility(View.VISIBLE);
-            imgPause.setVisibility(View.GONE);
-            audioWave.setVisibility(GONE);
-            imgHeadset.setVisibility(VISIBLE);
-            imgDownload.setVisibility(GONE);
-            pb_play.setVisibility(GONE);
-
-            mediaPlayer.pause();
-        }
-    };
-
-    final OnClickListener imgPlayNoFileClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            final Screens screens = new Screens(context);
-            screens.showToast(R.string.msgFileNotFound);
-        }
-    };
-
-
-    private void prepareVisualizer() {
+        mediaPlayer!!.start()
         try {
-            mVisualizer = new Visualizer(mediaPlayer.getAudioSessionId());
-            mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
-            mVisualizer.setDataCaptureListener(
-                    new Visualizer.OnDataCaptureListener() {
-                        public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
-                            audioWave.updateVisualizer(bytes);
-                        }
+            context?.let { it1 -> update(mediaPlayer, txtProcess, seekBar, it1) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    var imgPauseClickListener = OnClickListener {
+        imgPlay!!.visibility = VISIBLE
+        imgPause!!.visibility = GONE
+        audioWave!!.visibility = GONE
+        imgHeadset!!.visibility = VISIBLE
+        imgDownload!!.visibility = GONE
+        playProgressbar!!.visibility = GONE
+        mediaPlayer!!.pause()
+    }
+    val imgPlayNoFileClickListener = OnClickListener {
+        val screens = context?.let { it1 -> Screens(it1) }
+        screens?.showToast(R.string.msgFileNotFound)
+    }
 
-                        public void onFftDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
-                        }
-                    }, Visualizer.getMaxCaptureRate() / 2, true, false);
-            mVisualizer.setEnabled(true);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+    private fun prepareVisualizer() {
+        try {
+            mVisualizer = Visualizer(mediaPlayer!!.audioSessionId)
+            mVisualizer!!.captureSize = Visualizer.getCaptureSizeRange()[1]
+            mVisualizer!!.setDataCaptureListener(
+                object : OnDataCaptureListener {
+                    override fun onWaveFormDataCapture(
+                        visualizer: Visualizer,
+                        bytes: ByteArray,
+                        samplingRate: Int
+                    ) {
+                        audioWave!!.updateVisualizer(bytes)
+                    }
+
+                    override fun onFftDataCapture(
+                        visualizer: Visualizer,
+                        bytes: ByteArray,
+                        samplingRate: Int
+                    ) {
+                    }
+                }, Visualizer.getMaxCaptureRate() / 2, true, false
+            )
+            mVisualizer!!.enabled = true
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    SeekBar.OnSeekBarChangeListener seekBarListener = new SeekBar.OnSeekBarChangeListener() {
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+    var seekBarListener: OnSeekBarChangeListener = object : OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
             if (fromUser) {
-                mediaPlayer.seekTo(progress);
-                update(mediaPlayer, txtProcess, seekBar, context);
-                if (seekbarV.getVisibility() == VISIBLE) {
-                    seekbarV.updatePlayerPercent((float) mediaPlayer.getCurrentPosition() / mediaPlayer.getDuration());
+                mediaPlayer!!.seekTo(progress)
+                context?.let { update(mediaPlayer, txtProcess, seekBar, it) }
+                if (seekbarV!!.visibility == VISIBLE) {
+                    seekbarV!!.updatePlayerPercent(mediaPlayer!!.currentPosition.toFloat() / mediaPlayer!!.duration)
                 }
             }
         }
 
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-            Utils.sout("onSeek touch");
-            imgPause.setVisibility(View.GONE);
-            audioWave.setVisibility(GONE);
-            imgPlay.setVisibility(View.VISIBLE);
-            imgHeadset.setVisibility(VISIBLE);
+        override fun onStartTrackingTouch(seekBar: SeekBar) {
+            sout("onSeek touch")
+            imgPause!!.visibility = GONE
+            audioWave!!.visibility = GONE
+            imgPlay!!.visibility = VISIBLE
+            imgHeadset!!.visibility = VISIBLE
         }
 
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            imgPlay.setVisibility(View.GONE);
-            imgHeadset.setVisibility(INVISIBLE);
-            imgPause.setVisibility(View.VISIBLE);
-            audioWave.setVisibility(VISIBLE);
-            mediaPlayer.start();
-
-        }
-    };
-
-    public void stopPlayer() {
-        try {
-            Utils.sout("Stop Player from Audio Player");
-            imgPause.callOnClick();
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        override fun onStopTrackingTouch(seekBar: SeekBar) {
+            imgPlay!!.visibility = GONE
+            imgHeadset!!.visibility = INVISIBLE
+            imgPause!!.visibility = VISIBLE
+            audioWave!!.visibility = VISIBLE
+            mediaPlayer!!.start()
         }
     }
 
-    OnClickListener imgShareClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            ((Activity) context).runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    imgShare.setVisibility(GONE);
-                    progressBar.setVisibility(VISIBLE);
-                }
-            });
-            File file = new File(path);
-            if (file.exists()) {
-                Intent intentShareFile = new Intent(Intent.ACTION_SEND);
-                intentShareFile.setType(URLConnection.guessContentTypeFromName(file.getName()));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-                    StrictMode.setVmPolicy(builder.build());
-                }
-                intentShareFile.putExtra(Intent.EXTRA_STREAM,
-                        Uri.parse("file://" + file.getAbsolutePath()));
-
-                context.startActivity(Intent.createChooser(intentShareFile, shareTitle));
-            }
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    ((Activity) context).runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.setVisibility(GONE);
-                            imgShare.setVisibility(VISIBLE);
-                        }
-                    });
-
-                }
-            }, 500);
-
+    fun stopPlayer() {
+        try {
+            sout("Stop Player from Audio Player")
+            imgPause!!.callOnClick()
+        } catch (e: Exception) {
+            getErrors(e)
         }
-    };
+    }
+
+    var imgShareClickListener = OnClickListener {
+        (context as Activity).runOnUiThread {
+            imgShare!!.visibility = GONE
+            progressBar!!.visibility = VISIBLE
+        }
+        val file = File(path)
+        if (file.exists()) {
+            val intentShareFile = Intent(Intent.ACTION_SEND)
+            intentShareFile.type = URLConnection.guessContentTypeFromName(file.name)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val builder = VmPolicy.Builder()
+                StrictMode.setVmPolicy(builder.build())
+            }
+            intentShareFile.putExtra(
+                Intent.EXTRA_STREAM,
+                Uri.parse("file://" + file.absolutePath)
+            )
+            (context as Activity).startActivity(Intent.createChooser(intentShareFile, shareTitle))
+        }
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed({
+            (context as Activity).runOnUiThread {
+                progressBar!!.visibility = GONE
+                imgShare!!.visibility = VISIBLE
+            }
+        }, 500)
+    }
 
     //Updating seekBar in realtime
-    private void update(final MediaPlayer mediaPlayer, final TextView time, final SeekBar seekBar, final Context context) {
-        ((Activity) context).runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                if (seekbarV.getVisibility() == VISIBLE) {
-                    seekbarV.setProgress(mediaPlayer.getCurrentPosition());
-                    seekbarV.updatePlayerPercent((float) mediaPlayer.getCurrentPosition() / mediaPlayer.getDuration());
-                }
-
-                if (mediaPlayer.getDuration() - mediaPlayer.getCurrentPosition() > 100) {
+    private fun update(
+        mediaPlayer: MediaPlayer?,
+        time: TextView?,
+        seekBar: SeekBar?,
+        context: Context
+    ) {
+        (context as Activity).runOnUiThread {
+            seekBar!!.progress = mediaPlayer!!.currentPosition
+            if (seekbarV!!.visibility == VISIBLE) {
+                seekbarV!!.progress = mediaPlayer.currentPosition
+                seekbarV!!.updatePlayerPercent(mediaPlayer.currentPosition.toFloat() / mediaPlayer.duration)
+            }
+            if (mediaPlayer.duration - mediaPlayer.currentPosition > 100) {
 //                    time.setText(convertSecondsToHMmSs(mediaPlayer.getCurrentPosition()) + " / " + convertSecondsToHMmSs(mediaPlayer.getDuration() ));
-                    time.setText(convertSecondsToHMmSs(mediaPlayer.getCurrentPosition()));
-                } else {
+                time!!.text = convertSecondsToHMmSs(mediaPlayer.currentPosition.toLong())
+            } else {
 //                    time.setText(DEFAULT_ZERO + " / " + convertSecondsToHMmSs(mediaPlayer.getDuration() / 1000));
-                    time.setText(convertSecondsToHMmSs(mediaPlayer.getDuration()));
-                    seekBar.setProgress(0);
-                    if (seekbarV.getVisibility() == VISIBLE) {
-                        seekbarV.updatePlayerPercent(0);
-                        seekbarV.setProgress(0);
-                    }
+                time!!.text = convertSecondsToHMmSs(mediaPlayer.duration.toLong())
+                seekBar.progress = 0
+                if (seekbarV!!.visibility == VISIBLE) {
+                    seekbarV!!.updatePlayerPercent(0f)
+                    seekbarV!!.progress = 0
                 }
-                Handler handler = new Handler(Looper.getMainLooper());
-                try {
-                    Runnable runnable = new Runnable() {
-                        @Override
-                        public void run() {
+            }
+            val handler = Handler(Looper.getMainLooper())
+            try {
+                val runnable = Runnable {
+                    try {
+                        if (mediaPlayer.currentPosition > -1) {
                             try {
-                                if (mediaPlayer.getCurrentPosition() > -1) {
-                                    try {
-                                        update(mediaPlayer, time, seekBar, context);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                                update(mediaPlayer, time, seekBar, context)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
                             }
                         }
-                    };
-                    handler.postDelayed(runnable, 2);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
-
+                handler.postDelayed(runnable, 2)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        });
+        }
     }
 
     //Convert long milli seconds to a formatted String to display it
-//    private static String convertSecondsToHMmSs(long seconds) {
-//        long s = seconds % 60;
-//        long m = (seconds / 60) % 60;
-//        long h = (seconds / (60 * 60)) % 24;
-//        return String.format("%02d:%02d", m, s);
-//    }
-
+    //    private static String convertSecondsToHMmSs(long seconds) {
+    //        long s = seconds % 60;
+    //        long m = (seconds / 60) % 60;
+    //        long h = (seconds / (60 * 60)) % 24;
+    //        return String.format("%02d:%02d", m, s);
+    //    }
     //These both functions to avoid mediaplayer errors
-
-    public void onStop() {
+    fun onStop() {
         try {
             try {
-                mVisualizer.release();
-            } catch (Exception e) {
-                e.printStackTrace();
+                mVisualizer!!.release()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            mediaPlayer.stop();
-            mediaPlayer.reset();
-            mediaPlayer.release();
-        } catch (Exception e) {
-            e.printStackTrace();
+            mediaPlayer!!.stop()
+            mediaPlayer!!.reset()
+            mediaPlayer!!.release()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    public void onPause() {
+    fun onPause() {
         try {
             if (mediaPlayer != null) {
-                if (mediaPlayer.isPlaying())
-                    mediaPlayer.pause();
+                if (mediaPlayer!!.isPlaying) mediaPlayer!!.pause()
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         try {
-            mVisualizer.release();
-        } catch (Exception e) {
-            e.printStackTrace();
+            mVisualizer!!.release()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-//        imgPause.setVisibility(View.GONE);
+        //        imgPause.setVisibility(View.GONE);
 //        audioWave.setVisibility(GONE);
 //        imgPlay.setVisibility(View.VISIBLE);
 //        imgHeadset.setVisibility(VISIBLE);
@@ -541,416 +585,98 @@ public class AudioPlayerView extends LinearLayout {
 //        pb_play.setVisibility(GONE);
     }
 
-
     // Programmatically functions
-
-    public void setViewBackgroundShape(int color, float radius) {
-        GradientDrawable shape = new GradientDrawable();
-        shape.setColor(getResources().getColor(color));
-        shape.setCornerRadius(radius);
-        main_layout.setBackground(shape);
+    fun setViewBackgroundShape(color: Int, radius: Float) {
+        val shape = GradientDrawable()
+        shape.setColor(resources.getColor(color))
+        shape.cornerRadius = radius
+        main_layout!!.background = shape
     }
 
-    public void setShareBackgroundShape(int color, float radius) {
-        GradientDrawable shape = new GradientDrawable();
-        shape.setColor(getResources().getColor(color));
-        shape.setCornerRadius(radius);
-        imgShare.setBackground(shape);
+    fun setShareBackgroundShape(color: Int, radius: Float) {
+        val shape = GradientDrawable()
+        shape.setColor(resources.getColor(color))
+        shape.cornerRadius = radius
+        imgShare!!.background = shape
     }
 
-    public void setPlayPauseBackgroundShape(int color, float radius) {
-        GradientDrawable shape = new GradientDrawable();
-        shape.setColor(getResources().getColor(color));
-        shape.setCornerRadius(radius);
-        imgPause.setBackground(shape);
-        imgPlay.setBackground(shape);
+    fun setPlayPauseBackgroundShape(color: Int, radius: Float) {
+        val shape = GradientDrawable()
+        shape.setColor(resources.getColor(color))
+        shape.cornerRadius = radius
+        imgPause!!.background = shape
+        imgPlay!!.background = shape
     }
 
-    public void setSeekBarStyle(int progressColor, int thumbColor) {
-        MyDrawableCompat.setColorFilter(seekBar.getProgressDrawable(), getResources().getColor(progressColor));
-        MyDrawableCompat.setColorFilter(seekBar.getThumb(), getResources().getColor(thumbColor));
-//        seekBar.getProgressDrawable().setColorFilter(getResources().getColor(progressColor), PorterDuff.Mode.SRC_IN);
+    fun setSeekBarStyle(progressColor: Int, thumbColor: Int) {
+        MyDrawableCompat.setColorFilter(
+            seekBar!!.progressDrawable,
+            resources.getColor(progressColor)
+        )
+        MyDrawableCompat.setColorFilter(seekBar!!.thumb, resources.getColor(thumbColor))
+        //        seekBar.getProgressDrawable().setColorFilter(getResources().getColor(progressColor), PorterDuff.Mode.SRC_IN);
 //        seekBar.getThumb().setColorFilter(getResources().getColor(thumbColor), PorterDuff.Mode.SRC_IN);
     }
 
-    public void setTimingVisibility(boolean visibility) {
-        if (!visibility)
-            txtProcess.setVisibility(INVISIBLE);
-        else
-            txtProcess.setVisibility(VISIBLE);
+    fun setTimingVisibility(visibility: Boolean) {
+        if (!visibility) txtProcess!!.visibility = INVISIBLE else txtProcess!!.visibility = VISIBLE
     }
 
-    public void setShareButtonVisibility(boolean visibility) {
-        if (!visibility)
-            imgShare.setVisibility(GONE);
-        else
-            imgShare.setVisibility(VISIBLE);
+    fun setShareButtonVisibility(visibility: Boolean) {
+        if (!visibility) imgShare!!.visibility = GONE else imgShare!!.visibility = VISIBLE
     }
 
-    public void setShareText(String shareText) {
-        shareTitle = shareText;
+    fun setShareText(shareText: String?) {
+        shareTitle = shareText
     }
 
-    public void showDownloadButton() {
-        imgPlay.setVisibility(GONE);
-        imgHeadset.setVisibility(VISIBLE);
-        imgPause.setVisibility(GONE);
-        audioWave.setVisibility(GONE);
-        imgDownload.setVisibility(VISIBLE);
-        pb_play.setVisibility(GONE);
+    fun showDownloadButton() {
+        imgPlay!!.visibility = GONE
+        imgHeadset!!.visibility = VISIBLE
+        imgPause!!.visibility = GONE
+        audioWave!!.visibility = GONE
+        imgDownload!!.visibility = VISIBLE
+        playProgressbar!!.visibility = GONE
     }
 
-    public void showPlayProgressbar() {
-        imgPlay.setVisibility(GONE);
-        imgHeadset.setVisibility(VISIBLE);
-        imgPause.setVisibility(GONE);
-        audioWave.setVisibility(GONE);
-        imgDownload.setVisibility(GONE);
-        pb_play.setVisibility(VISIBLE);
+    fun showPlayProgressbar() {
+        imgPlay!!.visibility = GONE
+        imgHeadset!!.visibility = VISIBLE
+        imgPause!!.visibility = GONE
+        audioWave!!.visibility = GONE
+        imgDownload!!.visibility = GONE
+        playProgressbar!!.visibility = VISIBLE
     }
 
-    public void hidePlayProgressbar() {
-        imgDownload.setVisibility(GONE);
-        pb_play.setVisibility(GONE);
-        imgPlay.setVisibility(VISIBLE);
-        imgHeadset.setVisibility(VISIBLE);
+    fun hidePlayProgressbar() {
+        imgDownload!!.visibility = GONE
+        playProgressbar!!.visibility = GONE
+        imgPlay!!.visibility = VISIBLE
+        imgHeadset!!.visibility = VISIBLE
     }
 
-    public void hidePlayProgressAndPlay() {
-        imgDownload.setVisibility(GONE);
-        pb_play.setVisibility(GONE);
-        imgPlay.setVisibility(VISIBLE);
-        imgHeadset.setVisibility(VISIBLE);
-        imgPlay.callOnClick();
+    fun hidePlayProgressAndPlay() {
+        imgDownload!!.visibility = GONE
+        playProgressbar!!.visibility = GONE
+        imgPlay!!.visibility = VISIBLE
+        imgHeadset!!.visibility = VISIBLE
+        imgPlay!!.callOnClick()
     }
 
-    public void refreshVisualizer() {
-        if (seekbarV.getVisibility() == VISIBLE) {
-            seekbarV.updateVisualizer(FileUtils.fileToBytes(new File(path)));
+    fun refreshVisualizer() {
+        if (seekbarV!!.visibility == VISIBLE) {
+            seekbarV!!.updateVisualizer(path?.let { File(it) }?.let { FileUtils.fileToBytes(it) })
         }
     }
 
-    public ProgressBar getPlayProgressbar() {
-        return pb_play;
+    fun setContext(context: Context) {
+        if (this.context == null) { // or any other appropriate condition
+            this.context = context
+        }
     }
 
-    public int getPlayPauseBackgroundColor() {
-        return playBackgroundColor;
-    }
-
-    public void setPlayPauseBackgroundColor(int playPauseBackgroundColor) {
-        this.playBackgroundColor = playPauseBackgroundColor;
-    }
-
-    public int getPlayPauseIconColor() {
-        return playIconColor;
-    }
-
-    public void setPlayPauseIconColor(int playPauseIconColor) {
-        this.playIconColor = playPauseIconColor;
-    }
-
-    public int getShareBackgroundColor() {
-        return shareBackgroundColor;
-    }
-
-    public void setShareBackgroundColor(int shareBackgroundColor) {
-        this.shareBackgroundColor = shareBackgroundColor;
-    }
-
-    public int getViewBackgroundColor() {
-        return viewBackgroundColor;
-    }
-
-    public void setViewBackgroundColor(int viewBackgroundColor) {
-        this.viewBackgroundColor = viewBackgroundColor;
-    }
-
-    public int getSeekBarProgressColor() {
-        return seekBarProgressColor;
-    }
-
-    public void setSeekBarProgressColor(int seekBarProgressColor) {
-        this.seekBarProgressColor = seekBarProgressColor;
-    }
-
-    public int getSeekBarThumbColor() {
-        return seekBarThumbColor;
-    }
-
-    public void setSeekBarThumbColor(int seekBarThumbColor) {
-        this.seekBarThumbColor = seekBarThumbColor;
-    }
-
-    public int getProgressTimeColor() {
-        return progressTimeColor;
-    }
-
-    public void setProgressTimeColor(int progressTimeColor) {
-        this.progressTimeColor = progressTimeColor;
-    }
-
-    public int getTimingBackgroundColor() {
-        return timingBackgroundColor;
-    }
-
-    public void setTimingBackgroundColor(int timingBackgroundColor) {
-        this.timingBackgroundColor = timingBackgroundColor;
-    }
-
-    public int getVisualizationPlayedColor() {
-        return visualizationPlayedColor;
-    }
-
-    public void setVisualizationPlayedColor(int visualizationPlayedColor) {
-        this.visualizationPlayedColor = visualizationPlayedColor;
-    }
-
-    public int getVisualizationNotPlayedColor() {
-        return visualizationNotPlayedColor;
-    }
-
-    public void setVisualizationNotPlayedColor(int visualizationNotPlayedColor) {
-        this.visualizationNotPlayedColor = visualizationNotPlayedColor;
-    }
-
-    public int getPlayProgressbarColor() {
-        return playProgressbarColor;
-    }
-
-    public void setPlayProgressbarColor(int playProgressbarColor) {
-        this.playProgressbarColor = playProgressbarColor;
-    }
-
-    public float getViewCornerRadius() {
-        return viewCornerRadius;
-    }
-
-    public void setViewCornerRadius(float viewCornerRadius) {
-        this.viewCornerRadius = viewCornerRadius;
-    }
-
-    public float getPlayCornerRadius() {
-        return playCornerRadius;
-    }
-
-    public void setPlayCornerRadius(float playCornerRadius) {
-        this.playCornerRadius = playCornerRadius;
-    }
-
-    public float getShareCornerRadius() {
-        return shareCornerRadius;
-    }
-
-    public void setShareCornerRadius(float shareCornerRadius) {
-        this.shareCornerRadius = shareCornerRadius;
-    }
-
-    public boolean isShowShareButton() {
-        return showShareButton;
-    }
-
-    public void setShowShareButton(boolean showShareButton) {
-        this.showShareButton = showShareButton;
-    }
-
-    public boolean isShowTiming() {
-        return showTiming;
-    }
-
-    public void setShowTiming(boolean showTiming) {
-        this.showTiming = showTiming;
-    }
-
-    public boolean isEnableVirtualizer() {
-        return enableVirtualizer;
-    }
-
-    public void setEnableVirtualizer(boolean enableVirtualizer) {
-        this.enableVirtualizer = enableVirtualizer;
-    }
-
-    public GradientDrawable getPlayShape() {
-        return playShape;
-    }
-
-    public void setPlayShape(GradientDrawable playShape) {
-        this.playShape = playShape;
-    }
-
-    public GradientDrawable getShareShape() {
-        return shareShape;
-    }
-
-    public void setShareShape(GradientDrawable shareShape) {
-        this.shareShape = shareShape;
-    }
-
-    public GradientDrawable getViewShape() {
-        return viewShape;
-    }
 
-    public void setViewShape(GradientDrawable viewShape) {
-        this.viewShape = viewShape;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public String getShareTitle() {
-        return shareTitle;
-    }
-
-    public void setShareTitle(String shareTitle) {
-        this.shareTitle = shareTitle;
-    }
-
-    public LinearLayout getMain_layout() {
-        return main_layout;
-    }
-
-    public void setMain_layout(LinearLayout main_layout) {
-        this.main_layout = main_layout;
-    }
-
-    public LinearLayout getPadded_layout() {
-        return padded_layout;
-    }
-
-    public void setPadded_layout(LinearLayout padded_layout) {
-        this.padded_layout = padded_layout;
-    }
-
-    public RelativeLayout getContainer_layout() {
-        return container_layout;
-    }
-
-    public void setContainer_layout(RelativeLayout container_layout) {
-        this.container_layout = container_layout;
-    }
-
-    public ImageView getImgPlay() {
-        return imgPlay;
-    }
-
-    public void setImgPlay(ImageView imgPlay) {
-        this.imgPlay = imgPlay;
-    }
-
-    public ImageView getImgPause() {
-        return imgPause;
-    }
-
-    public void setImgPause(ImageView imgPause) {
-        this.imgPause = imgPause;
-    }
-
-    public ImageView getImgDownload() {
-        return imgDownload;
-    }
-
-    public void setImgDownload(ImageView imgDownload) {
-        this.imgDownload = imgDownload;
-    }
-
-    public ImageView getImgShare() {
-        return imgShare;
-    }
-
-    public void setImgShare(ImageView imgShare) {
-        this.imgShare = imgShare;
-    }
 
-    public SeekBar getSeekBar() {
-        return seekBar;
-    }
-
-    public void setSeekBar(SeekBar seekBar) {
-        this.seekBar = seekBar;
-    }
-
-    public ProgressBar getProgressBar() {
-        return progressBar;
-    }
-
-    public void setProgressBar(ProgressBar progressBar) {
-        this.progressBar = progressBar;
-    }
-
-    public TextView getTxtProcess() {
-        return txtProcess;
-    }
-
-    public void setTxtProcess(TextView txtProcess) {
-        this.txtProcess = txtProcess;
-    }
-
-    public MediaPlayer getMediaPlayer() {
-        return mediaPlayer;
-    }
-
-    public void setMediaPlayer(MediaPlayer mediaPlayer) {
-        this.mediaPlayer = mediaPlayer;
-    }
-
-    public ProgressBar getPb_play() {
-        return pb_play;
-    }
-
-    public void setPb_play(ProgressBar pb_play) {
-        this.pb_play = pb_play;
-    }
 
-    public PlayerVisualizerSeekbar getSeekbarV() {
-        return seekbarV;
-    }
-
-    public void setSeekbarV(PlayerVisualizerSeekbar seekbarV) {
-        this.seekbarV = seekbarV;
-    }
-
-    public OnClickListener getImgPlayClickListener() {
-        return imgPlayClickListener;
-    }
-
-    public void setImgPlayClickListener(OnClickListener imgPlayClickListener) {
-        this.imgPlayClickListener = imgPlayClickListener;
-    }
-
-    public OnClickListener getImgPlayNoFileClickListener() {
-        return imgPlayNoFileClickListener;
-    }
-
-    public SeekBar.OnSeekBarChangeListener getSeekBarListener() {
-        return seekBarListener;
-    }
-
-    public void setSeekBarListener(SeekBar.OnSeekBarChangeListener seekBarListener) {
-        this.seekBarListener = seekBarListener;
-    }
-
-    public OnClickListener getImgPauseClickListener() {
-        return imgPauseClickListener;
-    }
 
-    public void setImgPauseClickListener(OnClickListener imgPauseClickListener) {
-        this.imgPauseClickListener = imgPauseClickListener;
-    }
-
-    public OnClickListener getImgShareClickListener() {
-        return imgShareClickListener;
-    }
-
-    public void setImgShareClickListener(OnClickListener imgShareClickListener) {
-        this.imgShareClickListener = imgShareClickListener;
-    }
 }

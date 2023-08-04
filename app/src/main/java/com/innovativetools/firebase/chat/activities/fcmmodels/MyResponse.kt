@@ -1,5 +1,5 @@
-package com.innovativetools.firebase.chat.activities.fcmmodels;
+package com.innovativetools.firebase.chat.activities.fcmmodels
 
-public class MyResponse {
-    public int success;
+class MyResponse {
+    var success = 0
 }

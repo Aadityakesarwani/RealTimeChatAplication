@@ -1,91 +1,89 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import android.graphics.PixelFormat;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.Window;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import com.google.firebase.auth.FirebaseUser
+import android.graphics.PixelFormat
+import android.os.Bundle
+import android.os.Handler
+import com.innovativetools.firebase.chat.activities.R
+import android.widget.TextView
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import android.os.Looper
+import android.view.View
+import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.tasks.OnCompleteListener
+import com.innovativetools.firebase.chat.activities.MainActivity
+import com.innovativetools.firebase.chat.activities.LoginActivity
+import com.innovativetools.firebase.chat.activities.OnBoardingActivity
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.RelativeLayout
+import android.widget.LinearLayout
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.tasks.Task
+import com.innovativetools.firebase.chat.activities.managers.SessionManager
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import java.lang.Exception
+import java.util.*
 
-import androidx.appcompat.app.AppCompatActivity;
+class SplashActivity : AppCompatActivity() {
+    private var firebaseUser //Current User
+            : FirebaseUser? = null
 
-import com.innovativetools.firebase.chat.activities.constants.IConstants;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.SessionManager;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
-import java.util.Objects;
-
-public class SplashActivity extends AppCompatActivity {
-
-    private FirebaseUser firebaseUser; //Current User
-
-    public void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        Window window = getWindow();
-        window.setFormat(PixelFormat.RGBA_8888);
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        val window = window
+        window.setFormat(PixelFormat.RGBA_8888)
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Utils.setWindow(getWindow());
-        setContentView(R.layout.activity_splash);
-
-        ((TextView) findViewById(R.id.txtName)).setText(String.format(getString(R.string.app_company_name), getString(R.string.app_company)));
-
-        StartAnimations();
-        load();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Utils.setWindow(window)
+        setContentView(R.layout.activity_splash)
+        (findViewById<View>(R.id.txtName) as TextView).text =
+            String.format(getString(R.string.app_company_name), getString(R.string.app_company))
+        StartAnimations()
+        load()
     }
 
-    private Screens screens;
-
-    private void load() {
-        screens = new Screens(getApplicationContext());
-        final Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(() -> {
-            try {
-                if (SessionManager.get().isOnBoardingDone()) {
-                    firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+    private var screens: Screens? = null
+    private fun load() {
+        screens = Screens(applicationContext)
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed({
+            try { if (SessionManager.get()!!.isOnBoardingDone) {
+                    firebaseUser = FirebaseAuth.getInstance().currentUser
                     if (firebaseUser != null) {
-                        firebaseUser.reload().addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                screens.showClearTopScreen(MainActivity.class);
+                        firebaseUser!!.reload().addOnCompleteListener { task: Task<Void?> ->
+                            if (task.isSuccessful) {
+                                screens!!.showClearTopScreen(MainActivity::class.java)
                             } else {
-                                screens.showToast(Objects.requireNonNull(task.getException()).getMessage());
-                                screens.showClearTopScreen(LoginActivity.class);
+                                screens!!.showToast(Objects.requireNonNull(task.exception)?.message)
+                                screens!!.showClearTopScreen(LoginActivity::class.java)
                             }
-                        });
+                        }
                     } else {
-                        screens.showClearTopScreen(LoginActivity.class);
+                        screens!!.showClearTopScreen(LoginActivity::class.java)
                     }
                 } else {
-                    screens.showClearTopScreen(OnBoardingActivity.class);
+                    screens!!.showClearTopScreen(OnBoardingActivity::class.java)
                 }
-            } catch (Exception e) {
-                Utils.getErrors(e);
+            } catch (e: Exception) {
+                Utils.getErrors(e)
             }
-        }, IConstants.SPLASH_DELAY);
+        }, IConstants.SPLASH_DELAY.toLong())
     }
 
-    private void StartAnimations() {
-        Animation anim = AnimationUtils.loadAnimation(this, R.anim.alpha);
-        anim.reset();
-        RelativeLayout l = findViewById(R.id.lin_lay);
-        l.clearAnimation();
-        l.startAnimation(anim);
-
-        anim = AnimationUtils.loadAnimation(this, R.anim.translate);
-        anim.reset();
-        LinearLayout iv = findViewById(R.id.layout);
-        iv.clearAnimation();
-        iv.startAnimation(anim);
+    private fun StartAnimations() {
+        var anim = AnimationUtils.loadAnimation(this, R.anim.alpha)
+        anim.reset()
+        val l = findViewById<RelativeLayout>(R.id.lin_lay)
+        l.clearAnimation()
+        l.startAnimation(anim)
+        anim = AnimationUtils.loadAnimation(this, R.anim.translate)
+        anim.reset()
+        val iv = findViewById<LinearLayout>(R.id.layout)
+        iv.clearAnimation()
+        iv.startAnimation(anim)
     }
-
 }

@@ -1,53 +1,49 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
+import android.widget.EditText
+import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import com.innovativetools.firebase.chat.activities.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.innovativetools.firebase.chat.activities.constants.IDialogListener
+import com.innovativetools.firebase.chat.activities.LoginActivity
+import com.innovativetools.firebase.chat.activities.managers.Utils
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.google.firebase.auth.FirebaseAuth;
-
-public class ForgetPasswordActivity extends BaseActivity implements View.OnClickListener {
-
-    private EditText txtEmail;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_forget_password);
-        backButton();
-        txtEmail = findViewById(R.id.txtEmail);
-
-        final Button btnSend = findViewById(R.id.btnSend);
-
-        auth = FirebaseAuth.getInstance();
-
-        btnSend.setOnClickListener(this);
+class ForgetPasswordActivity : BaseActivity(), View.OnClickListener {
+    private var txtEmail: EditText? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_forget_password)
+        backButton()
+        txtEmail = findViewById(R.id.txtEmail)
+        val btnSend = findViewById<Button>(R.id.btnSend)
+        auth = FirebaseAuth.getInstance()
+        btnSend.setOnClickListener(this)
     }
 
-    @Override
-    public void onClick(View v) {
-        int id = v.getId();
+    override fun onClick(v: View) {
+        val id = v.id
         if (id == R.id.btnSend) {
-            final String strEmail = txtEmail.getText().toString().trim();
-
+            val strEmail = txtEmail!!.text.toString().trim { it <= ' ' }
             if (Utils.isEmpty(strEmail)) {
-                screens.showToast(R.string.strAllFieldsRequired);
+                screens!!.showToast(R.string.strAllFieldsRequired)
             } else if (!Utils.isValidEmail(strEmail)) {
-                screens.showToast(R.string.strInvalidEmail);
+                screens!!.showToast(R.string.strInvalidEmail)
             } else {
-                showProgress();
-                auth.sendPasswordResetEmail(strEmail).addOnCompleteListener(task -> {
-                    hideProgress();
-                    if (task.isSuccessful()) {
-                        Utils.showOKDialog(mActivity, ZERO, R.string.lblSendYouForgetEmail,
-                                () -> screens.showClearTopScreen(LoginActivity.class));
+                showProgress()
+                auth!!.sendPasswordResetEmail(strEmail).addOnCompleteListener { task: Task<Void?> ->
+                    hideProgress()
+                    if (task.isSuccessful) {
+                        Utils.showOKDialog(
+                            mActivity!!, IConstants.ZERO, R.string.lblSendYouForgetEmail
+                        ) { screens!!.showClearTopScreen(LoginActivity::class.java) }
                     }
-                });
+                }
             }
         }
     }
-
 }

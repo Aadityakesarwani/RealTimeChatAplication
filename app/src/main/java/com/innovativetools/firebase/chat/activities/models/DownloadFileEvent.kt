@@ -1,42 +1,14 @@
-package com.innovativetools.firebase.chat.activities.models;
+package com.innovativetools.firebase.chat.activities.models
 
-import org.jetbrains.annotations.NotNull;
+import com.innovativetools.firebase.chat.activities.models.Chat
+import java.io.Serializable
 
-import java.io.Serializable;
+class DownloadFileEvent(var attachment: Chat, var position: Int) : Serializable {
 
-
-public class DownloadFileEvent implements Serializable {
-    private Chat attachment;
-    private int position;
-
-    public DownloadFileEvent(Chat attachment, int adapterPosition) {
-        this.attachment = attachment;
-        this.position = adapterPosition;
-    }
-
-    public Chat getAttachment() {
-        return attachment;
-    }
-
-    public void setAttachment(Chat attachment) {
-        this.attachment = attachment;
-    }
-
-    public int getPosition() {
-        return position;
-    }
-
-    public void setPosition(int position) {
-        this.position = position;
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
+    override fun toString(): String {
         return "DownloadFileEvent{" +
                 "attachment=" + attachment +
                 ", position=" + position +
-                '}';
+                '}'
     }
 }
-

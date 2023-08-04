@@ -4,7 +4,6 @@ import static com.innovativetools.firebase.chat.activities.constants.IConstants.
 import static com.innovativetools.firebase.chat.activities.constants.IConstants.PLAYING_DATA;
 import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
 import static com.innovativetools.firebase.chat.activities.managers.Utils.convertSecondsToHMmSs;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;

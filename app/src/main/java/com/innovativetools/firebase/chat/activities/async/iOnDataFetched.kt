@@ -1,9 +1,7 @@
-package com.innovativetools.firebase.chat.activities.async;
+package com.innovativetools.firebase.chat.activities.async
 
-public interface iOnDataFetched {
-    void showProgressBar(int progress);
-
-    void hideProgressBar();
-
-    void setDataInPageWithResult(Object result);
+interface iOnDataFetched {
+    fun showProgressBar(progress: Int)
+    fun hideProgressBar()
+    fun setDataInPageWithResult(result: Any?)
 }

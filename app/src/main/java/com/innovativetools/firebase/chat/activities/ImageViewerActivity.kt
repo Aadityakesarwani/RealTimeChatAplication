@@ -1,74 +1,61 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUP_NAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IMGPATH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USERNAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_DEFAULTS;
+import android.net.Uri
+import android.os.Bundle
+import android.view.View
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.github.chrisbanes.photoview.PhotoView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.lang.Exception
 
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.bumptech.glide.Glide;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.github.chrisbanes.photoview.PhotoView;
-
-public class ImageViewerActivity extends AppCompatActivity {
-
-    int placeholder;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        Bundle extras = getIntent().getExtras();
-
-        setContentView(R.layout.activity_image_fullscreen);
-        final String imgPath = extras.getString(EXTRA_IMGPATH);
-        final Uri imageUri = Uri.parse(imgPath);
-        final String groupName = extras.getString(EXTRA_GROUP_NAME, "");
-        final String username = extras.getString(EXTRA_USERNAME, "");
-
-        findViewById(R.id.imgBack).setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                onBackPressed();
+class ImageViewerActivity : AppCompatActivity() {
+    var placeholder = 0
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val extras = intent.extras
+        setContentView(R.layout.activity_image_fullscreen)
+        val imgPath = extras!!.getString(IConstants.EXTRA_IMGPATH)
+        val imageUri = Uri.parse(imgPath)
+        val groupName = extras.getString(IConstants.EXTRA_GROUP_NAME, "")
+        val username = extras.getString(IConstants.EXTRA_USERNAME, "")
+        findViewById<View>(R.id.imgBack).setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                onBackPressed()
             }
-        });
-
-        final PhotoView imageViewZoom = findViewById(R.id.imgPath);
-        final TextView txtMyName = findViewById(R.id.txtMyName);
-
+        })
+        val imageViewZoom = findViewById<PhotoView>(R.id.imgPath)
+        val txtMyName = findViewById<TextView>(R.id.txtMyName)
         if (Utils.isEmpty(groupName)) {
             if (Utils.isEmpty(username)) {
-                txtMyName.setVisibility(View.GONE);
+                txtMyName.visibility = View.GONE
             } else {
-                txtMyName.setVisibility(View.VISIBLE);
-                txtMyName.setText(username);
+                txtMyName.visibility = View.VISIBLE
+                txtMyName.text = username
             }
         } else {
-            txtMyName.setText(groupName);
+            txtMyName.text = groupName
         }
-
-        if (!Utils.isEmpty(groupName) && imgPath.equalsIgnoreCase(IMG_DEFAULTS)) {
-            placeholder = R.drawable.img_group_default_orange;
+        placeholder = if (!Utils.isEmpty(groupName) && imgPath.equals(
+                IConstants.IMG_DEFAULTS,
+                ignoreCase = true
+            )
+        ) {
+            R.drawable.img_group_default_orange
         } else {
-            placeholder = R.drawable.profile_avatar;
+            R.drawable.profile_avatar
         }
-
         try {
-            if (imgPath.equals(IMG_DEFAULTS)) {
-                Glide.with(this).load(placeholder).into(imageViewZoom);
+            if (imgPath == IConstants.IMG_DEFAULTS) {
+                Glide.with(this).load(placeholder).into(imageViewZoom)
             } else {
-                Glide.with(this).load(imageUri).into(imageViewZoom);
+                Glide.with(this).load(imageUri).into(imageViewZoom)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
-
     }
-
 }

@@ -1,434 +1,375 @@
-package com.innovativetools.firebase.chat.activities.fragments;
-
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ABOUT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ADMIN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUPS_IN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUPS_IN_BOTH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUP_MEMBERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IMAGEURL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USER_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_MALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_UNSPECIFIED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHATS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUPS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUPS_MESSAGES;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUP_MEMBERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_OTHERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_TOKENS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_UPLOAD;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_EMAIL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_GOOGLE;
-
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
-import android.net.Uri;
-import android.os.Bundle;
-import android.provider.MediaStore;
-import android.text.TextUtils;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
-
-import com.innovativetools.firebase.chat.activities.LoginActivity;
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.SessionManager;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.EmailAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageTask;
-import com.google.firebase.storage.UploadTask;
-import com.shobhitpuri.custombuttons.GoogleSignInButton;
-import com.skydoves.powermenu.CircularEffect;
-import com.skydoves.powermenu.MenuAnimation;
-import com.skydoves.powermenu.PowerMenu;
-import com.skydoves.powermenu.PowerMenuItem;
-import com.theartofdev.edmodo.cropper.CropImage;
-import com.theartofdev.edmodo.cropper.CropImageView;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import de.hdodenhof.circleimageview.CircleImageView;
+package com.innovativetools.firebase.chat.activities.fragments
 
 
-public class ProfileFragment extends BaseFragment implements View.OnClickListener {
+import com.innovativetools.firebase.chat.activities.fragments.BaseFragment
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.StorageTask
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.os.Bundle
+import com.innovativetools.firebase.chat.activities.R
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.auth.FirebaseAuth
+import android.content.Intent
+import androidx.cardview.widget.CardView
+import com.shobhitpuri.custombuttons.GoogleSignInButton
+import android.text.TextUtils
+import com.innovativetools.firebase.chat.activities.models.Chat
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.android.gms.tasks.OnCompleteListener
+import com.innovativetools.firebase.chat.activities.LoginActivity
+import com.google.firebase.auth.GoogleAuthProvider
+import com.innovativetools.firebase.chat.activities.fragments.ProfileFragment
+import com.skydoves.powermenu.PowerMenuItem
+import com.skydoves.powermenu.PowerMenu
+import com.skydoves.powermenu.MenuAnimation
+import com.skydoves.powermenu.CircularEffect
+import android.view.Gravity
+import android.provider.MediaStore
+import com.theartofdev.edmodo.cropper.CropImage
+import com.theartofdev.edmodo.cropper.CropImageView
+import android.app.Activity
+import android.app.AlertDialog
+import android.app.ProgressDialog
+import android.content.Context
+import android.graphics.Color
+import android.net.Uri
+import android.view.View
+import android.widget.*
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.AppCompatButton
+import androidx.core.content.ContextCompat
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.tasks.Continuation
+import com.google.android.gms.tasks.Task
+import com.google.firebase.database.*
+import com.google.firebase.storage.UploadTask
+import com.innovativetools.firebase.chat.activities.managers.SessionManager
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.Groups
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import de.hdodenhof.circleimageview.CircleImageView
+import java.io.File
+import java.lang.Exception
+import java.util.ArrayList
+import java.util.HashMap
 
-    private CircleImageView imgAvatar;
-    private FirebaseUser firebaseUser;
-    private DatabaseReference reference;
-    private StorageReference storageReference;
-    private ImageView imgEditAbout;
-    private ImageView imgEditGender;
-    private Button btnDeleteAccount;
-    private Uri imageUri;
-    private StorageTask uploadTask;
-    private String strDescription = "";
-    private int strGender = GEN_UNSPECIFIED;
-    private String strReEmail = "", strRePassword = "", strAvatarImg, strUsername = "", strSocialToken = "";
-    private String currentId, strSignUpType = TYPE_EMAIL;
-
-    private final List<String> userList = new ArrayList<>();
-    private final List<String> groupAdminList = new ArrayList<>();
-    private final List<String> groupAdminMemberList = new ArrayList<>();
-    private final List<String> groupOthersList = new ArrayList<>();
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+class ProfileFragment : BaseFragment(), View.OnClickListener {
+    private var imgAvatar: CircleImageView? = null
+    private var firebaseUser: FirebaseUser? = null
+    private var reference: DatabaseReference? = null
+    private var storageReference: StorageReference? = null
+    private var imgEditAbout: ImageView? = null
+    private var imgEditGender: ImageView? = null
+    private var btnDeleteAccount: Button? = null
+    private var imageUri: Uri? = null
+    private var uploadTask: StorageTask<*>? = null
+    private var strDescription = ""
+    private var strGender = IConstants.GEN_UNSPECIFIED
+    private var strReEmail = ""
+    private var strRePassword = ""
+    private var strAvatarImg: String? = null
+    private var strUsername = ""
+    private var strSocialToken = ""
+    private var currentId: String? = null
+    private var strSignUpType = IConstants.TYPE_EMAIL
+    private val userList: MutableList<String?> = ArrayList()
+    private val groupAdminList: MutableList<String> = ArrayList()
+    private val groupAdminMemberList: MutableList<String> = ArrayList()
+    private val groupOthersList: MutableList<String?> = ArrayList()
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
-
-        final View layoutCameraGallery = view.findViewById(R.id.layoutCameraGallery);
-        imgAvatar = view.findViewById(R.id.imgAvatar);
-        final TextView txtUsername = view.findViewById(R.id.txtUsername);
-        final TextView txtEmail = view.findViewById(R.id.txtEmail);
-        final TextView txtAbout = view.findViewById(R.id.txtAbout);
-        final TextView txtGender = view.findViewById(R.id.txtGender);
-        imgEditAbout = view.findViewById(R.id.imgEdit);
-        imgEditGender = view.findViewById(R.id.imgEditGender);
-        final RelativeLayout layoutAbout = view.findViewById(R.id.layoutAbout);
-        final RelativeLayout layoutGender = view.findViewById(R.id.layoutGender);
-        btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
-
-        final FirebaseStorage storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReference(REF_UPLOAD);
-
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert firebaseUser != null;
-        currentId = firebaseUser.getUid();
-
-        final Intent i = getActivity().getIntent();
-        final String userId = i.getStringExtra(EXTRA_USER_ID);
-
-        String viewUserId;
-        if (Utils.isEmpty(userId)) {//
-            viewUserId = firebaseUser.getUid();
-            showHideViews(View.VISIBLE);
-            layoutCameraGallery.setOnClickListener(this);
-            imgAvatar.setOnClickListener(this);
-            layoutAbout.setOnClickListener(this);
-            layoutGender.setOnClickListener(this);
-            btnDeleteAccount.setOnClickListener(this);
+        val view = inflater.inflate(R.layout.fragment_profile, container, false)
+        val layoutCameraGallery = view.findViewById<View>(R.id.layoutCameraGallery)
+        imgAvatar = view.findViewById(R.id.imgAvatar)
+        val txtUsername = view.findViewById<TextView>(R.id.txtUsername)
+        val txtEmail = view.findViewById<TextView>(R.id.txtEmail)
+        val txtAbout = view.findViewById<TextView>(R.id.txtAbout)
+        val txtGender = view.findViewById<TextView>(R.id.txtGender)
+        imgEditAbout = view.findViewById(R.id.imgEdit)
+        imgEditGender = view.findViewById(R.id.imgEditGender)
+        val layoutAbout = view.findViewById<RelativeLayout>(R.id.layoutAbout)
+        val layoutGender = view.findViewById<RelativeLayout>(R.id.layoutGender)
+        btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount)
+        val storage = FirebaseStorage.getInstance()
+        storageReference = storage.getReference(IConstants.REF_UPLOAD)
+        firebaseUser = FirebaseAuth.getInstance().currentUser
+        assert(firebaseUser != null)
+        currentId = firebaseUser!!.uid
+        val i = requireActivity().intent
+        val userId = i.getStringExtra(IConstants.EXTRA_USER_ID)
+        val viewUserId: String?
+        if (Utils.isEmpty(userId)) { //
+            viewUserId = firebaseUser!!.uid
+            showHideViews(View.VISIBLE)
+            layoutCameraGallery.setOnClickListener(this)
+            imgAvatar?.setOnClickListener(this)
+            layoutAbout.setOnClickListener(this)
+            layoutGender.setOnClickListener(this)
+            btnDeleteAccount?.setOnClickListener(this)
         } else {
-            viewUserId = userId;
-            showHideViews(View.GONE);
+            viewUserId = userId
+            showHideViews(View.GONE)
         }
-
-        final String lblStatus = mActivity.getString(R.string.strAboutStatus);
-        final String lblUnSpecified = getString(R.string.strUnspecified);
-        final String lblMale = getString(R.string.strMale);
-        final String lblFemale = getString(R.string.strFemale);
-
-        reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(viewUserId);
-        reference.keepSynced(true);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        val lblStatus = mActivity!!.getString(R.string.strAboutStatus)
+        val lblUnSpecified = getString(R.string.strUnspecified)
+        val lblMale = getString(R.string.strMale)
+        val lblFemale = getString(R.string.strFemale)
+        reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+            viewUserId!!
+        )
+        reference!!.keepSynced(true)
+        reference!!.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
-                    assert user != null;
-                    strUsername = user.getUsername();
-                    strSignUpType = user.getSignup_type();
+                    val user = dataSnapshot.getValue(
+                        User::class.java
+                    )
+                    strUsername = user?.username.toString()
+                    strSignUpType = user?.signup_type.toString()
                     try {
-                        strSocialToken = Utils.isEmpty(user.getSocial_token()) ? "" : user.getSocial_token();
-                    } catch (Exception ignored) {
+                        if (user != null) {
+                            strSocialToken = if (Utils.isEmpty(
+                                    user.social_token
+                                )
+                            ) "" else user.social_token
+                        }
+                    } catch (ignored: Exception) {
                     }
-                    strAvatarImg = user.getMyImg();
-                    txtUsername.setText(strUsername);
-                    strReEmail = user.getEmail();
-                    strRePassword = user.getPassword();
-                    txtEmail.setText(strReEmail);
-                    strGender = user.getGenders();
-                    strDescription = user.getAbout();
-                    txtAbout.setText(Utils.isEmpty(strDescription) ? lblStatus : strDescription);
-                    txtGender.setText(strGender == GEN_UNSPECIFIED ? lblUnSpecified : (strGender == GEN_MALE ? lblMale : lblFemale));
-
-                    Utils.setProfileImage(getContext(), strAvatarImg, imgAvatar);
+                    strAvatarImg = user?.myImg
+                    txtUsername.text = strUsername
+                    strReEmail = user?.email.toString()
+                    strRePassword = user?.password.toString()
+                    txtEmail.text = strReEmail
+                    strGender = user?.genders!!
+                    strDescription = user?.about.toString()
+                    txtAbout.text = if (Utils.isEmpty(strDescription)) lblStatus else strDescription
+                    txtGender.text =
+                        if (strGender == IConstants.GEN_UNSPECIFIED) lblUnSpecified else if (strGender == IConstants.GEN_MALE) lblMale else lblFemale
+                    strAvatarImg?.let {
+                        Utils.setProfileImage(
+                            context, it, imgAvatar
+                        )
+                    }
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        return view;
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        return view
     }
 
-    private void showHideViews(int isShow) {
-        imgEditAbout.setVisibility(isShow);
-        imgEditGender.setVisibility(isShow);
-        btnDeleteAccount.setVisibility(isShow);
+    private fun showHideViews(isShow: Int) {
+        imgEditAbout!!.visibility = isShow
+        imgEditGender!!.visibility = isShow
+        btnDeleteAccount!!.visibility = isShow
     }
 
-    @Override
-    public void onClick(View v) {
-        final int id = v.getId();
+    override fun onClick(v: View) {
+        val id = v.id
         if (id == R.id.layoutCameraGallery) {
             if (Utils.isTypeEmail(strSignUpType)) {
-                openImageCropper();
+                openImageCropper()
             } else {
-                screens.openFullImageViewActivity(v, strAvatarImg, strUsername);
+                screens!!.openFullImageViewActivity(v, strAvatarImg, strUsername)
             }
         } else if (id == R.id.imgAvatar) {
-            screens.openFullImageViewActivity(v, strAvatarImg, strUsername);
+            screens!!.openFullImageViewActivity(v, strAvatarImg, strUsername)
         } else if (id == R.id.layoutAbout) {
-            popupForAbout();
+            popupForAbout()
         } else if (id == R.id.layoutGender) {
-            Utils.selectGenderPopup(mActivity, firebaseUser.getUid(), strGender);
+            Utils.selectGenderPopup(mActivity!!, firebaseUser!!.uid, strGender)
         } else if (id == R.id.btnDeleteAccount) {
-            openAuthenticatePopup();
+            openAuthenticatePopup()
         }
     }
 
-    private void openAuthenticatePopup() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-        CardView view = (CardView) mActivity.getLayoutInflater().inflate(R.layout.dialog_reauthenticate, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    private fun openAuthenticatePopup() {
+        val builder = AlertDialog.Builder(mContext)
+        val view =
+            mActivity!!.layoutInflater.inflate(R.layout.dialog_reauthenticate, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        builder.setView(view);
-
-        final LinearLayout layoutEmail = view.findViewById(R.id.layoutEmail);
-        final TextView txtEmail = view.findViewById(R.id.txtEmail);
-        final TextView txtPassword = view.findViewById(R.id.txtPassword);
-        final Button btnSignup = view.findViewById(R.id.btnSignUp);
-        final Button btnCancel = view.findViewById(R.id.btnCancel);
-        final GoogleSignInButton btnGoogleSignIn = view.findViewById(R.id.btnGoogleSignIn);
-
-        layoutEmail.setVisibility(View.GONE);
-        btnGoogleSignIn.setVisibility(View.GONE);
-
+        builder.setView(view)
+        val layoutEmail = view.findViewById<LinearLayout>(R.id.layoutEmail)
+        val txtEmail = view.findViewById<TextView>(R.id.txtEmail)
+        val txtPassword = view.findViewById<TextView>(R.id.txtPassword)
+        val btnSignup = view.findViewById<Button>(R.id.btnSignUp)
+        val btnCancel = view.findViewById<Button>(R.id.btnCancel)
+        val btnGoogleSignIn = view.findViewById<GoogleSignInButton>(R.id.btnGoogleSignIn)
+        layoutEmail.visibility = View.GONE
+        btnGoogleSignIn.visibility = View.GONE
         if (Utils.isTypeEmail(strSignUpType)) {
-            layoutEmail.setVisibility(View.VISIBLE);
-        } else if (strSignUpType.equalsIgnoreCase(TYPE_GOOGLE)) {
-            btnGoogleSignIn.setVisibility(View.VISIBLE);
+            layoutEmail.visibility = View.VISIBLE
+        } else if (strSignUpType.equals(IConstants.TYPE_GOOGLE, ignoreCase = true)) {
+            btnGoogleSignIn.visibility = View.VISIBLE
         }
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
             }
-        });
-
-        btnSignup.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                final String strEmail = txtEmail.getText().toString().trim();
-                final String strPassword = txtPassword.getText().toString().trim();
-
+        })
+        btnSignup.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                val strEmail = txtEmail.text.toString().trim { it <= ' ' }
+                val strPassword = txtPassword.text.toString().trim { it <= ' ' }
                 if (TextUtils.isEmpty(strEmail) || TextUtils.isEmpty(strPassword)) {
-                    screens.showToast(R.string.strAllFieldsRequired);
-                } else if (!strEmail.equalsIgnoreCase(strReEmail) || !strPassword.equalsIgnoreCase(strRePassword)) {
-                    screens.showToast(R.string.strInvalidEmailPassword);
+                    screens!!.showToast(R.string.strAllFieldsRequired)
+                } else if (!strEmail.equals(strReEmail, ignoreCase = true) || !strPassword.equals(
+                        strRePassword,
+                        ignoreCase = true
+                    )
+                ) {
+                    screens!!.showToast(R.string.strInvalidEmailPassword)
                 } else {
-                    alert.dismiss();
-                    deleteChatsAndOtherData();
+                    alert.dismiss()
+                    deleteChatsAndOtherData()
                 }
             }
-        });
-
-        btnGoogleSignIn.setOnClickListener(v -> {
-            final String strEmail = txtEmail.getText().toString().trim();
+        })
+        btnGoogleSignIn.setOnClickListener { v: View? ->
+            val strEmail = txtEmail.text.toString().trim { it <= ' ' }
             if (TextUtils.isEmpty(strEmail)) {
-                screens.showToast(mActivity.getString(R.string.strEmailFieldsRequired));
-            } else if (!strEmail.equalsIgnoreCase(strReEmail)) {
-                screens.showToast(mActivity.getString(R.string.strInvalidEmail));
+                screens!!.showToast(mActivity!!.getString(R.string.strEmailFieldsRequired))
+            } else if (!strEmail.equals(strReEmail, ignoreCase = true)) {
+                screens!!.showToast(mActivity!!.getString(R.string.strInvalidEmail))
             } else {
-                alert.dismiss();
-                deleteChatsAndOtherData();
+                alert.dismiss()
+                deleteChatsAndOtherData()
             }
-        });
-
-        alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(!Utils.isTypeEmail(strSignUpType));
-        alert.show();
+        }
+        alert.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(!Utils.isTypeEmail(strSignUpType))
+        alert.show()
     }
 
-    private void deleteInsideUsersChat() {
-        for (int i = 0; i < userList.size(); i++) {
-            final String key = userList.get(i);
-            Query query = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(key);
-            query.addValueEventListener(new ValueEventListener() {
-
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+    private fun deleteInsideUsersChat() {
+        for (i in userList.indices) {
+            val key = userList[i]
+            val query: Query =
+                FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+                    key!!
+                )
+            query.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
                     try {
                         if (dataSnapshot.exists()) {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                if (snapshot.getKey().equalsIgnoreCase(currentId)) {
-                                    snapshot.getRef().removeValue();
-                                    break;
+                            for (snapshot in dataSnapshot.children) {
+                                if (snapshot.key.equals(currentId, ignoreCase = true)) {
+                                    snapshot.ref.removeValue()
+                                    break
                                 }
                             }
                         }
-                    } catch (Exception ignored) {
+                    } catch (ignored: Exception) {
                     }
                 }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
         }
     }
 
-    private void deleteChatsAndOtherData() {
-        showProgress();
-        userList.clear();
-        groupAdminList.clear();
-        groupAdminMemberList.clear();
-        groupOthersList.clear();
-
-        final Query chats = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(currentId);
-        chats.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+    private fun deleteChatsAndOtherData() {
+        showProgress()
+        userList.clear()
+        groupAdminList.clear()
+        groupAdminMemberList.clear()
+        groupOthersList.clear()
+        val chats: Query = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+            currentId!!
+        )
+        chats.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.exists()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-
-                            userList.add(snapshot.getKey());
-
-                            snapshot.getRef().removeValue();
-
+                        for (snapshot in dataSnapshot.children) {
+                            userList.add(snapshot.key)
+                            snapshot.ref.removeValue()
                         }
-
-                        deleteInsideUsersChat();
+                        deleteInsideUsersChat()
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        deleteGroupData();
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        deleteGroupData()
     }
 
     //***************************************************************************************************************************
     //************************************************** GROUPS ADMIN DELETE - START **************************************************
     //***************************************************************************************************************************
-    private void deleteGroupData() {
+    private fun deleteGroupData() {
 
         //Delete first our groups, where we are admin
-        final Query groupsAdmin = FirebaseDatabase.getInstance().getReference(REF_GROUPS).orderByChild(EXTRA_ADMIN).equalTo(currentId);
-        groupsAdmin.addListenerForSingleValueEvent(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        val groupsAdmin = FirebaseDatabase.getInstance().getReference(IConstants.REF_GROUPS)
+            .orderByChild(IConstants.EXTRA_ADMIN).equalTo(currentId)
+        groupsAdmin.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.exists()) {
                         try {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                Groups grp = snapshot.getValue(Groups.class);
-
-                                assert grp != null;
-                                groupAdminList.add(grp.getId());
-
-                                groupAdminMemberList.addAll(grp.getMembers());
-
-                                snapshot.getRef().removeValue();// Delete our admin group
+                            for (snapshot in dataSnapshot.children) {
+                                val grp = snapshot.getValue(
+                                    Groups::class.java
+                                )!!
+                                grp.id?.let { groupAdminList.add(it) }
+                                grp.members?.let { groupAdminMemberList.addAll(it) }
+                                snapshot.ref.removeValue() // Delete our admin group
                             }
-                        } catch (Exception ignored) {
+                        } catch (ignored: Exception) {
                         }
 
                         //Remove group messages where we are Group Admin, Whole Group can be deleted
-                        for (int i = 0; i < groupAdminList.size(); i++) {
-                            String keyGroupId = null;
+                        for (i in groupAdminList.indices) {
+                            var keyGroupId: String? = null
                             try {
-                                keyGroupId = groupAdminList.get(i);
-
-                                final Query groupsAdminMessages = FirebaseDatabase.getInstance().getReference(REF_GROUPS_MESSAGES).child(keyGroupId);
-
-                                groupsAdminMessages.getRef().removeValue();// Delete our created Group All Messages
-
-                            } catch (Exception ignored) {
+                                keyGroupId = groupAdminList[i]
+                                val groupsAdminMessages: Query = FirebaseDatabase.getInstance()
+                                    .getReference(IConstants.REF_GROUPS_MESSAGES).child(keyGroupId)
+                                groupsAdminMessages.ref.removeValue() // Delete our created Group All Messages
+                            } catch (ignored: Exception) {
                             }
-
                             try {
-                                for (int j = 0; j < groupAdminMemberList.size(); j++) {
-                                    String keyMem = groupAdminMemberList.get(j);
-
-                                    final Query groupsAdminGroupsIn = FirebaseDatabase.getInstance().getReference(REF_GROUP_MEMBERS).child(keyMem + EXTRA_GROUPS_IN_BOTH + keyGroupId);
-
-                                    groupsAdminGroupsIn.getRef().removeValue();//Remove Group Id from Other member's groupIn, So they are not part of our group because we're deleted
-
+                                for (j in groupAdminMemberList.indices) {
+                                    val keyMem = groupAdminMemberList[j]
+                                    val groupsAdminGroupsIn: Query = FirebaseDatabase.getInstance()
+                                        .getReference(IConstants.REF_GROUP_MEMBERS)
+                                        .child(keyMem + IConstants.EXTRA_GROUPS_IN_BOTH + keyGroupId)
+                                    groupsAdminGroupsIn.ref.removeValue() //Remove Group Id from Other member's groupIn, So they are not part of our group because we're deleted
                                 }
-                            } catch (Exception ignored) {
+                            } catch (ignored: Exception) {
                             }
                         }
-                        deleteOtherGroupData();
+                        deleteOtherGroupData()
                     } else {
-                        deleteOtherGroupData();
+                        deleteOtherGroupData()
                     }
-
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
 
 //        Utils.updateUserActive(firebaseUser.getUid());
     }
@@ -438,168 +379,147 @@ public class ProfileFragment extends BaseFragment implements View.OnClickListene
      * =========================== START OTHER GROUPS DATA AND DELETE IF FOUND ===========================
      * ===================================================================================================
      */
-    private void deleteOtherGroupData() {
+    private fun deleteOtherGroupData() {
 
         //Delete myself from Other groups where added by thier other users.
-        final Query groupsAdminGroupsIn = FirebaseDatabase.getInstance().getReference(REF_GROUP_MEMBERS).child(currentId + SLASH + EXTRA_GROUPS_IN);
-        groupsAdminGroupsIn.addListenerForSingleValueEvent(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        val groupsAdminGroupsIn: Query =
+            FirebaseDatabase.getInstance().getReference(IConstants.REF_GROUP_MEMBERS)
+                .child(currentId + IConstants.SLASH + IConstants.EXTRA_GROUPS_IN)
+        groupsAdminGroupsIn.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.exists()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            groupOthersList.add(snapshot.getKey());
-                            snapshot.getRef().removeValue();//Remove from other Group created by other user.
+                        for (snapshot in dataSnapshot.children) {
+                            groupOthersList.add(snapshot.key)
+                            snapshot.ref.removeValue() //Remove from other Group created by other user.
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
-
                 try {
                     //Delete other groups from where I did chat with other guys, So I only deleted my message from that groups.
-                    for (int i = 0; i < groupOthersList.size(); i++) {
-                        String grpOtherMsg = groupOthersList.get(i);
-
-                        final Query groupsOtherMsg = FirebaseDatabase.getInstance().getReference(REF_GROUPS_MESSAGES).child(grpOtherMsg);
-
-                        groupsOtherMsg.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for (i in groupOthersList.indices) {
+                        val grpOtherMsg = groupOthersList[i]
+                        val groupsOtherMsg: Query = FirebaseDatabase.getInstance()
+                            .getReference(IConstants.REF_GROUPS_MESSAGES).child(
+                            grpOtherMsg!!
+                        )
+                        groupsOtherMsg.addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(dataSnapshot: DataSnapshot) {
                                 try {
                                     if (dataSnapshot.exists()) {
-                                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-
-                                            Chat chat = snapshot.getValue(Chat.class);
-
-                                            assert chat != null;
-                                            if (chat.getSender().equalsIgnoreCase(currentId)) {
-
-                                                snapshot.getRef().removeValue();//Delete mine message only from Other groups
-
+                                        for (snapshot in dataSnapshot.children) {
+                                            val chat = snapshot.getValue(Chat::class.java)!!
+                                            if (chat.sender.equals(currentId, ignoreCase = true)) {
+                                                snapshot.ref.removeValue() //Delete mine message only from Other groups
                                             }
                                         }
                                     }
-                                } catch (Exception ignored) {
+                                } catch (ignored: Exception) {
                                 }
                             }
 
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-                            }
-                        });
+                            override fun onCancelled(databaseError: DatabaseError) {}
+                        })
 
                         //Delete from Other Groups info where I added inside the 'members' attribute. So delete myself from their.
-                        final Query groupsOther = FirebaseDatabase.getInstance().getReference(REF_GROUPS).child(grpOtherMsg);
-                        groupsOther.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        val groupsOther: Query =
+                            FirebaseDatabase.getInstance().getReference(IConstants.REF_GROUPS)
+                                .child(
+                                    grpOtherMsg
+                                )
+                        groupsOther.addValueEventListener(object : ValueEventListener {
+                            override fun onDataChange(dataSnapshot: DataSnapshot) {
                                 try {
                                     if (dataSnapshot.exists()) {
-                                        Groups groups = dataSnapshot.getValue(Groups.class);
-                                        assert groups != null;
-                                        List list = groups.getMembers();
-
-                                        list.remove(currentId);//Delete our Id to remove from that group and update it list
-
-                                        HashMap<String, Object> hashMap = new HashMap<>();
-
-                                        hashMap.put(EXTRA_GROUP_MEMBERS, list);
-
-                                        dataSnapshot.getRef().updateChildren(hashMap);// Delete/Update myself from members in other groups.
+                                        val groups = dataSnapshot.getValue(
+                                            Groups::class.java
+                                        )!!
+                                        val list: MutableList<String> = groups.members!!.toMutableList()
+                                        list.remove(currentId) //Delete our Id to remove from that group and update it list
+                                        val hashMap = HashMap<String, Any>()
+                                        hashMap[IConstants.EXTRA_GROUP_MEMBERS] = list
+                                        dataSnapshot.ref.updateChildren(hashMap) // Delete/Update myself from members in other groups.
                                     }
-                                } catch (Exception ignored) {
+                                } catch (ignored: Exception) {
                                 }
                             }
 
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-                            }
-                        });
-
+                            override fun onCancelled(databaseError: DatabaseError) {}
+                        })
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
-
-                deleteTokenOtherData();
+                deleteTokenOtherData()
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
     //***************************************************************************************************************************
     //*************************************************** TOKENS DELETE - END ***************************************************
     //***************************************************************************************************************************
-    private void deleteTokenOtherData() {
-
-        final Query tokens = FirebaseDatabase.getInstance().getReference(REF_TOKENS).orderByKey().equalTo(firebaseUser.getUid());
-        tokens.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+    private fun deleteTokenOtherData() {
+        val tokens =
+            FirebaseDatabase.getInstance().getReference(IConstants.REF_TOKENS).orderByKey().equalTo(
+                firebaseUser!!.uid
+            )
+        tokens.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.exists()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-
-                            snapshot.getRef().removeValue();
+                        for (snapshot in dataSnapshot.children) {
+                            snapshot.ref.removeValue()
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
-
-                final Query others = FirebaseDatabase.getInstance().getReference(REF_OTHERS).orderByKey().equalTo(firebaseUser.getUid());
-                others.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                val others =
+                    FirebaseDatabase.getInstance().getReference(IConstants.REF_OTHERS).orderByKey()
+                        .equalTo(
+                            firebaseUser!!.uid
+                        )
+                others.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
                         try {
                             if (dataSnapshot.exists()) {
-                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-
-                                    snapshot.getRef().removeValue();
+                                for (snapshot in dataSnapshot.children) {
+                                    snapshot.ref.removeValue()
                                 }
                             }
-                        } catch (Exception ignored) {
+                        } catch (ignored: Exception) {
                         }
                         if (Utils.isTypeEmail(strSignUpType)) {
-                            deActivateAccount();
+                            deActivateAccount()
                         } else {
-                            deActivateAccount(strSignUpType);
+                            deActivateAccount(strSignUpType)
                         }
                     }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                    }
-                });
+                    override fun onCancelled(databaseError: DatabaseError) {}
+                })
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    public void deActivateAccount() {
+    fun deActivateAccount() {
         //Getting the user instance.
-        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
+        val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
             //You need to get here the token you saved at logging-in time.
-            String token = null;
-
-            AuthCredential credential;
+            val token: String? = null
+            val credential: AuthCredential
 
             //This means you didn't have the token because user used like Facebook Sign-in method.
-            if (token == null) {
-                credential = EmailAuthProvider.getCredential(strReEmail, strRePassword);
+            credential = if (token == null) {
+                EmailAuthProvider.getCredential(strReEmail, strRePassword)
             } else {
                 //Doesn't matter if it was Facebook Sign-in or others. It will always work using GoogleAuthProvider for whatever the provider.
                 //credential = GoogleAuthProvider.getCredential(token, null);
-                return;
+                return
             }
 
 
@@ -607,342 +527,324 @@ public class ProfileFragment extends BaseFragment implements View.OnClickListene
             //it was the sign-in. Calling reauthenticate, will update the
             //user login and prevent FirebaseException (CREDENTIAL_TOO_OLD_LOGIN_AGAIN) on user.delete()
             user.reauthenticate(credential)
-                    .addOnCompleteListener(task -> {
-                        //Calling delete to remove the user and wait for a result.
-
-                        user.delete().addOnCompleteListener(task1 -> {
-                            if (task1.isSuccessful()) {
-                                //Ok, user remove
-                                try {
-                                    hideProgress();
-                                    final Query reference3 = FirebaseDatabase.getInstance().getReference(REF_USERS).orderByKey().equalTo(user.getUid());
-                                    reference3.addListenerForSingleValueEvent(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                            if (dataSnapshot.exists()) {
-                                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                                    snapshot.getRef().removeValue();
-                                                    screens.showClearTopScreen(LoginActivity.class);
-                                                }
+                .addOnCompleteListener { task: Task<Void?>? ->
+                    //Calling delete to remove the user and wait for a result.
+                    user.delete().addOnCompleteListener({ task1: Task<Void?> ->
+                        if (task1.isSuccessful) {
+                            //Ok, user remove
+                            try {
+                                hideProgress()
+                                val reference3: Query = FirebaseDatabase.getInstance()
+                                    .getReference(IConstants.REF_USERS).orderByKey()
+                                    .equalTo(user.uid)
+                                reference3.addListenerForSingleValueEvent(object :
+                                    ValueEventListener {
+                                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                                        if (dataSnapshot.exists()) {
+                                            for (snapshot: DataSnapshot in dataSnapshot.children) {
+                                                snapshot.ref.removeValue()
+                                                screens!!.showClearTopScreen(LoginActivity::class.java)
                                             }
                                         }
+                                    }
 
-                                        @Override
-                                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    Utils.getErrors(e);
-                                }
-                            } else {
-                                //Handle the exception
-                                Utils.getErrors(task1.getException());
+                                    override fun onCancelled(databaseError: DatabaseError) {}
+                                })
+                            } catch (e: Exception) {
+                                Utils.getErrors(e)
                             }
-                        });
-                    });
+                        } else {
+                            //Handle the exception
+                            Utils.getErrors(task1.exception)
+                        }
+                    })
+                }
         }
     }
 
-    public void deActivateAccount(final String strSignUpType) {
+    fun deActivateAccount(strSignUpType: String) {
         //Getting the user instance.
-        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
             try {
-                hideProgress();
-                AuthCredential credential;
-                if (strSignUpType.equalsIgnoreCase(TYPE_GOOGLE)) {
-                    credential = GoogleAuthProvider.getCredential(strSocialToken, null);
+                hideProgress()
+                val credential: AuthCredential
+                credential = if (strSignUpType.equals(IConstants.TYPE_GOOGLE, ignoreCase = true)) {
+                    GoogleAuthProvider.getCredential(strSocialToken, null)
                 } else {
-                    user.delete();
-                    openLoginScreen(user, strSignUpType);
-                    return;
+                    user.delete()
+                    openLoginScreen(user, strSignUpType)
+                    return
                 }
                 user.reauthenticate(credential)
-                        .addOnCompleteListener(task -> {
-                            //Calling delete to remove the user and wait for a result.
-                            user.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    if (task.isSuccessful()) {
-                                        //Ok, user remove
-                                        openLoginScreen(user, strSignUpType);
-                                    } else {
-                                        //Handle the exception
-                                        openLoginScreen(user, strSignUpType);
-                                        Utils.getErrors(task.getException());
-                                    }
-                                }
-                            });
-                        });
-            } catch (Exception e) {
-                openLoginScreen(user, strSignUpType);
-                Utils.getErrors(e);
+                    .addOnCompleteListener { task: Task<Void?>? ->
+                        //Calling delete to remove the user and wait for a result.
+                        user.delete().addOnCompleteListener(OnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                //Ok, user remove
+                                openLoginScreen(user, strSignUpType)
+                            } else {
+                                //Handle the exception
+                                openLoginScreen(user, strSignUpType)
+                                Utils.getErrors(task.exception)
+                            }
+                        })
+                    }
+            } catch (e: Exception) {
+                openLoginScreen(user, strSignUpType)
+                Utils.getErrors(e)
             }
         } else {
             //Handle the exception
         }
     }
 
-    private void openLoginScreen(FirebaseUser user, final String strSignUpType) {
+    private fun openLoginScreen(user: FirebaseUser, strSignUpType: String) {
         try {
-            final Query reference3 = FirebaseDatabase.getInstance().getReference(REF_USERS).orderByKey().equalTo(user.getUid());
-            reference3.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            val reference3 =
+                FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).orderByKey()
+                    .equalTo(user.uid)
+            reference3.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
                     if (dataSnapshot.exists()) {
-                        FirebaseAuth.getInstance().signOut();
-                        if (strSignUpType.equalsIgnoreCase(TYPE_GOOGLE)) {
-                            revokeGoogle(mContext);
+                        FirebaseAuth.getInstance().signOut()
+                        if (strSignUpType.equals(IConstants.TYPE_GOOGLE, ignoreCase = true)) {
+                            revokeGoogle(mContext!!)
                         }
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            snapshot.getRef().removeValue();
-                            screens.showClearTopScreen(LoginActivity.class);
+                        for (snapshot in dataSnapshot.children) {
+                            snapshot.ref.removeValue()
+                            screens!!.showClearTopScreen(LoginActivity::class.java)
                         }
                     }
                 }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-        } catch (Exception e) {
-            Utils.getErrors(e);
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    private static void revokeGoogle(Context context) {
-        try {
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(context.getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build();
-
-            final GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(context, gso);
-            mGoogleSignInClient.revokeAccess();
-        } catch (Exception e) {
-            Utils.getErrors(e);
-        }
-    }
-
-    public void popupForAbout() {
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(getText(R.string.strEnterAbout));
-
-        CardView view = (CardView) getLayoutInflater().inflate(R.layout.dialog_description, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    fun popupForAbout() {
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle(getText(R.string.strEnterAbout))
+        val view = layoutInflater.inflate(R.layout.dialog_description, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
-        builder.setView(view);
-
-        final EditText txtAbout = view.findViewById(R.id.txtAbout);
-        txtAbout.setText(strDescription);
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
+        builder.setView(view)
+        val txtAbout = view.findViewById<EditText>(R.id.txtAbout)
+        txtAbout.setText(strDescription)
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
             }
-        });
-
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
+        })
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
                 try {
-                    final String strAbout = txtAbout.getText().toString().trim();
-
+                    val strAbout = txtAbout.text.toString().trim { it <= ' ' }
                     if (Utils.isEmpty(strAbout)) {
-                        screens.showToast(R.string.msgErrorEnterDesc);
-                        return;
+                        screens!!.showToast(R.string.msgErrorEnterDesc)
+                        return
                     }
-
                     try {
-                        DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(firebaseUser.getUid());
-                        HashMap<String, Object> hashMap = new HashMap<>();
-                        hashMap.put(EXTRA_ABOUT, strAbout);
-                        reference.updateChildren(hashMap);
-                    } catch (Exception e) {
-                        Utils.getErrors(e);
+                        val reference =
+                            FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                                firebaseUser!!.uid
+                            )
+                        val hashMap = HashMap<String, Any>()
+                        hashMap[IConstants.EXTRA_ABOUT] = strAbout
+                        reference.updateChildren(hashMap)
+                    } catch (e: Exception) {
+                        Utils.getErrors(e)
                     }
-
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
-                alert.dismiss();
+                alert.dismiss()
             }
-        });
-
-        alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(false);
-        alert.show();
+        })
+        alert.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(false)
+        alert.show()
     }
 
-    private File fileUri = null;
-    private Uri imgUri;
-
-    private void openImageCropper() {
+    private var fileUri: File? = null
+    private var imgUri: Uri? = null
+    private fun openImageCropper() {
         try {
-            fileUri = null;
-            imgUri = null;
-
-            List<PowerMenuItem> list = new ArrayList<>();
-            list.add(new PowerMenuItem(getString(R.string.strGallery), R.drawable.ic_popup_gallery));
-            list.add(new PowerMenuItem(getString(R.string.strCamera), R.drawable.ic_popup_camera));
-            PowerMenu powerMenu = new PowerMenu.Builder(mActivity)
+            fileUri = null
+            imgUri = null
+            val list: MutableList<PowerMenuItem> = ArrayList()
+            list.add(PowerMenuItem(getString(R.string.strGallery), R.drawable.ic_popup_gallery))
+            list.add(PowerMenuItem(getString(R.string.strCamera), R.drawable.ic_popup_camera))
+            val powerMenu = Utils.getRegularFont(mActivity)?.let {
+                PowerMenu.Builder(mActivity!!)
                     .addItemList(list)
                     .setAnimation(MenuAnimation.ELASTIC_CENTER)
                     .setCircularEffect(CircularEffect.BODY)
                     .setTextGravity(Gravity.NO_GRAVITY)
                     .setMenuRadius(10f) // sets the corner radius.
                     .setMenuShadow(10f) // sets the shadow.
-                    .setTextTypeface(Utils.getRegularFont(mActivity))
+                    .setTextTypeface(it)
                     .setTextSize(15)
                     .setSelectedTextColor(Color.WHITE)
                     .setMenuColor(Color.WHITE)
                     .setSelectedEffect(true)
-                    .setTextColor(ContextCompat.getColor(mActivity, R.color.grey_800))
-                    .setSelectedMenuColor(ContextCompat.getColor(mActivity, R.color.colorAccent))
+                    .setTextColor(ContextCompat.getColor(mActivity!!, R.color.grey_800))
+                    .setSelectedMenuColor(ContextCompat.getColor(mActivity!!, R.color.colorAccent))
                     .setDismissIfShowAgain(true)
                     .setAutoDismiss(true)
-                    .setOnMenuItemClickListener((position, item) -> {
-                        if (item.getTitle().toString().equalsIgnoreCase(getString(R.string.strGallery))) {
-                            openImage();
+                    .setOnMenuItemClickListener { position: Int, item: PowerMenuItem ->
+                        if (item.title.toString()
+                                .equals(getString(R.string.strGallery), ignoreCase = true)
+                        ) {
+                            openImage()
                         } else {
-                            openCamera();
+                            openCamera()
                         }
-                    })
-                    .build();
-
-            powerMenu.showAsAnchorCenter(getView());
-
-        } catch (Exception e) {
-            Utils.getErrors(e);
+                    }
+                    .build()
+            }
+            if (powerMenu != null) {
+                powerMenu.showAsAnchorCenter(view)
+            }
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    private void openCamera() {
-        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+    private fun openCamera() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         try {
-            fileUri = Utils.createImageFile(mActivity);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Utils.getUriForFileProvider(mActivity, fileUri));
-        } catch (Exception ignored) {
-
+            fileUri = Utils.createImageFile(mActivity!!)
+            intent.putExtra(
+                MediaStore.EXTRA_OUTPUT,
+                Utils.getUriForFileProvider(mActivity!!, fileUri)
+            )
+        } catch (ignored: Exception) {
         }
-        intentLauncher.launch(intent);
+        intentLauncher.launch(intent)
     }
 
-    private void openImage() {
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        intentLauncher.launch(intent);
+    private fun openImage() {
+        val intent = Intent()
+        intent.action = Intent.ACTION_GET_CONTENT
+        intent.type = "image/*"
+        intentLauncher.launch(intent)
     }
 
-    private void cropImage() {
+    private fun cropImage() {
         try {
-            Intent intent = CropImage.activity(imgUri)
-                    .setGuidelines(CropImageView.Guidelines.ON_TOUCH)
-                    .setFixAspectRatio(true)
-                    .setCropShape(CropImageView.CropShape.OVAL)
-                    .getIntent(mActivity);
-            cropLauncher.launch(intent);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val intent = CropImage.activity(imgUri)
+                .setGuidelines(CropImageView.Guidelines.ON_TOUCH)
+                .setFixAspectRatio(true)
+                .setCropShape(CropImageView.CropShape.OVAL)
+                .getIntent(mActivity!!)
+            cropLauncher.launch(intent)
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
     /*
      * Intent launcher to get Image Uri from storage
      * */
-    final ActivityResultLauncher<Intent> intentLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            if (result.getResultCode() == Activity.RESULT_OK) {
-                if (fileUri != null) { // Image Capture
-                    imgUri = Uri.fromFile(fileUri);
+    val intentLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                imgUri = if (fileUri != null) { // Image Capture
+                    Uri.fromFile(fileUri)
                 } else { // Pick from Gallery
-                    Intent data = result.getData();
-                    assert data != null;
-                    imgUri = data.getData();
+                    val data = result.data!!
+                    data.data
                 }
-
-                Utils.sout("ImageURI:::  " + imgUri);
-                cropImage();
-
+                Utils.sout("ImageURI:::  $imgUri")
+                cropImage()
             }
         }
-    });
 
     /*
      * Intent launcher to get Image Uri from storage
      * */
-    final ActivityResultLauncher<Intent> cropLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            if (result.getResultCode() == Activity.RESULT_OK) {
-                Intent data = result.getData();
-                CropImage.ActivityResult re = CropImage.getActivityResult(data);
-                assert re != null;
-                imageUri = re.getUri();
-                if (uploadTask != null && uploadTask.isInProgress()) {
-                    screens.showToast(R.string.msgUploadInProgress);
+    val cropLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data
+                val re = CropImage.getActivityResult(data)!!
+                imageUri = re.uri
+                if (uploadTask != null && uploadTask!!.isInProgress) {
+                    screens!!.showToast(R.string.msgUploadInProgress)
                 } else {
-                    uploadImage();
+                    uploadImage()
                 }
             }
         }
-    });
 
-    private void uploadImage() {
-        final ProgressDialog pd = new ProgressDialog(getContext());
-        pd.setMessage(getString(R.string.msg_image_upload));
-        pd.show();
-
+    private fun uploadImage() {
+        val pd = ProgressDialog(context)
+        pd.setMessage(getString(R.string.msg_image_upload))
+        pd.show()
         if (imageUri != null) {
-            final StorageReference fileReference = storageReference.child(System.currentTimeMillis() + "." + Utils.getExtension(getContext(), imageUri));
-            uploadTask = fileReference.putFile(imageUri);
-
-            uploadTask.continueWithTask((Continuation<UploadTask.TaskSnapshot, Task<Uri>>) task -> {
-                        if (!task.isSuccessful()) {
-                            throw task.getException();
-                        }
-
-                        return fileReference.getDownloadUrl();
-                    })
-                    .addOnCompleteListener((OnCompleteListener<Uri>) task -> {
-                        if (task.isSuccessful()) {
-                            Uri downloadUri = task.getResult();
-                            String mUrl = downloadUri.toString();
-                            imgAvatar.setImageURI(imageUri);
-
-                            reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(firebaseUser.getUid());
-                            HashMap<String, Object> hashMap = new HashMap<>();
-                            hashMap.put(EXTRA_IMAGEURL, mUrl);
-                            reference.updateChildren(hashMap);
-                        } else {
-                            screens.showToast(R.string.msgFailedToUpload);
-                        }
-                        pd.dismiss();
-                    }).addOnFailureListener(e -> {
-                        Utils.getErrors(e);
-                        screens.showToast(e.getMessage());
-                        pd.dismiss();
-                    });
+            val fileReference = storageReference!!.child(
+                System.currentTimeMillis().toString() + "." + context?.let {
+                    Utils.getExtension(
+                        it, imageUri
+                    )
+                }
+            )
+            uploadTask = fileReference.putFile(imageUri!!)
+            (uploadTask as UploadTask).continueWithTask(Continuation { task: Task<UploadTask.TaskSnapshot?> ->
+                if (!task.isSuccessful) {
+                    throw task.exception!!
+                }
+                fileReference.downloadUrl
+            } as Continuation<UploadTask.TaskSnapshot?, Task<Uri>>)
+                .addOnCompleteListener((OnCompleteListener { task: Task<Uri> ->
+                    if (task.isSuccessful) {
+                        val downloadUri = task.result
+                        val mUrl = downloadUri.toString()
+                        imgAvatar!!.setImageURI(imageUri)
+                        reference =
+                            FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+                                .child(firebaseUser!!.uid)
+                        val hashMap = HashMap<String, Any>()
+                        hashMap[IConstants.EXTRA_IMAGEURL] = mUrl
+                        reference!!.updateChildren(hashMap)
+                    } else {
+                        screens!!.showToast(R.string.msgFailedToUpload)
+                    }
+                    pd.dismiss()
+                } as OnCompleteListener<Uri>))
+                .addOnFailureListener(OnFailureListener { e: Exception ->
+                    Utils.getErrors(e)
+                    screens!!.showToast(e.message)
+                    pd.dismiss()
+                })
         } else {
-            screens.showToast(R.string.msgNoImageSelected);
+            screens!!.showToast(R.string.msgNoImageSelected)
         }
     }
 
+    companion object {
+        private fun revokeGoogle(context: Context) {
+            try {
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(context.getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                val mGoogleSignInClient = GoogleSignIn.getClient(context, gso)
+                mGoogleSignInClient.revokeAccess()
+            } catch (e: Exception) {
+                Utils.getErrors(e)
+            }
+        }
+    }
 }

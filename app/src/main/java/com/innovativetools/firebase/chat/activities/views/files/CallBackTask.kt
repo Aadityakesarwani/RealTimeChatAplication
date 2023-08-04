@@ -1,11 +1,13 @@
-package com.innovativetools.firebase.chat.activities.views.files;
+package com.innovativetools.firebase.chat.activities.views.files
 
 interface CallBackTask {
-    void PickerManagerOnUriReturned();
-
-    void PickerManagerOnPreExecute();
-
-    void PickerManagerOnProgressUpdate(int progress);
-
-    void PickerManagerOnPostExecute(String path, boolean wasDriveFile, boolean wasSuccessful, String reason);
+    fun PickerManagerOnUriReturned()
+    fun PickerManagerOnPreExecute()
+    fun PickerManagerOnProgressUpdate(progress: Int)
+    fun PickerManagerOnPostExecute(
+        path: String?,
+        wasDriveFile: Boolean,
+        wasSuccessful: Boolean,
+        reason: String?
+    )
 }

@@ -1,98 +1,60 @@
-package com.innovativetools.firebase.chat.activities.models;
+package com.innovativetools.firebase.chat.activities.models
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcelable
+import android.os.Parcel
+import android.os.Parcelable.Creator
 
+class Attachment : Parcelable {
+    var name: String? = null
+    var fileName: String? = null
+    var data: String? = null
+    var url: String? = null
+    var duration: String? = null
+    var bytesCount: Long = 0
 
-public class Attachment implements Parcelable {
-    private String name, fileName, data, url, duration;
-    private long bytesCount;
-
-    public Attachment() {
+    constructor() {}
+    protected constructor(`in`: Parcel) {
+        name = `in`.readString()
+        fileName = `in`.readString()
+        data = `in`.readString()
+        url = `in`.readString()
+        duration = `in`.readString()
+        bytesCount = `in`.readLong()
     }
 
-    protected Attachment(Parcel in) {
-        name = in.readString();
-        fileName = in.readString();
-        data = in.readString();
-        url = in.readString();
-        duration = in.readString();
-        bytesCount = in.readLong();
+//    fun getFileName(): String {
+//        return if (fileName != null) fileName!! else ""
+//    }
+
+//    fun setFileName(name: String?) {
+//        fileName = name
+//    }
+
+    override fun describeContents(): Int {
+        return 0
     }
 
-    public static final Creator<Attachment> CREATOR = new Creator<Attachment>() {
-        @Override
-        public Attachment createFromParcel(Parcel in) {
-            return new Attachment(in);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(name)
+        dest.writeString(fileName)
+        dest.writeString(data)
+        dest.writeString(url)
+        dest.writeString(duration)
+        dest.writeLong(bytesCount)
+    }
+
+    companion object {
+        @JvmField
+        val CREATOR: Creator<Attachment?> = object : Creator<Attachment?> {
+            override fun createFromParcel(`in`: Parcel): Attachment? {
+                return Attachment(`in`)
+            }
+
+            override fun newArray(size: Int): Array<Attachment?> {
+                return arrayOfNulls(size)
+            }
         }
-
-        @Override
-        public Attachment[] newArray(int size) {
-            return new Attachment[size];
-        }
-    };
-
-    public String getName() {
-        return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
-    public String getFileName() {
-        return fileName != null ? fileName : "";
-    }
-
-    public void setFileName(String name) {
-        this.fileName = name;
-    }
-
-    public String getData() {
-        return data;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getDuration() {
-        return duration;
-    }
-
-    public void setDuration(String duration) {
-        this.duration = duration;
-    }
-
-    public long getBytesCount() {
-        return bytesCount;
-    }
-
-    public void setBytesCount(long bytesCount) {
-        this.bytesCount = bytesCount;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(name);
-        dest.writeString(fileName);
-        dest.writeString(data);
-        dest.writeString(url);
-        dest.writeString(duration);
-        dest.writeLong(bytesCount);
-    }
 }
-

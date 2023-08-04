@@ -1,104 +1,86 @@
-package com.innovativetools.firebase.chat.activities.adapters;
+package com.innovativetools.firebase.chat.activities.adapters
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.content.Context
+import androidx.recyclerview.widget.RecyclerView
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ImageView
+import com.innovativetools.firebase.chat.activities.R
+import com.google.firebase.auth.FirebaseAuth
+import android.widget.TextView
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.util.ArrayList
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+class GroupsParticipantsAdapters(private val mContext: Context, usersList: ArrayList<User>?) :
+    RecyclerView.Adapter<GroupsParticipantsAdapters.ViewHolder>() {
+    private val mUsers: ArrayList<User>
+    private val screens: Screens
 
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.firebase.auth.FirebaseAuth;
-
-import java.util.ArrayList;
-
-public class GroupsParticipantsAdapters extends RecyclerView.Adapter<GroupsParticipantsAdapters.ViewHolder> {
-
-    private final Context mContext;
-    private final ArrayList<User> mUsers;
-    private final Screens screens;
-
-    public GroupsParticipantsAdapters(Context mContext, ArrayList<User> usersList) {
-        this.mContext = mContext;
-        this.mUsers = Utils.removeDuplicates(usersList);
-        this.screens = new Screens(mContext);
+    init {
+        mUsers = Utils.removeDuplicates<String>(usersList)!!
+        screens = Screens(mContext)
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.list_group_participants, viewGroup, false);
-        return new ViewHolder(view);
+    override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): ViewHolder {
+        val view = LayoutInflater.from(mContext)
+            .inflate(R.layout.list_group_participants, viewGroup, false)
+        return ViewHolder(view)
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
-        final User user = mUsers.get(i);
-        final String strAbout = user.getAbout();
-
-        viewHolder.txtUsername.setText(user.getUsername());
-        if (user.getUsername().equalsIgnoreCase(mContext.getString(R.string.strYou))) {
-            Utils.setProfileImage(mContext, user.getMyImg(), viewHolder.imageView);
+    override fun onBindViewHolder(viewHolder: ViewHolder, i: Int) {
+        val user = mUsers[i]
+        val strAbout = user.about
+        viewHolder.txtUsername.text = user.username
+        if (user.username.equals(mContext.getString(R.string.strYou), ignoreCase = true)) {
+            user.myImg?.let { Utils.setProfileImage(mContext, it, viewHolder.imageView) }
         } else {
-            Utils.setProfileImage(mContext, user.getImageURL(), viewHolder.imageView);
+            user.getImageURL()?.let { Utils.setProfileImage(mContext, it, viewHolder.imageView) }
         }
-
-        viewHolder.txtLastMsg.setVisibility(View.VISIBLE);
+        viewHolder.txtLastMsg.visibility = View.VISIBLE
         if (Utils.isEmpty(strAbout)) {
-            viewHolder.txtLastMsg.setText(mContext.getString(R.string.strAboutStatus));
+            viewHolder.txtLastMsg.text = mContext.getString(R.string.strAboutStatus)
         } else {
-            viewHolder.txtLastMsg.setText(strAbout);
+            viewHolder.txtLastMsg.text = strAbout
         }
-
-        viewHolder.txtAdmin.setVisibility(View.GONE);
-
-        if (user.isAdmin()) {
-            viewHolder.txtAdmin.setVisibility(View.VISIBLE);
+        viewHolder.txtAdmin.visibility = View.GONE
+        if (user.isAdmin) {
+            viewHolder.txtAdmin.visibility = View.VISIBLE
         }
-
-        viewHolder.imageView.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.openViewProfileActivity(user.getId());
+        viewHolder.imageView.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens.openViewProfileActivity(user.id)
             }
-        });
-
-        viewHolder.itemView.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                if (!FirebaseAuth.getInstance().getCurrentUser().getUid().equalsIgnoreCase(user.getId())) {
-                    screens.openUserMessageActivity(user.getId());
+        })
+        viewHolder.itemView.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                if (!FirebaseAuth.getInstance().currentUser!!
+                        .uid.equals(user.id, ignoreCase = true)
+                ) {
+                    screens.openUserMessageActivity(user.id)
                 }
             }
-        });
+        })
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imageView: ImageView
+        val txtUsername: TextView
+        val txtLastMsg: TextView
+        val txtAdmin: TextView
 
-        public final ImageView imageView;
-        public final TextView txtUsername;
-        private final TextView txtLastMsg;
-        private final TextView txtAdmin;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            imageView = itemView.findViewById(R.id.imageView);
-            txtUsername = itemView.findViewById(R.id.txtUsername);
-            txtLastMsg = itemView.findViewById(R.id.txtLastMsg);
-            txtAdmin = itemView.findViewById(R.id.txtAdmin);
+        init {
+            imageView = itemView.findViewById(R.id.imageView)
+            txtUsername = itemView.findViewById(R.id.txtUsername)
+            txtLastMsg = itemView.findViewById(R.id.txtLastMsg)
+            txtAdmin = itemView.findViewById(R.id.txtAdmin)
         }
     }
 
-    @Override
-    public int getItemCount() {
-        return mUsers.size();
+    override fun getItemCount(): Int {
+        return mUsers.size
     }
 }

@@ -1,113 +1,103 @@
-package com.innovativetools.firebase.chat.activities.settings;
+package com.innovativetools.firebase.chat.activities.settings
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_HIDE_EMAIL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_HIDE_PROFILE_PHOTO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TRUE;
+import com.innovativetools.firebase.chat.activities.managers.Utils.updateGenericUserField
+import com.innovativetools.firebase.chat.activities.BaseActivity
+import android.os.Bundle
+import android.view.View
+import com.innovativetools.firebase.chat.activities.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.ads.AdView
+import android.widget.LinearLayout
+import android.widget.CompoundButton
+import androidx.appcompat.widget.SwitchCompat
+import androidx.appcompat.widget.Toolbar
+import com.google.android.gms.ads.AdRequest
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.innovativetools.firebase.chat.activities.BuildConfig
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.LinearLayout;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.widget.SwitchCompat;
-import androidx.appcompat.widget.Toolbar;
-
-import com.innovativetools.firebase.chat.activities.BaseActivity;
-import com.innovativetools.firebase.chat.activities.BuildConfig;
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-public class PrivacySettingActivity extends BaseActivity implements View.OnClickListener {
-
-    private SwitchCompat emailOnOff, profilePhotoOnOff;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_privacy_settings);
-
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert firebaseUser != null;
-        final String currentId = firebaseUser.getUid();
-
-        final AdView adView = findViewById(R.id.adView);
+class PrivacySettingActivity : BaseActivity(), View.OnClickListener {
+    private var emailOnOff: SwitchCompat? = null
+    private var profilePhotoOnOff: SwitchCompat? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_privacy_settings)
+        firebaseUser = FirebaseAuth.getInstance().currentUser
+        assert(firebaseUser != null)
+        val currentId = firebaseUser!!.uid
+        val adView = findViewById<AdView>(R.id.adView)
         if (BuildConfig.ADS_SHOWN) {
-            adView.setVisibility(View.VISIBLE);
-            final AdRequest adRequest = new AdRequest.Builder().build();
-            adView.loadAd(adRequest);
+            adView.visibility = View.VISIBLE
+            val adRequest = AdRequest.Builder().build()
+            adView.loadAd(adRequest)
         } else {
-            adView.setVisibility(View.GONE);
+            adView.visibility = View.GONE
         }
-
-        final Toolbar mToolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(R.string.strPrivacySetting);
-        mToolbar.setNavigationOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                onBackPressed();
+        val mToolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(mToolbar)
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        supportActionBar!!.setTitle(R.string.strPrivacySetting)
+        mToolbar.setNavigationOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                onBackPressed()
             }
-        });
-
-        final LinearLayout layoutEmail = findViewById(R.id.layoutEmail);
-        final LinearLayout layoutProfilePhoto = findViewById(R.id.layoutProfilePhoto);
-
-        profilePhotoOnOff = findViewById(R.id.profilePhotoOnOff);
-        profilePhotoOnOff.setOnCheckedChangeListener((compoundButton, b) -> Utils.updateGenericUserField(currentId, EXTRA_HIDE_PROFILE_PHOTO, b));
-
-        emailOnOff = findViewById(R.id.emailOnOff);
-        emailOnOff.setOnCheckedChangeListener((compoundButton, b) -> Utils.updateGenericUserField(currentId, EXTRA_HIDE_EMAIL, b));
-
-        reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(currentId);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        })
+        val layoutEmail = findViewById<LinearLayout>(R.id.layoutEmail)
+        val layoutProfilePhoto = findViewById<LinearLayout>(R.id.layoutProfilePhoto)
+        profilePhotoOnOff = findViewById(R.id.profilePhotoOnOff)
+        profilePhotoOnOff?.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { compoundButton: CompoundButton?, b: Boolean ->
+            updateGenericUserField(
+                currentId,
+                IConstants.EXTRA_HIDE_PROFILE_PHOTO,
+                b
+            )
+        })
+        emailOnOff = findViewById(R.id.emailOnOff)
+        emailOnOff?.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { compoundButton: CompoundButton?, b: Boolean ->
+            updateGenericUserField(
+                currentId,
+                IConstants.EXTRA_HIDE_EMAIL,
+                b
+            )
+        })
+        reference =
+            FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(currentId)
+        reference!!.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
-                    assert user != null;
-                    emailOnOff.setChecked(user.isHideEmail());
-                    profilePhotoOnOff.setChecked(user.isHideProfilePhoto());
+                    val user = dataSnapshot.getValue(
+                        User::class.java
+                    )!!
+                    emailOnOff?.setChecked(user.isHideEmail)
+                    profilePhotoOnOff?.setChecked(user.isHideProfilePhoto)
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        layoutEmail.setOnClickListener(this);
-        layoutProfilePhoto.setOnClickListener(this);
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        layoutEmail.setOnClickListener(this)
+        layoutProfilePhoto.setOnClickListener(this)
     }
 
-    @Override
-    public void onClick(View view) {
-        final int id = view.getId();
+    override fun onClick(view: View) {
+        val id = view.id
         if (id == R.id.layoutEmail) {
-            if (emailOnOff.isChecked()) {
-                emailOnOff.setChecked(FALSE);
+            if (emailOnOff!!.isChecked) {
+                emailOnOff!!.isChecked = IConstants.FALSE
             } else {
-                emailOnOff.setChecked(TRUE);
+                emailOnOff!!.isChecked = IConstants.TRUE
             }
         } else if (id == R.id.layoutProfilePhoto) {
-            if (profilePhotoOnOff.isChecked()) {
-                profilePhotoOnOff.setChecked(FALSE);
+            if (profilePhotoOnOff!!.isChecked) {
+                profilePhotoOnOff!!.isChecked = IConstants.FALSE
             } else {
-                profilePhotoOnOff.setChecked(TRUE);
+                profilePhotoOnOff!!.isChecked = IConstants.TRUE
             }
         }
     }
-
 }

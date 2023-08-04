@@ -1,59 +1,56 @@
-package com.innovativetools.firebase.chat.activities.views.profileview;
+package com.innovativetools.firebase.chat.activities.views.profileview
 
-import android.annotation.TargetApi;
-import android.content.Context;
-import android.os.Build;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.annotation.TargetApi
+import android.content.Context
+import android.os.Build
+import android.util.AttributeSet
+import com.innovativetools.firebase.chat.activities.R
+import android.util.TypedValue
 
-import com.innovativetools.firebase.chat.activities.R;
+class HeaderView : LinearLayout {
+    private var name: TextView? = null
+    private var lastSeen: TextView? = null
 
-
-public class HeaderView extends LinearLayout {
-
-    private TextView name;
-    private TextView lastSeen;
-
-    public HeaderView(Context context) {
-        super(context);
-    }
-
-    public HeaderView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    public HeaderView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+    constructor(context: Context?) : super(context) {}
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {}
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public HeaderView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
+    constructor(
+        context: Context?,
+        attrs: AttributeSet?,
+        defStyleAttr: Int,
+        defStyleRes: Int
+    ) : super(context, attrs, defStyleAttr, defStyleRes) {
     }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        name = findViewById(R.id.txtGroupName);
-        lastSeen = findViewById(R.id.txtSubtitle);
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        name = findViewById(R.id.txtGroupName)
+        lastSeen = findViewById(R.id.txtSubtitle)
     }
 
-    public void bindTo(String name, String lastSeen) {
-        this.name.setText(name);
-        this.lastSeen.setText(lastSeen);
+    fun bindTo(name: String?, lastSeen: String?) {
+        this.name!!.text = name
+        this.lastSeen!!.text = lastSeen
     }
 
-    public void setName(String name) {
-        this.name.setText(name);
+    fun setName(name: String?) {
+        this.name!!.text = name
     }
 
-    public void setLastSeen(String lastSeen) {
-        this.lastSeen.setText(lastSeen);
+    fun setLastSeen(lastSeen: String?) {
+        this.lastSeen!!.text = lastSeen
     }
 
-    public void setTextSize(float size) {
-        name.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+    fun setTextSize(size: Float) {
+        name!!.setTextSize(TypedValue.COMPLEX_UNIT_PX, size)
     }
 }

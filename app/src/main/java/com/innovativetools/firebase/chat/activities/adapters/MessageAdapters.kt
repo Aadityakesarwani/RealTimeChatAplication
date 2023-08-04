@@ -1,748 +1,773 @@
-package com.innovativetools.firebase.chat.activities.adapters;
+package com.innovativetools.firebase.chat.activities.adapters
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.BROADCAST_DOWNLOAD_EVENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.COMPLETED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.DOWNLOAD_DATA;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_AUDIO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_DOCUMENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_IMAGE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_LOCATION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_RECORDING;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_TEXT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_VIDEO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
+import com.innovativetools.firebase.chat.activities.models.Chat
+import androidx.recyclerview.widget.RecyclerView
+import com.innovativetools.firebase.chat.activities.views.audiowave.AudioPlayerView
+import com.innovativetools.firebase.chat.activities.views.voiceplayer.RecordingPlayerView
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.widget.SeekBar.OnSeekBarChangeListener
+import android.app.Activity
+import android.content.Context
+import com.innovativetools.firebase.chat.activities.models.LocationAddress
+import com.google.gson.Gson
+import android.content.Intent
+import android.view.View
+import android.widget.*
+import com.innovativetools.firebase.chat.activities.models.DownloadFileEvent
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.FirebaseAuth
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.io.File
+import java.lang.Exception
+import java.util.*
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.SeekBar;
-import android.widget.TextView;
+class MessageAdapters(
+    private val mContext: Context,
+    private val mChats: ArrayList<Chat>,
+    private val userName: String,
+    private val strCurrentImage: String,
+    private val imageUrl: String
+) : RecyclerView.Adapter<MessageAdapters.ViewHolder>() {
+    private val MSG_TYPE_RIGHT = 0
+    private val MSG_TYPE_LEFT = 1
+    private val myViewList: ArrayList<AudioPlayerView?>
+    private val myRecList: ArrayList<RecordingPlayerView?>
+    private var isAudioPlaying = false
+    private var isRecordingPlaying = false
+    private val screens: Screens
 
-import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.DownloadFileEvent;
-import com.innovativetools.firebase.chat.activities.models.LocationAddress;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.innovativetools.firebase.chat.activities.views.audiowave.AudioPlayerView;
-import com.innovativetools.firebase.chat.activities.views.voiceplayer.RecordingPlayerView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.gson.Gson;
-
-import java.io.File;
-import java.util.ArrayList;
-
-public class MessageAdapters extends RecyclerView.Adapter<MessageAdapters.ViewHolder> {
-
-    private final int MSG_TYPE_RIGHT = 0;
-    private final int MSG_TYPE_LEFT = 1;
-
-    private final Context mContext;
-    private final ArrayList<Chat> mChats;
-    private final String imageUrl;
-    private final String strCurrentImage;
-    private final String userName;
-    private final ArrayList<AudioPlayerView> myViewList;
-    private final ArrayList<RecordingPlayerView> myRecList;
-    private boolean isAudioPlaying = false, isRecordingPlaying = false;
-    private final Screens screens;
-
-    public MessageAdapters(Context mContext, ArrayList<Chat> chatList, String userName, String strCurrentImage, String imageUrl) {
-        this.mContext = mContext;
-        this.mChats = chatList;
-        this.userName = userName;
-        this.imageUrl = imageUrl;
-        this.strCurrentImage = strCurrentImage;
-        this.myViewList = new ArrayList<>();
-        this.myRecList = new ArrayList<>();
-        screens = new Screens(mContext);
+    init {
+        myViewList = ArrayList()
+        myRecList = ArrayList()
+        screens = Screens(mContext)
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-        if (viewType == MSG_TYPE_RIGHT) {
-            View view = LayoutInflater.from(mContext).inflate(R.layout.list_chat_right, viewGroup, false);
-            return new MessageAdapters.ViewHolder(view);
+    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
+        return if (viewType == MSG_TYPE_RIGHT) {
+            val view =
+                LayoutInflater.from(mContext).inflate(R.layout.list_chat_right, viewGroup, false)
+            ViewHolder(view)
         } else {
-            View view = LayoutInflater.from(mContext).inflate(R.layout.list_chat_left, viewGroup, false);
-            return new MessageAdapters.ViewHolder(view);
+            val view =
+                LayoutInflater.from(mContext).inflate(R.layout.list_chat_left, viewGroup, false)
+            ViewHolder(view)
         }
     }
 
-    private void showTextLayout(final ViewHolder viewHolder, final Chat chat) {
+    private fun showTextLayout(viewHolder: ViewHolder, chat: Chat) {
         try {
-            viewHolder.txtShowMessage.setVisibility(View.VISIBLE);
-            viewHolder.txtShowMessage.setText(chat.getMessage());
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            viewHolder.txtShowMessage.visibility = View.VISIBLE
+            viewHolder.txtShowMessage.text = chat.message
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    private void setImageLayout(final ViewHolder viewHolder, final Chat chat) {
+    private fun setImageLayout(viewHolder: ViewHolder, chat: Chat) {
         try {
-            viewHolder.imgPath.setVisibility(View.VISIBLE);
-            Utils.setChatImage(mContext, chat.getImgPath(), viewHolder.imgPath);
-            viewHolder.imgPath.setOnClickListener(new SingleClickListener() {
-                @Override
-                public void onClickView(View v) {
-                    screens.openFullImageViewActivity(v, chat.getImgPath(), "");
+            viewHolder.imgPath.visibility = View.VISIBLE
+            chat.imgPath?.let { Utils.setChatImage(mContext, it, viewHolder.imgPath) }
+            viewHolder.imgPath.setOnClickListener(object : SingleClickListener() {
+                override fun onClickView(v: View?) {
+                    screens.openFullImageViewActivity(v, chat.imgPath, "")
                 }
-            });
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            })
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull final ViewHolder viewHolder, final int position) {
-        final Chat chat = mChats.get(position);
-        final String attachType = chat.getAttachmentType();
+    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
+        val chat = mChats[position]
+        val attachType = chat.attachmentType
         try {
-            viewHolder.txtShowMessage.setVisibility(View.GONE);
-            viewHolder.imgPath.setVisibility(View.GONE);
-
-            viewHolder.recordingLayout.setVisibility(View.GONE);
-
-            viewHolder.audioLayout.setVisibility(View.GONE);
-
-            viewHolder.documentLayout.setVisibility(View.GONE);
-
-            viewHolder.videoLayout.setVisibility(View.GONE);
-
-            viewHolder.contactLayout.setVisibility(View.GONE);
-
-            viewHolder.locationLayout.setVisibility(View.GONE);
-
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            viewHolder.txtShowMessage.visibility = View.GONE
+            viewHolder.imgPath.visibility = View.GONE
+            viewHolder.recordingLayout!!.visibility = View.GONE
+            viewHolder.audioLayout!!.visibility = View.GONE
+            viewHolder.documentLayout!!.visibility = View.GONE
+            viewHolder.videoLayout!!.visibility = View.GONE
+            viewHolder.contactLayout!!.visibility = View.GONE
+            viewHolder.locationLayout!!.visibility = View.GONE
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
-
         if (Utils.isEmpty(attachType)) {
-            if (Utils.isEmpty(chat.getType())) {//This is for those who are already chat with older App and need to display proper.
-                showTextLayout(viewHolder, chat);
+            if (Utils.isEmpty(chat.type)) { //This is for those who are already chat with older App and need to display proper.
+                showTextLayout(viewHolder, chat)
             } else {
-                if (chat.getType().equalsIgnoreCase(TYPE_IMAGE)) {
-                    setImageLayout(viewHolder, chat);
+                if (chat.type.equals(IConstants.TYPE_IMAGE, ignoreCase = true)) {
+                    setImageLayout(viewHolder, chat)
                 } else {
-                    showTextLayout(viewHolder, chat);
+                    showTextLayout(viewHolder, chat)
                 }
             }
         } else {
-            if (attachType.equalsIgnoreCase(TYPE_TEXT)) {
-                showTextLayout(viewHolder, chat);
-            } else if (attachType.equalsIgnoreCase(TYPE_IMAGE)) {
-                setImageLayout(viewHolder, chat);
-            } else if (attachType.equalsIgnoreCase(TYPE_RECORDING)) {
+            if (attachType.equals(IConstants.TYPE_TEXT, ignoreCase = true)) {
+                showTextLayout(viewHolder, chat)
+            } else if (attachType.equals(IConstants.TYPE_IMAGE, ignoreCase = true)) {
+                setImageLayout(viewHolder, chat)
+            } else if (attachType.equals(IConstants.TYPE_RECORDING, ignoreCase = true)) {
                 try {
-                    viewHolder.recordingLayout.setVisibility(View.VISIBLE);
-
-                    switch (viewHolder.getItemViewType()) {
-                        case MSG_TYPE_LEFT: //OTHER USER's ITEM RECEIVED TO PLAY HERE
-                            final String receiverPath = Utils.getReceiveDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-                            if (new File(receiverPath).exists()) {
-                                viewHolder.recordingPlayerView.setAudio(receiverPath);
-                                if (chat.getDownloadProgress() == COMPLETED) {
-                                    viewHolder.recordingPlayerView.hidePlayProgressAndPlay();
+                    viewHolder.recordingLayout!!.visibility = View.VISIBLE
+                    when (viewHolder.itemViewType) {
+                        MSG_TYPE_LEFT -> {
+                            val receiverPath = Utils.getReceiveDirectory(
+                                mContext, attachType
+                            ).toString() + IConstants.SLASH + chat.attachmentFileName
+                            if (File(receiverPath).exists()) {
+                                viewHolder.recordingPlayerView!!.setAudio(receiverPath)
+                                if (chat.downloadProgress == IConstants.COMPLETED) {
+                                    viewHolder.recordingPlayerView!!.hidePlayProgressAndPlay()
                                 } else {
-                                    viewHolder.recordingPlayerView.hidePlayProgressbar();
+                                    viewHolder.recordingPlayerView!!.hidePlayProgressbar()
                                 }
                             } else {
-                                viewHolder.recordingPlayerView.showDownloadButton();
-                                viewHolder.recordingPlayerView.getImgDownload().setOnClickListener(new SingleClickListener() {
-                                    @Override
-                                    public void onClickView(View v) {
-                                        viewHolder.recordingPlayerView.showPlayProgressbar();
-                                        viewHolder.broadcastDownloadEvent(chat);
-                                    }
-                                });
-                                viewHolder.recordingPlayerView.setAudio(null); //Default null value pass for file not found message
+                                viewHolder.recordingPlayerView!!.showDownloadButton()
+                                viewHolder.recordingPlayerView!!.imgDownload.setOnClickListener(
+                                    object : SingleClickListener() {
+                                        override fun onClickView(v: View?) {
+                                            viewHolder.recordingPlayerView!!.showPlayProgressbar()
+                                            viewHolder.broadcastDownloadEvent(chat)
+                                        }
+                                    })
+                                viewHolder.recordingPlayerView!!.setAudio(null) //Default null value pass for file not found message
                                 try {
-                                    viewHolder.recordingPlayerView.getTxtProcess().setText(Utils.getFileSize(chat.getAttachmentSize()));
-                                } catch (Exception ignored) {
+                                    viewHolder.recordingPlayerView!!.txtProcess.text =
+                                        Utils.getFileSize(chat.attachmentSize)
+                                } catch (ignored: Exception) {
                                 }
                             }
-                            break;
-                        case MSG_TYPE_RIGHT: //It check logged in user already sent file, then check inside the /.sent/ folder
-                            final String path = Utils.getSentDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-                            if (new File(path).exists()) {
-                                viewHolder.recordingPlayerView.setAudio(path);
+                        }
+                        MSG_TYPE_RIGHT -> {
+                            val path = Utils.getSentDirectory(
+                                mContext, attachType
+                            ).toString() + IConstants.SLASH + chat.attachmentFileName
+                            if (File(path).exists()) {
+                                viewHolder.recordingPlayerView!!.setAudio(path)
                             } else {
-                                viewHolder.recordingPlayerView.setAudio(null); //Default null value pass for file not found message
+                                viewHolder.recordingPlayerView!!.setAudio(null) //Default null value pass for file not found message
                             }
-                            break;
+                        }
                     }
-
-                    viewHolder.recordingPlayerView.getImgPlay().setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            isRecordingPlaying = true;
-                            isAudioPlaying = false;
-                            playingTrack(viewHolder);
+                    viewHolder.recordingPlayerView!!.imgPlay.setOnClickListener(object :
+                        SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            isRecordingPlaying = true
+                            isAudioPlaying = false
+                            playingTrack(viewHolder)
                         }
-                    });
-
-                    viewHolder.recordingPlayerView.getImgPause().setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            isRecordingPlaying = false;
-                            viewHolder.recordingPlayerView.getImgPauseClickListener().onClick(v);
+                    })
+                    viewHolder.recordingPlayerView!!.imgPause.setOnClickListener(object :
+                        SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            isRecordingPlaying = false
+                            viewHolder.recordingPlayerView!!.imgPauseClickListener.onClick(v)
                         }
-                    });
-
-                    viewHolder.recordingPlayerView.getSeekBar().setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                            if (!Utils.isEmpty(viewHolder.recordingPlayerView.getPath())) {
-                                viewHolder.recordingPlayerView.getSeekBarListener().onProgressChanged(seekBar, progress, fromUser);
+                    })
+                    viewHolder.recordingPlayerView!!.seekBar.setOnSeekBarChangeListener(object :
+                        OnSeekBarChangeListener {
+                        override fun onProgressChanged(
+                            seekBar: SeekBar,
+                            progress: Int,
+                            fromUser: Boolean
+                        ) {
+                            if (!Utils.isEmpty(
+                                    viewHolder.recordingPlayerView!!.path
+                                )
+                            ) {
+                                viewHolder.recordingPlayerView!!.seekBarListener.onProgressChanged(
+                                    seekBar,
+                                    progress,
+                                    fromUser
+                                )
                             }
                         }
 
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {
-                            if (!Utils.isEmpty(viewHolder.recordingPlayerView.getPath())) {
-                                viewHolder.recordingPlayerView.getSeekBarListener().onStartTrackingTouch(seekBar);
+                        override fun onStartTrackingTouch(seekBar: SeekBar) {
+                            if (!Utils.isEmpty(
+                                    viewHolder.recordingPlayerView!!.path
+                                )
+                            ) {
+                                viewHolder.recordingPlayerView!!.seekBarListener.onStartTrackingTouch(
+                                    seekBar
+                                )
                             }
-                            isRecordingPlaying = true;
-                            isAudioPlaying = false;
-                            playingTrack(viewHolder);
+                            isRecordingPlaying = true
+                            isAudioPlaying = false
+                            playingTrack(viewHolder)
                         }
 
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {
-                            if (!Utils.isEmpty(viewHolder.recordingPlayerView.getPath())) {
-                                viewHolder.recordingPlayerView.getSeekBarListener().onStopTrackingTouch(seekBar);
+                        override fun onStopTrackingTouch(seekBar: SeekBar) {
+                            if (!Utils.isEmpty(
+                                    viewHolder.recordingPlayerView!!.path
+                                )
+                            ) {
+                                viewHolder.recordingPlayerView!!.seekBarListener.onStopTrackingTouch(
+                                    seekBar
+                                )
                             } else {
-                                viewHolder.recordingPlayerView.getSeekBar().setProgress(0);
+                                viewHolder.recordingPlayerView!!.seekBar.progress = 0
                             }
                         }
-                    });
-
-                    //REMAINING - PRASHANT ADESARA
-                    switch (viewHolder.getItemViewType()) {
-                        case MSG_TYPE_LEFT:
-                            Utils.setProfileImage(mContext, imageUrl, viewHolder.recordingPlayerView.getVoiceUserImage());
-                            break;
-                        case MSG_TYPE_RIGHT:
-                            Utils.setProfileImage(mContext, strCurrentImage, viewHolder.recordingPlayerView.getVoiceUserImage());
-                            break;
+                    })
+                    when (viewHolder.itemViewType) {
+                        MSG_TYPE_LEFT -> Utils.setProfileImage(
+                            mContext, imageUrl, viewHolder.recordingPlayerView!!.voiceUserImage
+                        )
+                        MSG_TYPE_RIGHT -> Utils.setProfileImage(
+                            mContext,
+                            strCurrentImage,
+                            viewHolder.recordingPlayerView!!.voiceUserImage
+                        )
                     }
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
-            } else if (attachType.equalsIgnoreCase(TYPE_AUDIO)) {
+            } else if (attachType.equals(IConstants.TYPE_AUDIO, ignoreCase = true)) {
                 try {
-                    viewHolder.audioLayout.setVisibility(View.VISIBLE);
-
-                    switch (viewHolder.getItemViewType()) {
-
-                        case MSG_TYPE_LEFT:
-                            final String receivePath = Utils.getReceiveDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-                            if (new File(receivePath).exists()) {
-
-                                viewHolder.audioPlayerView.setAudio(receivePath);
-
-                                if (chat.getDownloadProgress() == COMPLETED) {
-                                    viewHolder.audioPlayerView.hidePlayProgressAndPlay();
+                    viewHolder.audioLayout!!.visibility = View.VISIBLE
+                    when (viewHolder.itemViewType) {
+                        MSG_TYPE_LEFT -> {
+                            val receivePath = Utils.getReceiveDirectory(
+                                mContext, attachType
+                            ).toString() + IConstants.SLASH + chat.attachmentFileName
+                            if (File(receivePath).exists()) {
+                                viewHolder.audioPlayerView!!.setAudio(receivePath)
+                                if (chat.downloadProgress == IConstants.COMPLETED) {
+                                    viewHolder.audioPlayerView!!.hidePlayProgressAndPlay()
                                 } else {
-                                    viewHolder.audioPlayerView.hidePlayProgressbar();
+                                    viewHolder.audioPlayerView!!.hidePlayProgressbar()
                                 }
                             } else {
-                                viewHolder.audioPlayerView.showDownloadButton();
-                                viewHolder.audioPlayerView.getImgDownload().setOnClickListener(new SingleClickListener() {
-                                    @Override
-                                    public void onClickView(View v) {
-                                        viewHolder.audioPlayerView.showPlayProgressbar();
-                                        viewHolder.broadcastDownloadEvent(chat);
+                                viewHolder.audioPlayerView!!.showDownloadButton()
+                                viewHolder.audioPlayerView!!.imgDownload?.setOnClickListener(object :
+                                    SingleClickListener() {
+                                    override fun onClickView(v: View?) {
+                                        viewHolder.audioPlayerView!!.showPlayProgressbar()
+                                        viewHolder.broadcastDownloadEvent(chat)
                                     }
-                                });
-                                viewHolder.audioPlayerView.setAudio(null); //Default null value pass for file not found message
+                                })
+                                viewHolder.audioPlayerView!!.setAudio(null) //Default null value pass for file not found message
                                 try {
-                                    viewHolder.audioPlayerView.getTxtProcess().setText(Utils.getFileSize(chat.getAttachmentSize()));
-                                } catch (Exception ignored) {
+                                    viewHolder.audioPlayerView!!.txtProcess?.text =
+                                        Utils.getFileSize(chat.attachmentSize)
+                                } catch (ignored: Exception) {
                                 }
                             }
-                            break;
-                        case MSG_TYPE_RIGHT:
-                            final String path = Utils.getSentDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-//                            Utils.sout("Audio Path right:: " + path + " >>>> " + new File(path).exists());
-                            if (new File(path).exists()) {
-                                viewHolder.audioPlayerView.setAudio(path);
+                        }
+                        MSG_TYPE_RIGHT -> {
+                            val path = Utils.getSentDirectory(
+                                mContext, attachType
+                            ).toString() + IConstants.SLASH + chat.attachmentFileName
+                            //                            Utils.sout("Audio Path right:: " + path + " >>>> " + new File(path).exists());
+                            if (File(path).exists()) {
+                                viewHolder.audioPlayerView!!.setAudio(path)
                             } else {
-                                viewHolder.audioPlayerView.setAudio(null); //Default null value pass for file not found message
+                                viewHolder.audioPlayerView!!.setAudio(null) //Default null value pass for file not found message
                             }
-                            break;
+                        }
                     }
-                    viewHolder.audioPlayerView.getImgPlay().setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            isAudioPlaying = true;
-                            isRecordingPlaying = false;
-                            playingTrack(viewHolder);
+                    viewHolder.audioPlayerView!!.imgPlay?.setOnClickListener(object :
+                        SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            isAudioPlaying = true
+                            isRecordingPlaying = false
+                            playingTrack(viewHolder)
                         }
-                    });
-                    viewHolder.audioPlayerView.getImgPause().setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            isAudioPlaying = false;
-                            viewHolder.audioPlayerView.getImgPauseClickListener().onClick(v);
+                    })
+                    viewHolder.audioPlayerView!!.imgPause?.setOnClickListener(object :
+                        SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            isAudioPlaying = false
+                            viewHolder.audioPlayerView!!.imgPauseClickListener.onClick(v)
                         }
-                    });
-
-                    viewHolder.audioPlayerView.getSeekBar().setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                            if (!Utils.isEmpty(viewHolder.audioPlayerView.getPath())) {
-                                viewHolder.audioPlayerView.getSeekBarListener().onProgressChanged(seekBar, progress, fromUser);
+                    })
+                    viewHolder.audioPlayerView!!.seekBar?.setOnSeekBarChangeListener(object :
+                        OnSeekBarChangeListener {
+                        override fun onProgressChanged(
+                            seekBar: SeekBar,
+                            progress: Int,
+                            fromUser: Boolean
+                        ) {
+                            if (!Utils.isEmpty(
+                                    viewHolder.audioPlayerView!!.path
+                                )
+                            ) {
+                                viewHolder.audioPlayerView!!.seekBarListener.onProgressChanged(
+                                    seekBar,
+                                    progress,
+                                    fromUser
+                                )
                             }
                         }
 
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {
-                            if (!Utils.isEmpty(viewHolder.audioPlayerView.getPath())) {
-                                viewHolder.audioPlayerView.getSeekBarListener().onStartTrackingTouch(seekBar);
+                        override fun onStartTrackingTouch(seekBar: SeekBar) {
+                            if (!Utils.isEmpty(
+                                    viewHolder.audioPlayerView!!.path
+                                )
+                            ) {
+                                viewHolder.audioPlayerView!!.seekBarListener.onStartTrackingTouch(
+                                    seekBar
+                                )
                             }
-                            isAudioPlaying = true;
-                            isRecordingPlaying = false;
-                            playingTrack(viewHolder);
+                            isAudioPlaying = true
+                            isRecordingPlaying = false
+                            playingTrack(viewHolder)
                         }
 
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {
-                            if (!Utils.isEmpty(viewHolder.audioPlayerView.getPath())) {
-                                viewHolder.audioPlayerView.getSeekBarListener().onStopTrackingTouch(seekBar);
+                        override fun onStopTrackingTouch(seekBar: SeekBar) {
+                            if (!Utils.isEmpty(
+                                    viewHolder.audioPlayerView!!.path
+                                )
+                            ) {
+                                viewHolder.audioPlayerView!!.seekBarListener.onStopTrackingTouch(
+                                    seekBar
+                                )
                             } else {
-                                viewHolder.audioPlayerView.getSeekBar().setProgress(0);
+                                viewHolder.audioPlayerView!!.seekBar?.progress = 0
                             }
                         }
-                    });
-                    viewHolder.audioPlayerView.setFileName(chat.getAttachmentName());
-                } catch (Exception ignored) {
+                    })
+                    viewHolder.audioPlayerView!!.setFileName(chat.attachmentName)
+                } catch (ignored: Exception) {
                 }
-            } else if (attachType.equalsIgnoreCase(TYPE_DOCUMENT)) {
+            } else if (attachType.equals(IConstants.TYPE_DOCUMENT, ignoreCase = true)) {
                 try {
-                    viewHolder.documentLayout.setVisibility(View.VISIBLE);
-                    viewHolder.imgFileDownload.setVisibility(View.GONE);
-                    viewHolder.fileProgressBar.setVisibility(View.GONE);
-                    viewHolder.imgFileIcon.setVisibility(View.GONE);
-
-                    switch (viewHolder.getItemViewType()) {
-                        case MSG_TYPE_LEFT:
-                            final String receivePath = Utils.getReceiveDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-
-                            if (new File(receivePath).exists()) {
-                                viewHolder.imgFileIcon.setVisibility(View.VISIBLE);
-                                viewHolder.imgFileDownload.setVisibility(View.GONE);
-                                viewHolder.fileProgressBar.setVisibility(View.GONE);
+                    viewHolder.documentLayout!!.visibility = View.VISIBLE
+                    viewHolder.imgFileDownload!!.visibility = View.GONE
+                    viewHolder.fileProgressBar!!.visibility = View.GONE
+                    viewHolder.imgFileIcon!!.visibility = View.GONE
+                    when (viewHolder.itemViewType) {
+                        MSG_TYPE_LEFT -> {
+                            val receivePath = Utils.getReceiveDirectory(
+                                mContext, attachType
+                            ).toString() + IConstants.SLASH + chat.attachmentFileName
+                            if (File(receivePath).exists()) {
+                                viewHolder.imgFileIcon!!.visibility = View.VISIBLE
+                                viewHolder.imgFileDownload!!.visibility = View.GONE
+                                viewHolder.fileProgressBar!!.visibility = View.GONE
                             } else {
-                                viewHolder.imgFileIcon.setVisibility(View.GONE);
-                                viewHolder.imgFileDownload.setVisibility(View.VISIBLE);
-                                viewHolder.fileProgressBar.setVisibility(View.GONE);
-
-                                viewHolder.imgFileDownload.setOnClickListener(new SingleClickListener() {
-                                    @Override
-                                    public void onClickView(View v) {
-                                        viewHolder.imgFileDownload.setVisibility(View.GONE);
-                                        viewHolder.fileProgressBar.setVisibility(View.VISIBLE);
-                                        viewHolder.broadcastDownloadEvent(chat);
+                                viewHolder.imgFileIcon!!.visibility = View.GONE
+                                viewHolder.imgFileDownload!!.visibility = View.VISIBLE
+                                viewHolder.fileProgressBar!!.visibility = View.GONE
+                                viewHolder.imgFileDownload!!.setOnClickListener(object :
+                                    SingleClickListener() {
+                                    override fun onClickView(v: View?) {
+                                        viewHolder.imgFileDownload!!.visibility = View.GONE
+                                        viewHolder.fileProgressBar!!.visibility = View.VISIBLE
+                                        viewHolder.broadcastDownloadEvent(chat)
                                     }
-                                });
+                                })
                             }
-                            break;
-
-                        case MSG_TYPE_RIGHT:
-                            viewHolder.imgFileIcon.setVisibility(View.VISIBLE);
-                            break;
+                        }
+                        MSG_TYPE_RIGHT -> viewHolder.imgFileIcon!!.visibility = View.VISIBLE
                     }
-                    viewHolder.documentLayout.setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            switch (viewHolder.getItemViewType()) {
-                                case MSG_TYPE_LEFT:
-                                    try {
-                                        final String receivePath = Utils.getReceiveDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-                                        if (new File(receivePath).exists()) {
-                                            mContext.startActivity(Utils.getOpenFileIntent(mContext, receivePath));
-                                        }
-                                    } catch (Exception e) {
-                                        Utils.getErrors(e);
+                    viewHolder.documentLayout!!.setOnClickListener(object : SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            when (viewHolder.itemViewType) {
+                                MSG_TYPE_LEFT -> try {
+                                    val receivePath = Utils.getReceiveDirectory(
+                                        mContext, attachType
+                                    ).toString() + IConstants.SLASH + chat.attachmentFileName
+                                    if (File(receivePath).exists()) {
+                                        mContext.startActivity(
+                                            Utils.getOpenFileIntent(
+                                                mContext, receivePath
+                                            )
+                                        )
                                     }
-                                    break;
-                                case MSG_TYPE_RIGHT:
-                                    try {
-                                        final String path = Utils.getSentDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-                                        mContext.startActivity(Utils.getOpenFileIntent(mContext, path));
-                                    } catch (Exception e) {
-                                        Utils.getErrors(e);
-                                        screens.showToast(R.string.msgFileNotFound);
-                                    }
-                                    break;
-                            }
-                        }
-                    });
-                    viewHolder.txtFileName.setText(chat.getAttachmentName());
-                    viewHolder.txtFileExt.setText(Utils.getFileExtensionFromPath(chat.getAttachmentFileName()).toUpperCase());
-                    viewHolder.txtFileSize.setText(Utils.getFileSize(chat.getAttachmentSize()));
-                } catch (Exception e) {
-                    Utils.getErrors(e);
-                }
-            } else if (attachType.equalsIgnoreCase(TYPE_VIDEO)) {
-                try {
-                    viewHolder.videoLayout.setVisibility(View.VISIBLE);
-                    viewHolder.imgVideoPlay.setVisibility(View.GONE);
-                    viewHolder.videoProgressBar.setVisibility(View.GONE);
-
-                    switch (viewHolder.getItemViewType()) {
-                        case MSG_TYPE_LEFT:
-                            try {
-                                final File receivePath = new File(Utils.getReceiveDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName());
-                                if (receivePath.exists()) {
-                                    viewHolder.imgVideoPlay.setVisibility(View.VISIBLE);
-                                    viewHolder.imgVideoDownload.setVisibility(View.GONE);
-                                    viewHolder.videoProgressBar.setVisibility(View.GONE);
-                                } else {
-                                    viewHolder.imgVideoPlay.setVisibility(View.GONE);
-                                    viewHolder.imgVideoDownload.setVisibility(View.VISIBLE);
-                                    viewHolder.videoProgressBar.setVisibility(View.GONE);
-
-                                    viewHolder.imgVideoDownload.setOnClickListener(new SingleClickListener() {
-                                        @Override
-                                        public void onClickView(View v) {
-                                            viewHolder.imgVideoDownload.setVisibility(View.GONE);
-                                            viewHolder.videoProgressBar.setVisibility(View.VISIBLE);
-                                            viewHolder.broadcastDownloadEvent(chat);
-                                        }
-                                    });
+                                } catch (e: Exception) {
+                                    Utils.getErrors(e)
                                 }
-                            } catch (Exception ignored) {
-                            }
-                            break;
-                        case MSG_TYPE_RIGHT:
-                            try {
-                                viewHolder.imgVideoPlay.setVisibility(View.VISIBLE);
-                                viewHolder.imgVideoDownload.setVisibility(View.GONE);
-                                viewHolder.videoProgressBar.setVisibility(View.GONE);
-                            } catch (Exception ignored) {
-                            }
-                            break;
-                    }
-
-                    viewHolder.imgVideoPlay.setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            switch (viewHolder.getItemViewType()) {
-                                case MSG_TYPE_LEFT:
-                                    try {
-                                        final String receivePath = Utils.getReceiveDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName();
-                                        if (new File(receivePath).exists()) {
-                                            Utils.openPlayingVideo(mContext, new File(receivePath));
-                                        }
-                                    } catch (Exception e) {
-                                        Utils.getErrors(e);
-                                    }
-                                    break;
-                                case MSG_TYPE_RIGHT:
-                                    try {
-                                        final File path = new File(Utils.getSentDirectory(mContext, attachType) + SLASH + chat.getAttachmentFileName());
-                                        Utils.openPlayingVideo(mContext, path);
-                                    } catch (Exception e) {
-                                        Utils.getErrors(e);
-                                    }
-                                    break;
+                                MSG_TYPE_RIGHT -> try {
+                                    val path = Utils.getSentDirectory(
+                                        mContext, attachType
+                                    ).toString() + IConstants.SLASH + chat.attachmentFileName
+                                    mContext.startActivity(
+                                        Utils.getOpenFileIntent(
+                                            mContext, path
+                                        )
+                                    )
+                                } catch (e: Exception) {
+                                    Utils.getErrors(e)
+                                    screens.showToast(R.string.msgFileNotFound)
+                                }
                             }
                         }
-                    });
-
-                    viewHolder.txtVideoDuration.setText(chat.getAttachmentDuration());
-                    viewHolder.txtVideoSize.setText(Utils.getFileSize(chat.getAttachmentSize()));
-                    Utils.setChatImage(mContext, chat.getAttachmentData(), viewHolder.videoThumbnail);
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                    })
+                    viewHolder.txtFileName!!.text = chat.attachmentName
+                    viewHolder.txtFileExt!!.text =
+                        chat.attachmentFileName?.let {
+                            Utils.getFileExtensionFromPath(it).uppercase(
+                                Locale.getDefault()
+                            )
+                        }
+                    viewHolder.txtFileSize!!.text = Utils.getFileSize(chat.attachmentSize)
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
-            } else if (attachType.equalsIgnoreCase(TYPE_CONTACT)) {
+            } else if (attachType.equals(IConstants.TYPE_VIDEO, ignoreCase = true)) {
                 try {
-                    viewHolder.contactLayout.setVisibility(View.VISIBLE);
-                    viewHolder.txtContactName.setText(chat.getAttachmentFileName());
-                    viewHolder.btnMessageContact.setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            Utils.shareApp((Activity) mContext);
+                    viewHolder.videoLayout!!.visibility = View.VISIBLE
+                    viewHolder.imgVideoPlay!!.visibility = View.GONE
+                    viewHolder.videoProgressBar!!.visibility = View.GONE
+                    when (viewHolder.itemViewType) {
+                        MSG_TYPE_LEFT -> try {
+                            val receivePath = File(
+                                Utils.getReceiveDirectory(
+                                    mContext, attachType
+                                ).toString() + IConstants.SLASH + chat.attachmentFileName
+                            )
+                            if (receivePath.exists()) {
+                                viewHolder.imgVideoPlay!!.visibility = View.VISIBLE
+                                viewHolder.imgVideoDownload!!.visibility = View.GONE
+                                viewHolder.videoProgressBar!!.visibility = View.GONE
+                            } else {
+                                viewHolder.imgVideoPlay!!.visibility = View.GONE
+                                viewHolder.imgVideoDownload!!.visibility = View.VISIBLE
+                                viewHolder.videoProgressBar!!.visibility = View.GONE
+                                viewHolder.imgVideoDownload!!.setOnClickListener(object :
+                                    SingleClickListener() {
+                                    override fun onClickView(v: View?) {
+                                        viewHolder.imgVideoDownload!!.visibility = View.GONE
+                                        viewHolder.videoProgressBar!!.visibility = View.VISIBLE
+                                        viewHolder.broadcastDownloadEvent(chat)
+                                    }
+                                })
+                            }
+                        } catch (ignored: Exception) {
                         }
-                    });
-                    viewHolder.contactLayout.setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            Utils.openCallIntent(mContext, chat.getAttachmentDuration());
+                        MSG_TYPE_RIGHT -> try {
+                            viewHolder.imgVideoPlay!!.visibility = View.VISIBLE
+                            viewHolder.imgVideoDownload!!.visibility = View.GONE
+                            viewHolder.videoProgressBar!!.visibility = View.GONE
+                        } catch (ignored: Exception) {
                         }
-                    });
-                } catch (Exception e) {
-                    Utils.getErrors(e);
-                }
-            } else if (attachType.equalsIgnoreCase(TYPE_LOCATION)) {
-                try {
-                    viewHolder.locationLayout.setVisibility(View.VISIBLE);
-                    LocationAddress locationAddress = new Gson().fromJson(chat.getAttachmentData(), LocationAddress.class);
-                    int topLeft = 0, topRight = 0;
-                    switch (viewHolder.getItemViewType()) {
-                        case MSG_TYPE_LEFT:
-                            topRight = 16;
-                            break;
-                        case MSG_TYPE_RIGHT:
-                            topLeft = 16;
-                            break;
                     }
-                    Utils.showStaticMap(mContext, locationAddress, topLeft, topRight, viewHolder.imgLocation);
-                    if (Utils.isEmpty(locationAddress.getName())) {
-                        viewHolder.txtLocationName.setVisibility(View.GONE);
+                    viewHolder.imgVideoPlay!!.setOnClickListener(object : SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            when (viewHolder.itemViewType) {
+                                MSG_TYPE_LEFT -> try {
+                                    val receivePath = Utils.getReceiveDirectory(
+                                        mContext, attachType
+                                    ).toString() + IConstants.SLASH + chat.attachmentFileName
+                                    if (File(receivePath).exists()) {
+                                        Utils.openPlayingVideo(
+                                            mContext, File(receivePath)
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    Utils.getErrors(e)
+                                }
+                                MSG_TYPE_RIGHT -> try {
+                                    val path = File(
+                                        Utils.getSentDirectory(
+                                            mContext, attachType
+                                        ).toString() + IConstants.SLASH + chat.attachmentFileName
+                                    )
+                                    Utils.openPlayingVideo(
+                                        mContext, path
+                                    )
+                                } catch (e: Exception) {
+                                    Utils.getErrors(e)
+                                }
+                            }
+                        }
+                    })
+                    viewHolder.txtVideoDuration!!.text = chat.attachmentDuration
+                    viewHolder.txtVideoSize!!.text = Utils.getFileSize(chat.attachmentSize)
+                    chat.attachmentData?.let {
+                        Utils.setChatImage(
+                            mContext, it, viewHolder.videoThumbnail
+                        )
+                    }
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
+                }
+            } else if (attachType.equals(IConstants.TYPE_CONTACT, ignoreCase = true)) {
+                try {
+                    viewHolder.contactLayout!!.visibility = View.VISIBLE
+                    viewHolder.txtContactName!!.text = chat.attachmentFileName
+                    viewHolder.btnMessageContact!!.setOnClickListener(object :
+                        SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            Utils.shareApp(
+                                mContext as Activity
+                            )
+                        }
+                    })
+                    viewHolder.contactLayout!!.setOnClickListener(object : SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            chat.attachmentDuration?.let {
+                                Utils.openCallIntent(
+                                    mContext, it
+                                )
+                            }
+                        }
+                    })
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
+                }
+            } else if (attachType.equals(IConstants.TYPE_LOCATION, ignoreCase = true)) {
+                try {
+                    viewHolder.locationLayout!!.visibility = View.VISIBLE
+                    val locationAddress =
+                        Gson().fromJson(chat.attachmentData, LocationAddress::class.java)
+                    var topLeft = 0
+                    var topRight = 0
+                    when (viewHolder.itemViewType) {
+                        MSG_TYPE_LEFT -> topRight = 16
+                        MSG_TYPE_RIGHT -> topLeft = 16
+                    }
+                    Utils.showStaticMap(
+                        mContext, locationAddress, topLeft, topRight, viewHolder.imgLocation
+                    )
+                    if (Utils.isEmpty(locationAddress.name)) {
+                        viewHolder.txtLocationName!!.visibility = View.GONE
                     } else {
-                        viewHolder.txtLocationName.setVisibility(View.VISIBLE);
-                        viewHolder.txtLocationName.setText(locationAddress.getName());
+                        viewHolder.txtLocationName!!.visibility = View.VISIBLE
+                        viewHolder.txtLocationName!!.text = locationAddress.name
                     }
-                    viewHolder.txtAddress.setText(locationAddress.getAddress());
-                    viewHolder.locationLayout.setOnClickListener(new SingleClickListener() {
-                        @Override
-                        public void onClickView(View v) {
-                            Utils.openMapWithAddress(mContext, locationAddress);
+                    viewHolder.txtAddress!!.text = locationAddress.address
+                    viewHolder.locationLayout!!.setOnClickListener(object : SingleClickListener() {
+                        override fun onClickView(v: View?) {
+                            Utils.openMapWithAddress(
+                                mContext, locationAddress
+                            )
                         }
-                    });
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                    })
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
             } else {
-                showTextLayout(viewHolder, chat);
+                showTextLayout(viewHolder, chat)
             }
         }
-
-        viewHolder.txtOnlyDate.setVisibility(View.GONE);
+        viewHolder.txtOnlyDate.visibility = View.GONE
         try {
-            final long first = Utils.dateToMillis(mChats.get(position - 1).getDatetime());
-            final long second = Utils.dateToMillis(chat.getDatetime());
+            val first = Utils.dateToMillis(
+                mChats[position - 1].datetime
+            )
+            val second = Utils.dateToMillis(chat.datetime)
             if (!Utils.hasSameDate(first, second)) {
-                viewHolder.txtOnlyDate.setVisibility(View.VISIBLE);
-                viewHolder.txtOnlyDate.setText(Utils.formatFullDate(chat.getDatetime()));
+                viewHolder.txtOnlyDate.visibility = View.VISIBLE
+                viewHolder.txtOnlyDate.text = Utils.formatFullDate(chat.datetime)
             }
-        } catch (Exception e) {
+        } catch (e: Exception) {
             if (position == 0) {
-                viewHolder.txtOnlyDate.setVisibility(View.VISIBLE);
-                viewHolder.txtOnlyDate.setText(Utils.formatFullDate(chat.getDatetime()));
+                viewHolder.txtOnlyDate.visibility = View.VISIBLE
+                viewHolder.txtOnlyDate.text = Utils.formatFullDate(chat.datetime)
             }
         }
-
-        switch (viewHolder.getItemViewType()) {
-            case MSG_TYPE_LEFT:
-                viewHolder.txtName.setText(userName);
-                viewHolder.imgMsgSeen.setVisibility(View.GONE);
-                break;
-            case MSG_TYPE_RIGHT:
-                if (position == mChats.size() - 1) {
-                    viewHolder.imgMsgSeen.setVisibility(View.VISIBLE);
-                    if (chat.isMsgseen()) {
-                        viewHolder.imgMsgSeen.setImageResource(R.drawable.ic_check_read);
-                    } else {
-                        viewHolder.imgMsgSeen.setImageResource(R.drawable.ic_check_delivery);
-                    }
+        when (viewHolder.itemViewType) {
+            MSG_TYPE_LEFT -> {
+                viewHolder.txtName.text = userName
+                viewHolder.imgMsgSeen.visibility = View.GONE
+            }
+            MSG_TYPE_RIGHT -> if (position == mChats.size - 1) {
+                viewHolder.imgMsgSeen.visibility = View.VISIBLE
+                if (chat.isMsgseen) {
+                    viewHolder.imgMsgSeen.setImageResource(R.drawable.ic_check_read)
                 } else {
-                    viewHolder.imgMsgSeen.setVisibility(View.GONE);
+                    viewHolder.imgMsgSeen.setImageResource(R.drawable.ic_check_delivery)
                 }
-                break;
+            } else {
+                viewHolder.imgMsgSeen.visibility = View.GONE
+            }
         }
-
-        long timeMilliSeconds = 0;
+        var timeMilliSeconds: Long = 0
         try {
-            timeMilliSeconds = Utils.dateToMillis(chat.getDatetime());
-        } catch (Exception ignored) {
+            timeMilliSeconds = Utils.dateToMillis(chat.datetime)
+        } catch (ignored: Exception) {
         }
-
         if (timeMilliSeconds > 0) {
-            viewHolder.txtMsgTime.setText(Utils.formatLocalTime(timeMilliSeconds));
+            viewHolder.txtMsgTime.text = Utils.formatLocalTime(timeMilliSeconds)
         } else {
-            viewHolder.txtMsgTime.setVisibility(View.GONE);
+            viewHolder.txtMsgTime.visibility = View.GONE
         }
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-
-        public final TextView txtName;
-        public final TextView txtShowMessage;
-        public final TextView txtMsgTime;
-        public final ImageView imgMsgSeen;
-        public final TextView txtOnlyDate;
-        public final ImageView imgPath;
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val txtName: TextView
+        val txtShowMessage: TextView
+        val txtMsgTime: TextView
+        val imgMsgSeen: ImageView
+        val txtOnlyDate: TextView
+        val imgPath: ImageView
 
         //New Component
-        public RelativeLayout recordingLayout, audioLayout, documentLayout, videoLayout, contactLayout, locationLayout;
-        public RecordingPlayerView recordingPlayerView;
-        public AudioPlayerView audioPlayerView;
-        public TextView txtFileName, txtFileSize, txtFileExt, txtVideoDuration, txtVideoSize, txtContactName, txtLocationName, txtAddress;
-        public ImageView imgFileIcon, imgFileDownload, videoThumbnail, imgVideoPlay, imgVideoDownload, imgUserContact, imgLocation;
-        public ProgressBar fileProgressBar, videoProgressBar;
-        public Button btnMessageContact;
+        var recordingLayout: RelativeLayout? = null
+        var audioLayout: RelativeLayout? = null
+        var documentLayout: RelativeLayout? = null
+        var videoLayout: RelativeLayout? = null
+        var contactLayout: RelativeLayout? = null
+        var locationLayout: RelativeLayout? = null
+        var recordingPlayerView: RecordingPlayerView? = null
+        var audioPlayerView: AudioPlayerView? = null
+        var txtFileName: TextView? = null
+        var txtFileSize: TextView? = null
+        var txtFileExt: TextView? = null
+        var txtVideoDuration: TextView? = null
+        var txtVideoSize: TextView? = null
+        var txtContactName: TextView? = null
+        var txtLocationName: TextView? = null
+        var txtAddress: TextView? = null
+        var imgFileIcon: ImageView? = null
+        var imgFileDownload: ImageView? = null
+        var videoThumbnail: ImageView? = null
+        var imgVideoPlay: ImageView? = null
+        var imgVideoDownload: ImageView? = null
+        var imgUserContact: ImageView? = null
+        var imgLocation: ImageView? = null
+        var fileProgressBar: ProgressBar? = null
+        var videoProgressBar: ProgressBar? = null
+        var btnMessageContact: Button? = null
 
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            txtOnlyDate = itemView.findViewById(R.id.txtOnlyDate);
-            txtShowMessage = itemView.findViewById(R.id.txtShowMessage);
-            txtName = itemView.findViewById(R.id.txtName);
-            imgMsgSeen = itemView.findViewById(R.id.imgMsgSeen);
-            txtMsgTime = itemView.findViewById(R.id.txtMsgTime);
-            imgPath = itemView.findViewById(R.id.imgPath);
-
+        init {
+            txtOnlyDate = itemView.findViewById(R.id.txtOnlyDate)
+            txtShowMessage = itemView.findViewById(R.id.txtShowMessage)
+            txtName = itemView.findViewById(R.id.txtName)
+            imgMsgSeen = itemView.findViewById(R.id.imgMsgSeen)
+            txtMsgTime = itemView.findViewById(R.id.txtMsgTime)
+            imgPath = itemView.findViewById(R.id.imgPath)
             try {
-                recordingLayout = itemView.findViewById(R.id.recordingLayout);
-                recordingPlayerView = itemView.findViewById(R.id.voicePlayerView);
-
-                audioLayout = itemView.findViewById(R.id.audioLayout);
-                audioPlayerView = itemView.findViewById(R.id.audioPlayerView);
-
-                documentLayout = itemView.findViewById(R.id.documentLayout);
-                txtFileName = itemView.findViewById(R.id.txtFileName);
-                txtFileSize = itemView.findViewById(R.id.txtFileSize);
-                txtFileExt = itemView.findViewById(R.id.txtFileExt);
-                imgFileIcon = itemView.findViewById(R.id.imgFileIcon);
-                imgFileDownload = itemView.findViewById(R.id.imgFileDownload);
-                fileProgressBar = itemView.findViewById(R.id.fileProgressBar);
-
-                videoLayout = itemView.findViewById(R.id.videoLayout);
-                videoThumbnail = itemView.findViewById(R.id.videoThumbnail);
-                imgVideoPlay = itemView.findViewById(R.id.imgVideoPlay);
-                imgVideoDownload = itemView.findViewById(R.id.imgVideoDownload);
-                videoProgressBar = itemView.findViewById(R.id.videoProgressBar);
-                txtVideoDuration = itemView.findViewById(R.id.txtVideoDuration);
-                txtVideoSize = itemView.findViewById(R.id.txtVideoSize);
-
-                contactLayout = itemView.findViewById(R.id.contactLayout);
-                imgUserContact = itemView.findViewById(R.id.imgUserContact);
-                txtContactName = itemView.findViewById(R.id.txtContactName);
-                btnMessageContact = itemView.findViewById(R.id.btnMessageContact);
-
-                locationLayout = itemView.findViewById(R.id.locationLayout);
-                imgLocation = itemView.findViewById(R.id.imgLocation);
-                txtLocationName = itemView.findViewById(R.id.txtLocationName);
-                txtAddress = itemView.findViewById(R.id.txtAddress);
-            } catch (Exception e) {
-                Utils.getErrors(e);
+                recordingLayout = itemView.findViewById(R.id.recordingLayout)
+                recordingPlayerView = itemView.findViewById(R.id.voicePlayerView)
+                audioLayout = itemView.findViewById(R.id.audioLayout)
+                audioPlayerView = itemView.findViewById(R.id.wave_audioPlayerView)
+                documentLayout = itemView.findViewById(R.id.documentLayout)
+                txtFileName = itemView.findViewById(R.id.txtFileName)
+                txtFileSize = itemView.findViewById(R.id.txtFileSize)
+                txtFileExt = itemView.findViewById(R.id.txtFileExt)
+                imgFileIcon = itemView.findViewById(R.id.imgFileIcon)
+                imgFileDownload = itemView.findViewById(R.id.imgFileDownload)
+                fileProgressBar = itemView.findViewById(R.id.fileProgressBar)
+                videoLayout = itemView.findViewById(R.id.videoLayout)
+                videoThumbnail = itemView.findViewById(R.id.videoThumbnail)
+                imgVideoPlay = itemView.findViewById(R.id.imgVideoPlay)
+                imgVideoDownload = itemView.findViewById(R.id.imgVideoDownload)
+                videoProgressBar = itemView.findViewById(R.id.videoProgressBar)
+                txtVideoDuration = itemView.findViewById(R.id.txtVideoDuration)
+                txtVideoSize = itemView.findViewById(R.id.txtVideoSize)
+                contactLayout = itemView.findViewById(R.id.contactLayout)
+                imgUserContact = itemView.findViewById(R.id.imgUserContact)
+                txtContactName = itemView.findViewById(R.id.txtContactName)
+                btnMessageContact = itemView.findViewById(R.id.btnMessageContact)
+                locationLayout = itemView.findViewById(R.id.locationLayout)
+                imgLocation = itemView.findViewById(R.id.imgLocation)
+                txtLocationName = itemView.findViewById(R.id.txtLocationName)
+                txtAddress = itemView.findViewById(R.id.txtAddress)
+            } catch (e: Exception) {
+                Utils.getErrors(e)
             }
         }
 
-        private void broadcastDownloadEvent(Chat chat) {
-            final Intent intent = new Intent(BROADCAST_DOWNLOAD_EVENT);
-            intent.putExtra(DOWNLOAD_DATA, new DownloadFileEvent(chat, getAbsoluteAdapterPosition()));
-            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+        fun broadcastDownloadEvent(chat: Chat) {
+            val intent = Intent(IConstants.BROADCAST_DOWNLOAD_EVENT)
+            intent.putExtra(
+                IConstants.DOWNLOAD_DATA,
+                DownloadFileEvent(chat, absoluteAdapterPosition)
+            )
+            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent)
         }
     }
 
-    public void playingTrack(final MessageAdapters.ViewHolder viewHolder) {
+    fun playingTrack(viewHolder: ViewHolder) {
         try {
             if (isAudioPlaying) {
-                if (Utils.isEmpty(viewHolder.audioPlayerView.getPath())) {
-                    viewHolder.audioPlayerView.getImgPlayNoFileClickListener().onClick(viewHolder.audioPlayerView);
+                if (Utils.isEmpty(viewHolder.audioPlayerView!!.path)) {
+                    viewHolder.audioPlayerView!!.imgPlayNoFileClickListener.onClick(viewHolder.audioPlayerView)
                 } else {
                     if (myViewList.isEmpty()) {
-                        myViewList.add(viewHolder.audioPlayerView);
-                        viewHolder.audioPlayerView.getImgPlayClickListener().onClick(viewHolder.audioPlayerView);
-                    } else {//call when one of audio already playing, so first pause that and playing new audio track
-                        final AudioPlayerView oldPlayerView = myViewList.get(ZERO);
-                        oldPlayerView.getImgPauseClickListener().onClick(viewHolder.audioPlayerView);
-                        myViewList.remove(ZERO);
-                        viewHolder.audioPlayerView.getImgPlay().callOnClick();
+                        myViewList.add(viewHolder.audioPlayerView)
+                        viewHolder.audioPlayerView!!.imgPlayClickListener.onClick(viewHolder.audioPlayerView)
+                    } else { //call when one of audio already playing, so first pause that and playing new audio track
+                        val oldPlayerView = myViewList[IConstants.ZERO]
+                        oldPlayerView!!.imgPauseClickListener.onClick(viewHolder.audioPlayerView)
+                        myViewList.removeAt(IConstants.ZERO)
+                        viewHolder.audioPlayerView!!.imgPlay?.callOnClick()
                     }
                 }
-            } else {//Call when Audio already playing and trying to play Recording track, so pause audio track first
+            } else { //Call when Audio already playing and trying to play Recording track, so pause audio track first
                 if (!myViewList.isEmpty()) {
-                    final AudioPlayerView oldPlayerView = myViewList.get(ZERO);
-                    oldPlayerView.getImgPauseClickListener().onClick(viewHolder.audioPlayerView);
-                    myViewList.remove(ZERO);
+                    val oldPlayerView = myViewList[IConstants.ZERO]
+                    oldPlayerView!!.imgPauseClickListener.onClick(viewHolder.audioPlayerView)
+                    myViewList.removeAt(IConstants.ZERO)
                 }
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
-
         try {
             if (isRecordingPlaying) {
-                if (Utils.isEmpty(viewHolder.recordingPlayerView.getPath())) {
-                    viewHolder.recordingPlayerView.getImgPlayNoFileClickListener().onClick(viewHolder.recordingPlayerView);
+                if (Utils.isEmpty(viewHolder.recordingPlayerView!!.path)) {
+                    viewHolder.recordingPlayerView!!.imgPlayNoFileClickListener.onClick(viewHolder.recordingPlayerView)
                 } else {
                     if (myRecList.isEmpty()) {
-                        myRecList.add(viewHolder.recordingPlayerView);
-                        viewHolder.recordingPlayerView.getImgPlayClickListener().onClick(viewHolder.recordingPlayerView);
-                    } else {//call when one of recording already playing, so first pause and playing new recording track
-                        final RecordingPlayerView oldPlayerView = myRecList.get(ZERO);
-                        oldPlayerView.getImgPauseClickListener().onClick(viewHolder.recordingPlayerView);
-                        myRecList.remove(ZERO);
-                        viewHolder.recordingPlayerView.getImgPlay().callOnClick();
+                        myRecList.add(viewHolder.recordingPlayerView)
+                        viewHolder.recordingPlayerView!!.imgPlayClickListener.onClick(viewHolder.recordingPlayerView)
+                    } else { //call when one of recording already playing, so first pause and playing new recording track
+                        val oldPlayerView = myRecList[IConstants.ZERO]
+                        oldPlayerView!!.imgPauseClickListener.onClick(viewHolder.recordingPlayerView)
+                        myRecList.removeAt(IConstants.ZERO)
+                        viewHolder.recordingPlayerView!!.imgPlay.callOnClick()
                     }
                 }
-            } else {//Call when Recording already playing and trying to play Audio track, so pause recording track first
+            } else { //Call when Recording already playing and trying to play Audio track, so pause recording track first
                 if (!myRecList.isEmpty()) {
-                    final RecordingPlayerView oldPlayerView = myRecList.get(ZERO);
-                    oldPlayerView.getImgPauseClickListener().onClick(viewHolder.recordingPlayerView);
-                    myRecList.remove(ZERO);
+                    val oldPlayerView = myRecList[IConstants.ZERO]
+                    oldPlayerView!!.imgPauseClickListener.onClick(viewHolder.recordingPlayerView)
+                    myRecList.removeAt(IConstants.ZERO)
                 }
             }
-
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    public void stopAudioFile() {
+    fun stopAudioFile() {
         if (!Utils.isEmpty(myViewList)) {
             try {
-                for (int i = 0; i < myViewList.size(); i++) {
-                    final AudioPlayerView audioPlayerView = myViewList.get(ZERO);
-                    audioPlayerView.getImgPause().callOnClick();
+                for (i in myViewList.indices) {
+                    val audioPlayerView = myViewList[IConstants.ZERO]
+                    audioPlayerView!!.imgPause?.callOnClick()
                 }
-                myViewList.clear();
-            } catch (Exception e) {
-                Utils.getErrors(e);
+                myViewList.clear()
+            } catch (e: Exception) {
+                Utils.getErrors(e)
             }
         }
-
         if (!Utils.isEmpty(myRecList)) {
             try {
-                for (int i = 0; i < myRecList.size(); i++) {
-                    final RecordingPlayerView recordingPlayerView = myRecList.get(ZERO);
-                    recordingPlayerView.getImgPause().callOnClick();
+                for (i in myRecList.indices) {
+                    val recordingPlayerView = myRecList[IConstants.ZERO]
+                    recordingPlayerView!!.imgPause.callOnClick()
                 }
-                myRecList.clear();
-            } catch (Exception e) {
-                Utils.getErrors(e);
+                myRecList.clear()
+            } catch (e: Exception) {
+                Utils.getErrors(e)
             }
         }
     }
 
-    @Override
-    public int getItemCount() {
-        return mChats.size();
+    override fun getItemCount(): Int {
+        return mChats.size
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        final Chat chat = mChats.get(position);
-        final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        assert firebaseUser != null;
-        if (chat.getSender().equalsIgnoreCase(firebaseUser.getUid())) {
-            return MSG_TYPE_RIGHT;
+    override fun getItemViewType(position: Int): Int {
+        val chat = mChats[position]
+        val firebaseUser = FirebaseAuth.getInstance().currentUser!!
+        return if (chat.sender.equals(firebaseUser.uid, ignoreCase = true)) {
+            MSG_TYPE_RIGHT
         } else {
-            return MSG_TYPE_LEFT;
+            MSG_TYPE_LEFT
         }
     }
 }

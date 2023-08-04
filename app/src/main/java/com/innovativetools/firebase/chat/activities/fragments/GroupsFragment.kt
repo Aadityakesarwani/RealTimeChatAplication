@@ -1,147 +1,118 @@
-package com.innovativetools.firebase.chat.activities.fragments;
+package com.innovativetools.firebase.chat.activities.fragments
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUPS_IN_BOTH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUPS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUP_MEMBERS_S;
+import android.widget.RelativeLayout
+import com.innovativetools.firebase.chat.activities.adapters.GroupsAdapters
+import android.os.Bundle
+import android.view.*
+import com.innovativetools.firebase.chat.activities.R
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import com.google.firebase.auth.FirebaseAuth
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.database.*
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.Groups
+import java.lang.Exception
+import java.util.ArrayList
+import java.util.HashMap
 
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.adapters.GroupsAdapters;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-
-public class GroupsFragment extends BaseFragment {
-
-    private ArrayList<String> groupList;
-    private RelativeLayout imgNoMessage;
-    private GroupsAdapters groupsAdapters;
-    private ArrayList<Groups> mGroups;
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+class GroupsFragment : BaseFragment() {
+    private var groupList: ArrayList<String?>? = null
+    private var imgNoMessage: RelativeLayout? = null
+    private var groupsAdapters: GroupsAdapters? = null
+    private var mGroups: ArrayList<Groups>? = null
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_groups, container, false);
-
-        imgNoMessage = view.findViewById(R.id.imgNoMessage);
-        imgNoMessage.setVisibility(View.GONE);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView = view.findViewById(R.id.recyclerView);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(layoutManager);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(), layoutManager.getOrientation());
-        mRecyclerView.addItemDecoration(dividerItemDecoration);
-
-        final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        groupList = new ArrayList<>();
-
-        assert firebaseUser != null;
-        Query query = FirebaseDatabase.getInstance().getReference(REF_GROUP_MEMBERS_S + firebaseUser.getUid() + EXTRA_GROUPS_IN_BOTH);
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                groupList.clear();
+        val view = inflater.inflate(R.layout.fragment_groups, container, false)
+        imgNoMessage = view.findViewById(R.id.imgNoMessage)
+        imgNoMessage?.setVisibility(View.GONE)
+        val layoutManager = LinearLayoutManager(activity)
+        mRecyclerView = view.findViewById(R.id.recyclerView)
+        mRecyclerView?.setHasFixedSize(true)
+        mRecyclerView?.setLayoutManager(layoutManager)
+        val dividerItemDecoration =
+            DividerItemDecoration(mRecyclerView?.getContext(), layoutManager.orientation)
+        mRecyclerView?.addItemDecoration(dividerItemDecoration)
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        groupList = ArrayList()
+        assert(firebaseUser != null)
+        val query: Query = FirebaseDatabase.getInstance()
+            .getReference(IConstants.REF_GROUP_MEMBERS_S + firebaseUser!!.uid + IConstants.EXTRA_GROUPS_IN_BOTH)
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                groupList!!.clear()
                 if (dataSnapshot.hasChildren()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        String strGroupId = snapshot.getValue(String.class);
-                        groupList.add(strGroupId);
+                    for (snapshot in dataSnapshot.children) {
+                        val strGroupId = snapshot.getValue(String::class.java)
+                        groupList!!.add(strGroupId)
                     }
                 }
-
-                if (groupList.size() > 0) {
-                    imgNoMessage.setVisibility(View.GONE);
-                    readGroups();
-                    mRecyclerView.setVisibility(View.VISIBLE);
+                if (groupList!!.size > 0) {
+                    imgNoMessage?.setVisibility(View.GONE)
+                    readGroups()
+                    mRecyclerView?.setVisibility(View.VISIBLE)
                 } else {
-                    imgNoMessage.setVisibility(View.VISIBLE);
-                    mRecyclerView.setVisibility(View.GONE);
+                    imgNoMessage?.setVisibility(View.VISIBLE)
+                    mRecyclerView?.setVisibility(View.GONE)
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        return view;
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        return view
     }
 
-    private void readGroups() {
-        mGroups = new ArrayList<>();
-
-        Query reference = FirebaseDatabase.getInstance().getReference(REF_GROUPS);
-        reference.keepSynced(true);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mGroups.clear();
+    private fun readGroups() {
+        mGroups = ArrayList()
+        val reference: Query = FirebaseDatabase.getInstance().getReference(IConstants.REF_GROUPS)
+        reference.keepSynced(true)
+        reference.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                mGroups!!.clear()
                 if (dataSnapshot.hasChildren()) {
-                    Map<String, Groups> uList = new HashMap<>();
+                    var uList: MutableMap<String?, Groups?> = HashMap()
                     try {
-
-                        for (String id : groupList) {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                Groups groups = snapshot.getValue(Groups.class);
-                                assert groups != null;
-                                if (!Utils.isEmpty(groups.getId())) {
-                                    if (groups.getId().equalsIgnoreCase(id) && groups.isActive()) {
-                                        uList.put(groups.getId(), groups);
-                                        break;
+                        for (id in groupList!!) {
+                            for (snapshot in dataSnapshot.children) {
+                                val groups = snapshot.getValue(
+                                    Groups::class.java
+                                )!!
+                                if (!Utils.isEmpty(
+                                        groups.id
+                                    )
+                                ) {
+                                    if (groups.id.equals(
+                                            id,
+                                            ignoreCase = true
+                                        ) && groups.isActive
+                                    ) {
+                                        uList[groups.id] = groups
+                                        break
                                     }
                                 }
                             }
                         }
-                    } catch (Exception e) {
-                        Utils.getErrors(e);
+                    } catch (e: Exception) {
+                        Utils.getErrors(e)
                     }
-
-                    if (uList.size() > 0) {
-                        uList = Utils.sortByGroupDateTime(uList, false);
-
-                        mGroups.addAll(uList.values());
+                    if (uList.size > 0) {
+                        uList = Utils.sortByGroupDateTime(uList, false) as MutableMap<String?, Groups?>
+                        mGroups!!.addAll(uList.values as MutableCollection<Groups>)
                     }
-                    groupsAdapters = new GroupsAdapters(getContext(), mGroups);
-                    mRecyclerView.setAdapter(groupsAdapters);
+                    groupsAdapters = GroupsAdapters(context!!, mGroups!!)
+                    mRecyclerView!!.adapter = groupsAdapters
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
     }
-
 }

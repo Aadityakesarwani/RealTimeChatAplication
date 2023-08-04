@@ -1,189 +1,163 @@
-package com.innovativetools.firebase.chat.activities.adapters;
+package com.innovativetools.firebase.chat.activities.adapters
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ONE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
+import android.content.Context
+import com.innovativetools.firebase.chat.activities.constants.IGroupListener
+import androidx.recyclerview.widget.RecyclerView
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView.SectionedAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ImageView
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.innovativetools.firebase.chat.activities.views.smoothcb.SmoothCheckBox
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import android.widget.TextView
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.Groups
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.util.ArrayList
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
+class GroupsUserAdapters(
+    private val mContext: Context,
+    usersList: ArrayList<User>,
+    mSelectedUsers: ArrayList<User>,
+    mSelectedMembersId: MutableList<String>,
+    mDeletedMembersId: MutableSet<String>,
+    isEditGroup: Boolean,
+    groups: Groups,
+    groupListener: IGroupListener
+) : RecyclerView.Adapter<GroupsUserAdapters.ViewHolder>(), SectionedAdapter {
+    private val mUsers: ArrayList<User>
+    private val mSelectedUsers: ArrayList<User>
+    private val mSelectedMembersId: MutableList<String>
+    private val groupListener: IGroupListener
+    private val isEditGroup: Boolean
+    private val groups: Groups
+    private val mDeletedMembersId: MutableSet<String>
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.constants.IGroupListener;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.innovativetools.firebase.chat.activities.views.smoothcb.SmoothCheckBox;
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-public class GroupsUserAdapters extends RecyclerView.Adapter<GroupsUserAdapters.ViewHolder>
-        implements FastScrollRecyclerView.SectionedAdapter {
-
-    private final Context mContext;
-    private final ArrayList<User> mUsers;
-    private final ArrayList<User> mSelectedUsers;
-    private final List<String> mSelectedMembersId;
-    private final IGroupListener groupListener;
-    private final boolean isEditGroup;
-    private final Groups groups;
-    private final Set<String> mDeletedMembersId;
-
-    public GroupsUserAdapters(Context mContext, ArrayList<User> usersList, ArrayList<User> mSelectedUsers, List<String> mSelectedMembersId, final Set<String> mDeletedMembersId, final boolean isEditGroup, final Groups groups, IGroupListener groupListener) {
-        this.mContext = mContext;
-        this.mUsers = Utils.removeDuplicates(usersList);
-        this.mSelectedUsers = mSelectedUsers;
-        this.mSelectedMembersId = mSelectedMembersId;
-        this.mDeletedMembersId = mDeletedMembersId;
-        this.groupListener = groupListener;
-
-        this.isEditGroup = isEditGroup;
-        this.groups = groups;
-
+    init {
+        mUsers = Utils.removeDuplicates<String>(usersList)!!
+        this.mSelectedUsers = mSelectedUsers
+        this.mSelectedMembersId = mSelectedMembersId
+        this.mDeletedMembersId = mDeletedMembersId
+        this.groupListener = groupListener
+        this.isEditGroup = isEditGroup
+        this.groups = groups
         if (isEditGroup) {
-            for (int i = 0; i < mUsers.size(); i++) {
-                if (groups.getMembers().contains(mUsers.get(i).getId())) {
-                    this.mSelectedUsers.add(mUsers.get(i));
-                    this.mSelectedMembersId.add(mUsers.get(i).getId());
+            for (i in mUsers.indices) {
+                if (groups.members!!.contains(mUsers[i].id)) {
+                    this.mSelectedUsers.add(mUsers[i])
+                    mUsers[i].id?.let { this.mSelectedMembersId.add(it) }
                 }
             }
-            groupListener.setSubTitle();
+            groupListener.setSubTitle()
         }
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.list_users_group, viewGroup, false);
-        return new ViewHolder(view);
+    override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): ViewHolder {
+        val view =
+            LayoutInflater.from(mContext).inflate(R.layout.list_users_group, viewGroup, false)
+        return ViewHolder(view)
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull final ViewHolder viewHolder, int position) {
-        final User user = mUsers.get(position);
-        final String strAbout = user.getAbout();
-
-        viewHolder.txtUsername.setText(user.getUsername());
-        Utils.setProfileImage(mContext, user.getImageURL(), viewHolder.imageView);
-
-        viewHolder.txtLastMsg.setVisibility(View.VISIBLE);
-
+    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
+        val user = mUsers[position]
+        val strAbout = user.about
+        viewHolder.txtUsername.text = user.username
+        user.getImageURL()?.let { Utils.setProfileImage(mContext, it, viewHolder.imageView) }
+        viewHolder.txtLastMsg.visibility = View.VISIBLE
         if (Utils.isEmpty(strAbout)) {
-            viewHolder.txtLastMsg.setText(mContext.getString(R.string.strAboutStatus));
+            viewHolder.txtLastMsg.text = mContext.getString(R.string.strAboutStatus)
         } else {
-            viewHolder.txtLastMsg.setText(strAbout);
+            viewHolder.txtLastMsg.text = strAbout
         }
-
-        if (user.getIsOnline() == STATUS_ONLINE) {
-            viewHolder.imgOn.setVisibility(View.VISIBLE);
-            viewHolder.imgOff.setVisibility(View.GONE);
+        if (user.isOnline == IConstants.STATUS_ONLINE) {
+            viewHolder.imgOn.visibility = View.VISIBLE
+            viewHolder.imgOff.visibility = View.GONE
         } else {
-            viewHolder.imgOn.setVisibility(View.GONE);
-            viewHolder.imgOff.setVisibility(View.VISIBLE);
+            viewHolder.imgOn.visibility = View.GONE
+            viewHolder.imgOff.visibility = View.VISIBLE
         }
-
-        viewHolder.cb.setOnCheckedChangeListener((checkBox, isChecked) -> user.setChecked(isChecked));
+        viewHolder.cb.setOnCheckedChangeListener {
+          checkBox: SmoothCheckBox?, isChecked: Boolean ->
+            user.isChecked = isChecked
+       }
 
         if (isEditGroup) {
-            viewHolder.cb.setChecked(groups.getMembers().contains(user.getId()));
+            viewHolder.cb.isChecked = user.id?.let { groups.members!!.contains(it) } == true
         } else {
-            viewHolder.cb.setChecked(user.isChecked());
+            viewHolder.cb.isChecked = user.isChecked
         }
-
-        viewHolder.imageView.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                final Screens screens = new Screens(mContext);
-                screens.openViewProfileActivity(user.getId());
+        viewHolder.imageView.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                val screens = Screens(mContext)
+                screens.openViewProfileActivity(user.id)
             }
-        });
-
-        viewHolder.itemView.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                user.setChecked(!user.isChecked());
-                viewHolder.cb.setChecked(user.isChecked(), true);
-                if (user.isChecked()) {
-                    mSelectedUsers.add(user);
-                    mSelectedMembersId.add(user.getId());
-                    mDeletedMembersId.remove(user.getId());
+        })
+        viewHolder.itemView.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                user.isChecked = !user.isChecked
+                viewHolder.cb.setChecked(user.isChecked, true)
+                if (user.isChecked) {
+                    mSelectedUsers.add(user)
+                    user.id?.let { mSelectedMembersId.add(it) }
+                    mDeletedMembersId.remove(user.id)
                 } else {
-                    mSelectedUsers.remove(user);
-                    mSelectedMembersId.remove(user.getId());
-                    mDeletedMembersId.add(user.getId());
+                    mSelectedUsers.remove(user)
+                    mSelectedMembersId.remove(user.id)
+                    user.id?.let { mDeletedMembersId.add(it) }
                 }
-                groupListener.setSubTitle();
+                groupListener.setSubTitle()
             }
-        });
-
-        viewHolder.cb.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                Utils.sout("Click on cb");
-                user.setChecked(!user.isChecked());
-                viewHolder.cb.setChecked(user.isChecked(), true);
-                if (user.isChecked()) {
-                    mSelectedUsers.add(user);
-                    mSelectedMembersId.add(user.getId());
-                    mDeletedMembersId.remove(user.getId());
+        })
+        viewHolder.cb.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                Utils.sout("Click on cb")
+                user.isChecked = !user.isChecked
+                viewHolder.cb.setChecked(user.isChecked, true)
+                if (user.isChecked) {
+                    mSelectedUsers.add(user)
+                    user.id?.let { mSelectedMembersId.add(it) }
+                    mDeletedMembersId.remove(user.id)
                 } else {
-                    mSelectedUsers.remove(user);
-                    mSelectedMembersId.remove(user.getId());
-                    mDeletedMembersId.add(user.getId());
+                    mSelectedUsers.remove(user)
+                    mSelectedMembersId.remove(user.id)
+                    user.id?.let { mDeletedMembersId.add(it) }
                 }
-                groupListener.setSubTitle();
+                groupListener.setSubTitle()
             }
-        });
-
+        })
     }
 
-    @NonNull
-    @NotNull
-    @Override
-    public String getSectionName(int position) {
-        if (!Utils.isEmpty(mUsers)) {
-            return mUsers.get(position).getUsername().substring(ZERO, ONE);
+    override fun getSectionName(position: Int): String {
+        return if (!Utils.isEmpty(mUsers)) {
+            mUsers[position].username!!.substring(IConstants.ZERO, IConstants.ONE)
         } else {
-            return null;
+            "-"
         }
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imageView: ImageView
+        val txtUsername: TextView
+        val imgOn: ImageView
+        val imgOff: ImageView
+        val txtLastMsg: TextView
+        val cb: SmoothCheckBox
 
-        public final ImageView imageView;
-        public final TextView txtUsername;
-        private final ImageView imgOn;
-        private final ImageView imgOff;
-        private final TextView txtLastMsg;
-        private final SmoothCheckBox cb;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            imageView = itemView.findViewById(R.id.imageView);
-            txtUsername = itemView.findViewById(R.id.txtUsername);
-            imgOn = itemView.findViewById(R.id.imgOn);
-            imgOff = itemView.findViewById(R.id.imgOff);
-            txtLastMsg = itemView.findViewById(R.id.txtLastMsg);
-            cb = itemView.findViewById(R.id.scb);
+        init {
+            imageView = itemView.findViewById(R.id.imageView)
+            txtUsername = itemView.findViewById(R.id.txtUsername)
+            imgOn = itemView.findViewById(R.id.imgOn)
+            imgOff = itemView.findViewById(R.id.imgOff)
+            txtLastMsg = itemView.findViewById(R.id.txtLastMsg)
+            cb = itemView.findViewById(R.id.scb)
         }
     }
 
-    @Override
-    public int getItemCount() {
-        return mUsers.size();
+    override fun getItemCount(): Int {
+        return mUsers.size
     }
 }

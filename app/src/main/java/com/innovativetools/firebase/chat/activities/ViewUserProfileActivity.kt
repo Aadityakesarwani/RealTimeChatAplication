@@ -1,76 +1,54 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import com.innovativetools.firebase.chat.activities.BaseActivity
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.Fragment
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.fragments.ViewUserProfileFragment
 
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-
-import com.innovativetools.firebase.chat.activities.fragments.ViewUserProfileFragment;
-
-import org.jetbrains.annotations.NotNull;
-
-public class ViewUserProfileActivity extends BaseActivity {
-    private Fragment fragment;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile);
-
-        final Toolbar mToolbar = findViewById(R.id.toolbar);
-
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setTitle(R.string.strProfile);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
-
-        if (savedInstanceState != null) {
-
-            fragment = getSupportFragmentManager().getFragment(savedInstanceState, "currentFragment");
-
+class ViewUserProfileActivity : BaseActivity() {
+    private var fragment: Fragment? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_profile)
+        val mToolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(mToolbar)
+        supportActionBar!!.setTitle(R.string.strProfile)
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        supportActionBar!!.setHomeButtonEnabled(true)
+        fragment = if (savedInstanceState != null) {
+            supportFragmentManager.getFragment(savedInstanceState, "currentFragment")
         } else {
-
-            fragment = new ViewUserProfileFragment();
+            ViewUserProfileFragment()
         }
-
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.container_body, fragment).commit();
+        val fragmentManager = supportFragmentManager
+        fragmentManager.beginTransaction().replace(R.id.container_body, fragment!!).commit()
     }
 
-    @Override
-    protected void onSaveInstanceState(@NotNull Bundle outState) {
-
-        super.onSaveInstanceState(outState);
-
-        getSupportFragmentManager().putFragment(outState, "currentFragment", fragment);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        supportFragmentManager.putFragment(outState, "currentFragment", fragment!!)
     }
 
-    @Override
-    public void onBackPressed() {
-
-        finish();
-
+    override fun onBackPressed() {
+        finish()
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        return super.onCreateOptionsMenu(menu);
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        return super.onCreateOptionsMenu(menu)
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
+        if (item.itemId == android.R.id.home) {
+            finish()
+            return true
         }
-        return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item)
     }
 }

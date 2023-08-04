@@ -1,18 +1,14 @@
-package com.innovativetools.firebase.chat.activities.async;
+package com.innovativetools.firebase.chat.activities.async
 
-public abstract class BaseTask<R> implements CustomCallable<R> {
-    @Override
-    public void setUiForLoading() {
+import com.innovativetools.firebase.chat.activities.async.CustomCallable
+import java.lang.Exception
+import kotlin.Throws
 
-    }
-
-    @Override
-    public void setDataAfterLoading(R result) {
-
-    }
-
-    @Override
-    public R call() throws Exception {
-        return null;
+abstract class BaseTask<R> : CustomCallable<R> {
+    override fun setUiForLoading() {}
+    override fun setDataAfterLoading(result: R) {}
+    @Throws(Exception::class)
+    override fun call(): R? {
+        return null
     }
 }

@@ -1,82 +1,65 @@
-package com.innovativetools.firebase.chat.activities.views.files;
+package com.innovativetools.firebase.chat.activities.views.files
 
+import android.content.Context
 
-import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.net.Uri;
-import android.webkit.MimeTypeMap;
+import com.innovativetools.firebase.chat.activities.managers.Utils.sout
+import com.innovativetools.firebase.chat.activities.managers.Utils.getErrors
+import android.webkit.MimeTypeMap
+import com.innovativetools.firebase.chat.activities.R
+import android.database.DatabaseUtils
+import com.innovativetools.firebase.chat.activities.async.BaseTask
+import kotlin.Throws
+import android.content.Intent
+import android.database.Cursor
+import android.net.Uri
+import com.innovativetools.firebase.chat.activities.async.CustomCallable
+import com.innovativetools.firebase.chat.activities.async.TaskRunner
+import java.io.*
+import java.lang.Exception
+import java.text.DecimalFormat
+import java.util.*
 
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.async.BaseTask;
-import com.innovativetools.firebase.chat.activities.async.TaskRunner;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
+object FileUtils {
+    const val MIME_TYPE_AUDIO = "audio/*"
+    const val MIME_TYPE_TEXT = "text/*"
+    const val MIME_TYPE_IMAGE = "image/*"
+    const val MIME_TYPE_VIDEO = "video/*"
+    const val MIME_TYPE_APP = "application/*"
+    const val HIDDEN_PREFIX = "."
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.text.DecimalFormat;
-import java.util.Comparator;
-
-/**
- * Created by BytesBee
- */
-public class FileUtils {
-    private FileUtils() {
-    } //private constructor to enforce Singleton pattern
-
-
-    public static final String MIME_TYPE_AUDIO = "audio/*";
-    public static final String MIME_TYPE_TEXT = "text/*";
-    public static final String MIME_TYPE_IMAGE = "image/*";
-    public static final String MIME_TYPE_VIDEO = "video/*";
-    public static final String MIME_TYPE_APP = "application/*";
-
-    public static final String HIDDEN_PREFIX = ".";
     /**
      * TAG for log messages.
      */
-    static final String TAG = "FileUtils";
-    private static final boolean DEBUG = false; // Set to true to enable logging
+    const val TAG = "FileUtils"
+    private const val DEBUG = false // Set to true to enable logging
+
     /**
      * File and folder comparator. TODO Expose sorting option method
      */
-    public static Comparator<File> sComparator = new Comparator<File>() {
-        @Override
-        public int compare(File f1, File f2) {
-            // Sort alphabetically by lower case, which is much cleaner
-            return f1.getName().toLowerCase().compareTo(
-                    f2.getName().toLowerCase());
+    var sComparator =
+        Comparator<File> { f1, f2 -> // Sort alphabetically by lower case, which is much cleaner
+            f1.name.lowercase(Locale.getDefault()).compareTo(
+                f2.name.lowercase(Locale.getDefault())
+            )
         }
-    };
+
     /**
      * File (not directories) filter.
      */
-    public static FileFilter sFileFilter = new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-            final String fileName = file.getName();
-            // Return files only (not directories) and skip hidden files
-            return file.isFile() && !fileName.startsWith(HIDDEN_PREFIX);
-        }
-    };
+    var sFileFilter = FileFilter { file ->
+        val fileName = file.name
+        // Return files only (not directories) and skip hidden files
+        file.isFile && !fileName.startsWith(HIDDEN_PREFIX)
+    }
+
     /**
      * Folder (directories) filter.
      */
-    public static FileFilter sDirFilter = new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-            final String fileName = file.getName();
-            // Return directories only and skip hidden directories
-            return file.isDirectory() && !fileName.startsWith(HIDDEN_PREFIX);
-        }
-    };
+    var sDirFilter = FileFilter { file ->
+        val fileName = file.name
+        // Return directories only and skip hidden directories
+        file.isDirectory && !fileName.startsWith(HIDDEN_PREFIX)
+    }
 
     /**
      * Gets the extension of a file name, like ".png" or ".jpg" or ".mp3".
@@ -85,17 +68,16 @@ public class FileUtils {
      * @return Extension including the dot("."); "" if there is no extension;
      * null if uri was null.
      */
-    public static String getExtension(String uri) {
+    fun getExtension(uri: String?): String? {
         if (uri == null) {
-            return null;
+            return null
         }
-
-        int dot = uri.lastIndexOf(".");
-        if (dot >= 0) {
-            return uri.substring(dot);
+        val dot = uri.lastIndexOf(".")
+        return if (dot >= 0) {
+            uri.substring(dot)
         } else {
             // No extension.
-            return "";
+            ""
         }
     }
 
@@ -105,81 +87,79 @@ public class FileUtils {
      * @param file
      * @return
      */
-    public static File getPathWithoutFilename(File file) {
-        if (file != null) {
-            if (file.isDirectory()) {
+    fun getPathWithoutFilename(file: File?): File? {
+        return if (file != null) {
+            if (file.isDirectory) {
                 // no file to be split off. Return everything
-                return file;
+                file
             } else {
-                String filename = file.getName();
-                String filepath = file.getAbsolutePath();
+                val filename = file.name
+                val filepath = file.absolutePath
 
                 // Construct path without file name.
-                String pathwithoutname = filepath.substring(0,
-                        filepath.length() - filename.length());
+                var pathwithoutname = filepath.substring(
+                    0,
+                    filepath.length - filename.length
+                )
                 if (pathwithoutname.endsWith("/")) {
-                    pathwithoutname = pathwithoutname.substring(0, pathwithoutname.length() - 1);
+                    pathwithoutname = pathwithoutname.substring(0, pathwithoutname.length - 1)
                 }
-                return new File(pathwithoutname);
+                File(pathwithoutname)
             }
-        }
-        return null;
+        } else null
     }
 
     /**
      * @return The MIME type for the given file.
      */
-    public static String getMimeType(File file) {
-
-        String extension = getExtension(file.getName());
-
-        if (extension.length() > 0)
-            return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.substring(1));
-
-        return "application/octet-stream";
+    fun getMimeType(file: File): String? {
+        val extension = getExtension(file.name)
+        return if (extension!!.length > 0) MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+            extension.substring(1)
+        ) else "application/octet-stream"
     }
 
-    public static final String AUTHORITY = "com.bytesbee.filechoser.documents";
+    const val AUTHORITY = "com.bytesbee.filechoser.documents"
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority.
      */
-    public static boolean isLocalStorageDocument(Context context, Uri uri) {
-        final String authority = context.getString(R.string.authority);
-        return authority.equals(uri.getAuthority());
+    fun isLocalStorageDocument(context: Context, uri: Uri): Boolean {
+        val authority = context.getString(R.string.authority)
+        return authority == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is ExternalStorageProvider.
      */
-    public static boolean isExternalStorageDocument(Uri uri) {
-        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    fun isExternalStorageDocument(uri: Uri): Boolean {
+        return "com.android.externalstorage.documents" == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is DownloadsProvider.
      */
-    public static boolean isDownloadsDocument(Uri uri) {
-        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    fun isDownloadsDocument(uri: Uri): Boolean {
+        return "com.android.providers.downloads.documents" == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is MediaProvider.
      */
-    public static boolean isMediaDocument(Uri uri) {
-        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    fun isMediaDocument(uri: Uri): Boolean {
+        return "com.android.providers.media.documents" == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is Google Photos.
      */
-    public static boolean isGooglePhotosUri(Uri uri) {
-        return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+    fun isGooglePhotosUri(uri: Uri): Boolean {
+        return "com.google.android.apps.photos.content" == uri.authority
     }
 
     /**
@@ -192,30 +172,29 @@ public class FileUtils {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
-
-        Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = {
-                column
-        };
-
+    fun getDataColumn(
+        context: Context, uri: Uri?, selection: String?,
+        selectionArgs: Array<String?>?
+    ): String? {
+        var cursor: Cursor? = null
+        val column = "_data"
+        val projection = arrayOf(
+            column
+        )
         try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
+            cursor = context.contentResolver.query(
+                uri!!, projection, selection, selectionArgs,
+                null
+            )
             if (cursor != null && cursor.moveToFirst()) {
-                if (DEBUG)
-                    DatabaseUtils.dumpCursor(cursor);
-
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
+                if (DEBUG) DatabaseUtils.dumpCursor(cursor)
+                val column_index = cursor.getColumnIndexOrThrow(column)
+                return cursor.getString(column_index)
             }
         } finally {
-            if (cursor != null)
-                cursor.close();
+            cursor?.close()
         }
-        return null;
+        return null
     }
 
     /**
@@ -224,60 +203,55 @@ public class FileUtils {
      * @param size
      * @return
      */
-    public static String getReadableFileSize(int size) {
-        final int BYTES_IN_KILOBYTES = 1024;
-        final DecimalFormat dec = new DecimalFormat("###.#");
-        final String KILOBYTES = " KB";
-        final String MEGABYTES = " MB";
-        final String GIGABYTES = " GB";
-        float fileSize = 0;
-        String suffix = KILOBYTES;
-
+    fun getReadableFileSize(size: Int): String {
+        val BYTES_IN_KILOBYTES = 1024
+        val dec = DecimalFormat("###.#")
+        val KILOBYTES = " KB"
+        val MEGABYTES = " MB"
+        val GIGABYTES = " GB"
+        var fileSize = 0f
+        var suffix = KILOBYTES
         if (size > BYTES_IN_KILOBYTES) {
-            fileSize = size / BYTES_IN_KILOBYTES;
+            fileSize = (size / BYTES_IN_KILOBYTES).toFloat()
             if (fileSize > BYTES_IN_KILOBYTES) {
-                fileSize = fileSize / BYTES_IN_KILOBYTES;
+                fileSize = fileSize / BYTES_IN_KILOBYTES
                 if (fileSize > BYTES_IN_KILOBYTES) {
-                    fileSize = fileSize / BYTES_IN_KILOBYTES;
-                    suffix = GIGABYTES;
+                    fileSize = fileSize / BYTES_IN_KILOBYTES
+                    suffix = GIGABYTES
                 } else {
-                    suffix = MEGABYTES;
+                    suffix = MEGABYTES
                 }
             }
         }
-        return dec.format(fileSize) + suffix;
+        return dec.format(fileSize.toDouble()) + suffix
     }
 
-    public static void copyFile(File src, File dst) {
-        final BaseTask baseTask = new BaseTask() {
-            @Override
-            public void setUiForLoading() {
-                super.setUiForLoading();
+    fun copyFile(src: File?, dst: File?) {
+        val baseTask: BaseTask<*> = object : BaseTask<Any?>() {
+            override fun setUiForLoading() {
+                super.setUiForLoading()
             }
 
-            @Override
-            public Object call() throws Exception {
+            @Throws(Exception::class)
+            override fun call(): Any? {
                 try {
-                    FileInputStream inStream = new FileInputStream(src);
-                    FileOutputStream outStream = new FileOutputStream(dst);
-                    FileChannel inChannel = inStream.getChannel();
-                    FileChannel outChannel = outStream.getChannel();
-                    inChannel.transferTo(0, inChannel.size(), outChannel);
-                    inStream.close();
-                    outStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    val inStream = FileInputStream(src)
+                    val outStream = FileOutputStream(dst)
+                    val inChannel = inStream.channel
+                    val outChannel = outStream.channel
+                    inChannel.transferTo(0, inChannel.size(), outChannel)
+                    inStream.close()
+                    outStream.close()
+                } catch (e: IOException) {
+                    e.printStackTrace()
                 }
-                return null;
+                return null
             }
 
-            @Override
-            public void setDataAfterLoading(Object result) {
-            }
-
-        };
-        TaskRunner taskRunner = new TaskRunner();
-        taskRunner.executeAsync(baseTask);
+            override fun setDataAfterLoading(result: Any?) {}
+        }
+        val taskRunner = TaskRunner()
+        taskRunner.executeAsync(baseTask as CustomCallable<R?>)
 
 //        AsyncTask<File, Void, Void> task = new AsyncTask<File, Void, Void>() {
 //            @Override
@@ -305,58 +279,88 @@ public class FileUtils {
 //        task.execute(arr);
     }
 
-    public static Intent getImageIntent() {
-        String[] mimeTypes = {"image/jpeg", "image/jpeg", "image/png"};
-        return pickIntentFromMimeType(mimeTypes);
-    }
+    val imageIntent: Intent
+        get() {
+            val mimeTypes = arrayOf("image/jpeg", "image/jpeg", "image/png")
+            return pickIntentFromMimeType(mimeTypes)
+        }
 
     /**
      * Supported Formats: avi, mov, mp4, webm, 3gp, mkv, mpeg
      */
-    public static Intent getVideoIntent() {
-        String[] mimeTypes = {"video/avi", "video/mov", "video/quicktime", "video/mp4", "video/webm", "video/3gpp", "video/x-matroska", "video/mpeg"};
-        return pickIntentFromMimeType(mimeTypes);
-    }
+    val videoIntent: Intent
+        get() {
+            val mimeTypes = arrayOf(
+                "video/avi",
+                "video/mov",
+                "video/quicktime",
+                "video/mp4",
+                "video/webm",
+                "video/3gpp",
+                "video/x-matroska",
+                "video/mpeg"
+            )
+            return pickIntentFromMimeType(mimeTypes)
+        }
 
     /**
      * Supported formats: aac, amr, awb, mp3, mp4, ogg, opus, wav
      */
-    public static Intent getAudioIntent() {
-        String[] mimeTypes = {"audio/aac", "audio/aac-adts", "audio/amr", "audio/amr-wb", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/x-wav"};
-        return pickIntentFromMimeType(mimeTypes);
-    }
-
+    val audioIntent: Intent
+        get() {
+            val mimeTypes = arrayOf(
+                "audio/aac",
+                "audio/aac-adts",
+                "audio/amr",
+                "audio/amr-wb",
+                "audio/mpeg",
+                "audio/mp4",
+                "audio/ogg",
+                "audio/x-wav"
+            )
+            return pickIntentFromMimeType(mimeTypes)
+        }// .doc & .docx
+    //pdf
+    // .xls & .xlsx
+    // .ppt & .pptx
+    //txt
+    //zip
+    //epub
     /**
      * Get the Intent for selecting content to be used in an Intent Chooser.
      * Supported Formats: doc, docx, xls, xlsx, ppt, pdf, epub, txt, zip
      *
      * @return The intent for opening a file with Intent.createChooser()
      */
-    public static Intent getDocumentIntent() {
-        String[] mimeTypes = {
-                "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .doc & .docx
-                "application/pdf", //pdf
-                "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xls & .xlsx
-                "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .ppt & .pptx
-                "text/plain",//txt
-                "application/zip",//zip
+    val documentIntent: Intent
+        get() {
+            val mimeTypes = arrayOf(
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  // .doc & .docx
+                "application/pdf",  //pdf
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  // .xls & .xlsx
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",  // .ppt & .pptx
+                "text/plain",  //txt
+                "application/zip",  //zip
                 "application/epub+zip" //epub
-        };
-        return pickIntentFromMimeType(mimeTypes);
-    }
+            )
+            return pickIntentFromMimeType(mimeTypes)
+        }
 
     /**
      * Get the Intent for selecting content to be used in an Intent Chooser.
      *
      * @return The intent for opening a file with Intent.createChooser()
      */
-    public static Intent pickIntentFromMimeType(String[] mimeTypes) {
+    fun pickIntentFromMimeType(mimeTypes: Array<String>?): Intent {
         // Implicitly allow the user to select a particular kind of data
 //        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
         // The MIME data type filter
-        intent.setType("*/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        intent.type = "*/*"
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
 
         /* Commented by Prashant Adesara - START API 30 */
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -374,47 +378,49 @@ public class FileUtils {
         /* Commented by Prashant Adesara - END API 30*/
 
         //intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(Environment.getExternalStorageDirectory(), "IMAGE_NAME.pdf")));
-        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        intent.flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         // Only return URIs that can be opened with ContentResolver
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        return intent;
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        return intent
     }
 
-    public static String fileCopyFromCache(Context context, Uri uri) {
-        final File file = new File(context.getCacheDir(), uri.getLastPathSegment());
-        try (final InputStream inputStream = context.getContentResolver().openInputStream(uri);
-             OutputStream output = new FileOutputStream(file)) {
-            final byte[] buffer = new byte[1024];
-            int read;
-            while ((read = inputStream.read(buffer)) != -1) {
-                output.write(buffer, 0, read);
-            }
-            output.flush();
-            return file.getPath();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return null;
-    }
-
-    public static void copyFileToDest(File src, File dst) {
+    @JvmStatic
+    fun fileCopyFromCache(context: Context, uri: Uri): String? {
+        val file = File(context.cacheDir, uri.lastPathSegment)
         try {
-            Utils.sout("copyFileNew:: Source File to copy:: " + src.toString() + " >> " + dst.toString());
-            FileInputStream input = new FileInputStream(src);
-            FileOutputStream output = new FileOutputStream(dst);
-            byte[] buffer = new byte[1024];
+            context.contentResolver.openInputStream(uri).use { inputStream ->
+                FileOutputStream(file).use { output ->
+                    val buffer = ByteArray(1024)
+                    var read: Int
+                    while (inputStream!!.read(buffer).also { read = it } != -1) {
+                        output.write(buffer, 0, read)
+                    }
+                    output.flush()
+                    return file.path
+                }
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+        return null
+    }
 
-            int read;
-            while ((read = input.read(buffer)) > 0) {
-                output.write(buffer, 0, read);
+    fun copyFileToDest(src: File, dst: File) {
+        try {
+            sout("copyFileNew:: Source File to copy:: $src >> $dst")
+            val input = FileInputStream(src)
+            val output = FileOutputStream(dst)
+            val buffer = ByteArray(1024)
+            var read: Int
+            while (input.read(buffer).also { read = it } > 0) {
+                output.write(buffer, 0, read)
             }
             //Utils.sout("copyFileNew Dest:: " + dst.exists());
-            input.close();
-            output.close();
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            input.close()
+            output.close()
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 }
-

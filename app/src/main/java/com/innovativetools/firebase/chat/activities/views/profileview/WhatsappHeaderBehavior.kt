@@ -1,117 +1,132 @@
-package com.innovativetools.firebase.chat.activities.views.profileview;
+package com.innovativetools.firebase.chat.activities.views.profileview
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.View;
+import android.content.Context
+import android.util.AttributeSet
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.innovativetools.firebase.chat.activities.views.profileview.HeaderView
+import com.google.android.material.appbar.AppBarLayout
+import com.innovativetools.firebase.chat.activities.views.profileview.WhatsappHeaderBehavior
+import com.innovativetools.firebase.chat.activities.R
+import android.util.TypedValue
+import android.view.View
 
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
+class WhatsappHeaderBehavior : CoordinatorLayout.Behavior<HeaderView> {
+    private val mContext: Context
+    private var mStartMarginLeft = 0
+    private var mEndMarginLeft = 0
+    private var mMarginRight = 0
+    private var mStartMarginBottom = 0
+    private var mTitleStartSize = 0f
+    private var mTitleEndSize = 0f
+    private var isHide = false
 
-import com.innovativetools.firebase.chat.activities.R;
-import com.google.android.material.appbar.AppBarLayout;
-
-import org.jetbrains.annotations.NotNull;
-
-public class WhatsappHeaderBehavior extends CoordinatorLayout.Behavior<HeaderView> {
-
-    private final Context mContext;
-
-    private int mStartMarginLeft;
-    private int mEndMarginLeft;
-    private int mMarginRight;
-    private int mStartMarginBottom;
-    private float mTitleStartSize;
-    private float mTitleEndSize;
-    private boolean isHide;
-
-    public WhatsappHeaderBehavior(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        mContext = context;
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        mContext = context
     }
 
-    public WhatsappHeaderBehavior(Context context, AttributeSet attrs, Context mContext) {
-        super(context, attrs);
-        this.mContext = mContext;
+    constructor(context: Context?, attrs: AttributeSet?, mContext: Context) : super(
+        context,
+        attrs
+    ) {
+        this.mContext = mContext
     }
 
-    public static int getToolbarHeight(Context context) {
-        int result = 0;
-        TypedValue tv = new TypedValue();
-        if (context.getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-            result = TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
-        }
-        return result;
+    override fun layoutDependsOn(
+        parent: CoordinatorLayout,
+        child: HeaderView,
+        dependency: View
+    ): Boolean {
+        return dependency is AppBarLayout
     }
 
-    @Override
-    public boolean layoutDependsOn(@NotNull CoordinatorLayout parent, @NotNull HeaderView child, @NotNull View dependency) {
-        return dependency instanceof AppBarLayout;
-    }
-
-    @Override
-    public boolean onDependentViewChanged(@NotNull CoordinatorLayout parent, HeaderView child, View dependency) {
-        shouldInitProperties();
-
-        int maxScroll = ((AppBarLayout) dependency).getTotalScrollRange();
-        float percentage = Math.abs(dependency.getY()) / (float) maxScroll;
-        float childPosition = dependency.getHeight()
-                + dependency.getY()
-                - child.getHeight()
-                - (getToolbarHeight(mContext) - child.getHeight()) * percentage / 2;
-
-        childPosition = childPosition - mStartMarginBottom * (1f - percentage);
-
-        CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) child.getLayoutParams();
+    override fun onDependentViewChanged(
+        parent: CoordinatorLayout,
+        child: HeaderView,
+        dependency: View
+    ): Boolean {
+        shouldInitProperties()
+        val maxScroll = (dependency as AppBarLayout).totalScrollRange
+        val percentage = Math.abs(dependency.getY()) / maxScroll.toFloat()
+        var childPosition = ((dependency.getHeight()
+                + dependency.getY()) - child.height
+                - (getToolbarHeight(mContext) - child.height) * percentage / 2)
+        childPosition = childPosition - mStartMarginBottom * (1f - percentage)
+        val lp = child.layoutParams as CoordinatorLayout.LayoutParams
         if (Math.abs(dependency.getY()) >= maxScroll / 2) {
-            float layoutPercentage = (Math.abs(dependency.getY()) - (maxScroll / 2)) / Math.abs(maxScroll / 2);
-            lp.leftMargin = (int) (layoutPercentage * mEndMarginLeft) + mStartMarginLeft;
-            child.setTextSize(getTranslationOffset(mTitleStartSize, mTitleEndSize, layoutPercentage));
+            val layoutPercentage =
+                (Math.abs(dependency.getY()) - maxScroll / 2) / Math.abs(maxScroll / 2)
+            lp.leftMargin = (layoutPercentage * mEndMarginLeft).toInt() + mStartMarginLeft
+            child.setTextSize(
+                getTranslationOffset(
+                    mTitleStartSize,
+                    mTitleEndSize,
+                    layoutPercentage
+                )
+            )
         } else {
-            lp.leftMargin = mStartMarginLeft;
+            lp.leftMargin = mStartMarginLeft
         }
-        lp.rightMargin = mMarginRight;
-        child.setLayoutParams(lp);
-        child.setY(childPosition);
-
+        lp.rightMargin = mMarginRight
+        child.layoutParams = lp
+        child.y = childPosition
         if (isHide && percentage < 1) {
-            child.setVisibility(View.VISIBLE);
-            isHide = false;
-        } else if (!isHide && percentage == 1) {
-            child.setVisibility(View.GONE);
-            isHide = true;
+            child.visibility = View.VISIBLE
+            isHide = false
+        } else if (!isHide && percentage == 1f) {
+            child.visibility = View.GONE
+            isHide = true
         }
-        return true;
+        return true
     }
 
-    protected float getTranslationOffset(float expandedOffset, float collapsedOffset, float ratio) {
-        return expandedOffset + ratio * (collapsedOffset - expandedOffset);
+    protected fun getTranslationOffset(
+        expandedOffset: Float,
+        collapsedOffset: Float,
+        ratio: Float
+    ): Float {
+        return expandedOffset + ratio * (collapsedOffset - expandedOffset)
     }
 
-    private void shouldInitProperties() {
+    private fun shouldInitProperties() {
         if (mStartMarginLeft == 0) {
-            mStartMarginLeft = mContext.getResources().getDimensionPixelOffset(R.dimen.header_view_start_margin_left);
+            mStartMarginLeft =
+                mContext.resources.getDimensionPixelOffset(R.dimen.header_view_start_margin_left)
         }
-
         if (mEndMarginLeft == 0) {
-            mEndMarginLeft = mContext.getResources().getDimensionPixelOffset(R.dimen.header_view_end_margin_left);
+            mEndMarginLeft =
+                mContext.resources.getDimensionPixelOffset(R.dimen.header_view_end_margin_left)
         }
-
         if (mStartMarginBottom == 0) {
-            mStartMarginBottom = mContext.getResources().getDimensionPixelOffset(R.dimen.header_view_start_margin_bottom);
+            mStartMarginBottom =
+                mContext.resources.getDimensionPixelOffset(R.dimen.header_view_start_margin_bottom)
         }
-
         if (mMarginRight == 0) {
-            mMarginRight = mContext.getResources().getDimensionPixelOffset(R.dimen.header_view_end_margin_right);
+            mMarginRight =
+                mContext.resources.getDimensionPixelOffset(R.dimen.header_view_end_margin_right)
         }
-
-        if (mTitleStartSize == 0) {
-            mTitleEndSize = mContext.getResources().getDimensionPixelSize(R.dimen.header_view_end_text_size);
+        if (mTitleStartSize == 0f) {
+            mTitleEndSize =
+                mContext.resources.getDimensionPixelSize(R.dimen.header_view_end_text_size)
+                    .toFloat()
         }
-
-        if (mTitleStartSize == 0) {
-            mTitleStartSize = mContext.getResources().getDimensionPixelSize(R.dimen.header_view_start_text_size);
+        if (mTitleStartSize == 0f) {
+            mTitleStartSize =
+                mContext.resources.getDimensionPixelSize(R.dimen.header_view_start_text_size)
+                    .toFloat()
         }
     }
 
-
+    companion object {
+        fun getToolbarHeight(context: Context): Int {
+            var result = 0
+            val tv = TypedValue()
+            if (context.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                result = TypedValue.complexToDimensionPixelSize(
+                    tv.data,
+                    context.resources.displayMetrics
+                )
+            }
+            return result
+        }
+    }
 }

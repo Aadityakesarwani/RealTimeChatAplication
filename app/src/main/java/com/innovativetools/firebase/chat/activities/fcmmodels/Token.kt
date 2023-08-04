@@ -1,20 +1,11 @@
-package com.innovativetools.firebase.chat.activities.fcmmodels;
+package com.innovativetools.firebase.chat.activities.fcmmodels
 
-public class Token {
-    private String token;
+class Token {
+    var token: String? = null
 
-    public Token(String token) {
-        this.token = token;
+    constructor(token: String?) {
+        this.token = token
     }
 
-    public Token() {
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
+    constructor() {}
 }

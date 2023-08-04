@@ -1,9 +1,8 @@
-package com.innovativetools.firebase.chat.activities.async;
+package com.innovativetools.firebase.chat.activities.async
 
-import java.util.concurrent.Callable;
+import java.util.concurrent.Callable
 
-public interface CustomCallable<R> extends Callable<R> {
-    void setDataAfterLoading(R result);
-
-    void setUiForLoading();
+interface CustomCallable<R> : Callable<R> {
+    fun setDataAfterLoading(result: R)
+    fun setUiForLoading()
 }

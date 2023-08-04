@@ -1,130 +1,92 @@
-package com.innovativetools.firebase.chat.activities.managers;
+package com.innovativetools.firebase.chat.activities.managers
 
-import android.net.Uri;
+import android.net.Uri
+import com.innovativetools.firebase.chat.activities.managers.Utils.getErrors
+import com.innovativetools.firebase.chat.activities.managers.Utils.sout
+import com.google.firebase.storage.StorageReference
+import com.innovativetools.firebase.chat.activities.managers.FirebaseUploader.UploadListener
+import com.google.firebase.storage.UploadTask
+import com.innovativetools.firebase.chat.activities.async.BaseTask
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.android.gms.tasks.OnFailureListener
+import kotlin.Throws
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.storage.OnProgressListener
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.async.CustomCallable
+import com.innovativetools.firebase.chat.activities.async.TaskRunner
+import java.io.File
+import java.lang.Exception
 
-import androidx.annotation.NonNull;
-
-import com.innovativetools.firebase.chat.activities.async.BaseTask;
-import com.innovativetools.firebase.chat.activities.async.TaskRunner;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-
-public class FirebaseUploader {
-    private final UploadListener uploadListener;
-    private UploadTask uploadTask;
-
-    private final StorageReference uploadRef;
-    private Uri fileUri;
-
-    public FirebaseUploader(final StorageReference storageReference, final UploadListener uploadListener) {
-        this.uploadRef = storageReference;
-        this.uploadListener = uploadListener;
-    }
-
-    public void uploadFile(final File file) {
-        final BaseTask baseTask = new BaseTask() {
-            @Override
-            public void setUiForLoading() {
-                super.setUiForLoading();
+class FirebaseUploader(
+    private val uploadRef: StorageReference,
+    private val uploadListener: UploadListener
+) {
+    private var uploadTask: UploadTask? = null
+    private var fileUri: Uri? = null
+    fun uploadFile(file: File?) {
+        val baseTask: BaseTask<*> = object : BaseTask<Any?>() {
+            override fun setUiForLoading() {
+                super.setUiForLoading()
             }
 
-            @Override
-            public Object call() {
+            override fun call(): Any? {
                 try {
-                    fileUri = Uri.fromFile(file);
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                    fileUri = Uri.fromFile(file)
+                } catch (e: Exception) {
+                    getErrors(e)
                 }
-                checkIfExists();
-                return "";
+                checkIfExists()
+                return ""
             }
 
-            @Override
-            public void setDataAfterLoading(Object result) {
-
-            }
-
-        };
-
-        TaskRunner runner = new TaskRunner();
-        runner.executeAsync(baseTask);
+            override fun setDataAfterLoading(result: Any?) {}
+        }
+        val runner = TaskRunner()
+        runner.executeAsync(baseTask as CustomCallable<R?>)
     }
 
-    private void checkIfExists() {
-        uploadRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                uploadListener.onUploadSuccess(uri.toString());
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                upload();
-            }
-        });
+    private fun checkIfExists() {
+        uploadRef.downloadUrl.addOnSuccessListener { uri -> uploadListener.onUploadSuccess(uri.toString()) }
+            .addOnFailureListener { upload() }
     }
 
-    private void upload() {
-        Utils.sout("Upload fileURI:::: " + fileUri);
-        uploadTask = uploadRef.putFile(fileUri);
-        uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-            @Override
-            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                if (!task.isSuccessful()) {
-                    throw task.getException();
-                }
-                // Continue with the task to get the download URL
-                return uploadRef.getDownloadUrl();
+    private fun upload() {
+        sout("Upload fileURI:::: $fileUri")
+        uploadTask = uploadRef.putFile(fileUri!!)
+        uploadTask!!.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                throw task.exception!!
             }
-        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-            @Override
-            public void onComplete(@NonNull Task<Uri> task) {
-                if (task.isSuccessful()) {
-                    Uri downloadUri = task.getResult();
-                    uploadListener.onUploadSuccess(downloadUri.toString());
+            // Continue with the task to get the download URL
+            uploadRef.downloadUrl
+        }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val downloadUri = task.result
+                    uploadListener.onUploadSuccess(downloadUri.toString())
                 } else {
-                    uploadListener.onUploadFail(task.getException().getMessage());
+                    uploadListener.onUploadFail(task.exception!!.message)
                 }
             }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                uploadListener.onUploadFail(e.getMessage());
-            }
-        });
-        uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(@NotNull UploadTask.TaskSnapshot taskSnapshot) {
-                long progress = (100 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                uploadListener.onUploadProgress((int) progress);
-            }
-        });
-    }
-
-    public void cancelUpload() {
-        if (uploadTask != null && uploadTask.isInProgress()) {
-            uploadTask.cancel();
-            uploadListener.onUploadCancelled();
+            .addOnFailureListener { e -> uploadListener.onUploadFail(e.message) }
+        uploadTask!!.addOnProgressListener { taskSnapshot ->
+            val progress = 100 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
+            uploadListener.onUploadProgress(progress.toInt())
         }
     }
 
-    public interface UploadListener {
-        void onUploadFail(String message);
+    fun cancelUpload() {
+        if (uploadTask != null && uploadTask!!.isInProgress) {
+            uploadTask!!.cancel()
+            uploadListener.onUploadCancelled()
+        }
+    }
 
-        void onUploadSuccess(String downloadUrl);
-
-        void onUploadProgress(int progress);
-
-        void onUploadCancelled();
+    interface UploadListener {
+        fun onUploadFail(message: String?)
+        fun onUploadSuccess(downloadUrl: String?)
+        fun onUploadProgress(progress: Int)
+        fun onUploadCancelled()
     }
 }

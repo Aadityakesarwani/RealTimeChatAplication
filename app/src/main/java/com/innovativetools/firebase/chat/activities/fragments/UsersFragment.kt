@@ -1,269 +1,219 @@
-package com.innovativetools.firebase.chat.activities.fragments;
+package com.innovativetools.firebase.chat.activities.fragments
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_FEMALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_MALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_UNSPECIFIED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_DEFAULTS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_OFFLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.female;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.male;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.notset;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.offline;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.online;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.withPicture;
-import static com.innovativetools.firebase.chat.activities.managers.Utils.withoutPicture;
+import com.innovativetools.firebase.chat.activities.fragments.BaseFragment
+import android.widget.RelativeLayout
+import android.os.Bundle
+import com.innovativetools.firebase.chat.activities.R
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import android.text.TextWatcher
+import android.text.Editable
+import android.view.*
+import com.innovativetools.firebase.chat.activities.adapters.UserAdapters
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import android.widget.ImageView
+import androidx.appcompat.widget.AppCompatEditText
+import com.innovativetools.firebase.chat.activities.constants.IFilterListener
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.lang.Exception
+import java.util.*
 
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatEditText;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.adapters.UserAdapters;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-
-
-public class UsersFragment extends BaseFragment {
-
-    private AppCompatEditText txtSearch;
-    private ImageView imgClear;
-    private RelativeLayout imgNoUsers;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+class UsersFragment : BaseFragment() {
+    private var txtSearch: AppCompatEditText? = null
+    private var imgClear: ImageView? = null
+    private var imgNoUsers: RelativeLayout? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_users, container, false);
-
-        imgNoUsers = view.findViewById(R.id.imgNoUsers);
-        imgNoUsers.setVisibility(View.GONE);
-
-        imgClear = view.findViewById(R.id.imgClear);
-        txtSearch = view.findViewById(R.id.txtSearch);
-        mRecyclerView = view.findViewById(R.id.recyclerView);
-        mRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView.setLayoutManager(layoutManager);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(), layoutManager.getOrientation());
-        mRecyclerView.addItemDecoration(dividerItemDecoration);
-
-        mUsers = new ArrayList<>();
-
-        readUsers();
-
-        txtSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                searchUsers(s.toString().toLowerCase());
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_users, container, false)
+        imgNoUsers = view.findViewById(R.id.imgNoUsers)
+        imgNoUsers?.setVisibility(View.GONE)
+        imgClear = view.findViewById(R.id.imgClear)
+        txtSearch = view.findViewById(R.id.txtSearch)
+        mRecyclerView = view.findViewById(R.id.recyclerView)
+        mRecyclerView?.setHasFixedSize(true)
+        val layoutManager = LinearLayoutManager(activity)
+        mRecyclerView?.setLayoutManager(layoutManager)
+        val dividerItemDecoration =
+            DividerItemDecoration(mRecyclerView?.getContext(), layoutManager.orientation)
+        mRecyclerView?.addItemDecoration(dividerItemDecoration)
+        mUsers = ArrayList()
+        readUsers()
+        txtSearch?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                searchUsers(s.toString().lowercase(Locale.getDefault()))
                 if (count > 0) {
-                    imgClear.setVisibility(View.VISIBLE);
+                    imgClear?.setVisibility(View.VISIBLE)
                 } else {
-                    imgClear.setVisibility(View.GONE);
+                    imgClear?.setVisibility(View.GONE)
                 }
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-
+            override fun afterTextChanged(s: Editable) {}
+        })
+        imgClear?.setVisibility(View.GONE)
+        imgClear?.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                txtSearch?.setText("")
+                txtSearch?.requestFocus()
             }
-        });
-
-        imgClear.setVisibility(View.GONE);
-        imgClear.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                txtSearch.setText("");
-                txtSearch.requestFocus();
-            }
-        });
-
-        return view;
+        })
+        return view
     }
 
-    private void showUsers() {
-        if (mUsers.size() > 0) {
-            imgNoUsers.setVisibility(View.GONE);
-            userAdapters = new UserAdapters(getContext(), mUsers, FALSE);
-            mRecyclerView.setAdapter(userAdapters);
-            mRecyclerView.setVisibility(View.VISIBLE);
+    private fun showUsers() {
+        if (mUsers!!.size > 0) {
+            imgNoUsers!!.visibility = View.GONE
+            userAdapters = UserAdapters(requireContext(), mUsers, IConstants.FALSE)
+            mRecyclerView!!.adapter = userAdapters
+            mRecyclerView!!.visibility = View.VISIBLE
         } else {
-            imgNoUsers.setVisibility(View.VISIBLE);
-            mRecyclerView.setVisibility(View.GONE);
+            imgNoUsers!!.visibility = View.VISIBLE
+            mRecyclerView!!.visibility = View.GONE
         }
     }
 
-
-    private void searchUsers(final String search) {
-        final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        final Query query = Utils.getQuerySortBySearch();
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mUsers.clear();
+    private fun searchUsers(search: String) {
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        val query = Utils.querySortBySearch
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                mUsers!!.clear()
                 if (dataSnapshot.hasChildren()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        User user = snapshot.getValue(User.class);
-                        assert user != null;
-                        assert firebaseUser != null;
-                        if (!user.getId().equalsIgnoreCase(firebaseUser.getUid()) && user.isActive()) {
-                            if (user.getSearch().contains(search)) {
-                                onlineOptionFilter(user);
+                    for (snapshot in dataSnapshot.children) {
+                        val user = snapshot.getValue(
+                            User::class.java
+                        )!!
+                        assert(firebaseUser != null)
+                        if (!user.id.equals(
+                                firebaseUser!!.uid,
+                                ignoreCase = true
+                            ) && user.isActive
+                        ) {
+                            if (user.search?.contains(search) == true) {
+                                onlineOptionFilter(user)
                             }
                         }
                     }
                 }
-                showUsers();
+                showUsers()
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void readUsers() {
-        final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-//        Query query = FirebaseDatabase.getInstance().getReference(REF_USERS).orderByChild(EXTRA_SEARCH).startAt(search).endAt(search + "\uf8ff");
-        final Query query = Utils.getQuerySortBySearch();
-        query.keepSynced(true);
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mUsers.clear();
+    private fun readUsers() {
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        //        Query query = FirebaseDatabase.getInstance().getReference(REF_USERS).orderByChild(EXTRA_SEARCH).startAt(search).endAt(search + "\uf8ff");
+        val query = Utils.querySortBySearch
+        query.keepSynced(true)
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                mUsers!!.clear()
                 if (dataSnapshot.hasChildren()) {
-                    if (txtSearch.getText().toString().trim().equalsIgnoreCase("")) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            User user = snapshot.getValue(User.class);
-
-                            assert firebaseUser != null;
-                            assert user != null;
-
-                            if (!user.getId().equalsIgnoreCase(firebaseUser.getUid()) && user.isActive()) {
-                                onlineOptionFilter(user);
+                    if (txtSearch!!.text.toString().trim { it <= ' ' }
+                            .equals("", ignoreCase = true)) {
+                        for (snapshot in dataSnapshot.children) {
+                            val user = snapshot.getValue(
+                                User::class.java
+                            )
+                            assert(firebaseUser != null)
+                            assert(user != null)
+                            if (!user!!.id.equals(
+                                    firebaseUser!!.uid,
+                                    ignoreCase = true
+                                ) && user.isActive
+                            ) {
+                                onlineOptionFilter(user)
                             }
-
                         }
                     }
                 }
-                showUsers();
-
+                showUsers()
                 try {
-                    final String searchHint = String.format(getString(R.string.strSearchWithCount), mUsers.size());
-                    txtSearch.setHint(searchHint);
-                } catch (Exception ignored) {
+                    val searchHint =
+                        String.format(getString(R.string.strSearchWithCount), mUsers!!.size)
+                    txtSearch!!.hint = searchHint
+                } catch (ignored: Exception) {
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void onlineOptionFilter(final User user) {
+    private fun onlineOptionFilter(user: User?) {
         try {
-            if (user.getIsOnline() == STATUS_ONLINE) {
-                if (online)
-                    profileOptionFilter(user);
-            } else if (user.getIsOnline() == STATUS_OFFLINE) {
-                if (offline)
-                    profileOptionFilter(user);
+            if (user!!.isOnline == IConstants.STATUS_ONLINE) {
+                if (Utils.online) profileOptionFilter(user)
+            } else if (user.isOnline == IConstants.STATUS_OFFLINE) {
+                if (Utils.offline) profileOptionFilter(user)
             } else {
-                profileOptionFilter(user);
+                profileOptionFilter(user)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    private void profileOptionFilter(final User user) {
+    private fun profileOptionFilter(user: User?) {
         try {
-            if (!user.getImageURL().equalsIgnoreCase(IMG_DEFAULTS)) {
-                if (withPicture)
-                    levelOptionFilter(user);
-            } else if (user.getImageURL().equalsIgnoreCase(IMG_DEFAULTS)) {
-                if (withoutPicture)
-                    levelOptionFilter(user);
+            if (!user!!.getImageURL().equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
+                if (Utils.withPicture) levelOptionFilter(user)
+            } else if (user.getImageURL().equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
+                if (Utils.withoutPicture) levelOptionFilter(user)
             } else {
-                levelOptionFilter(user);
+                levelOptionFilter(user)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    private void levelOptionFilter(final User user) {
+    private fun levelOptionFilter(user: User?) {
         try {
-            if (user.getGenders() == GEN_UNSPECIFIED) {
-                if (notset)
-                    addNewUserDataToList(user);
+            if (user!!.genders == IConstants.GEN_UNSPECIFIED) {
+                if (Utils.notset) addNewUserDataToList(user)
             } else {
-                if (user.getGenders() == GEN_MALE) {
-                    if (male)
-                        addNewUserDataToList(user);
-                } else if (user.getGenders() == GEN_FEMALE) {
-                    if (female)
-                        addNewUserDataToList(user);
+                if (user.genders == IConstants.GEN_MALE) {
+                    if (Utils.male) addNewUserDataToList(user)
+                } else if (user.genders == IConstants.GEN_FEMALE) {
+                    if (Utils.female) addNewUserDataToList(user)
                 }
             }
-        } catch (Exception e) {
-            addNewUserDataToList(user);
+        } catch (e: Exception) {
+            addNewUserDataToList(user)
         }
     }
 
-    private void addNewUserDataToList(User user) {
-        mUsers.add(user);
+    private fun addNewUserDataToList(user: User?) {
+        mUsers!!.add(user!!)
     }
 
-    @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_filter, menu);
-
-        MenuItem searchItem = menu.findItem(R.id.itemFilter);
-
-        searchItem.setOnMenuItemClickListener(item -> {
-            Utils.filterPopup(getActivity(), this::readUsers);
-            return true;
-        });
-
-        super.onCreateOptionsMenu(menu, inflater);
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_filter, menu)
+        val searchItem = menu.findItem(R.id.itemFilter)
+        searchItem.setOnMenuItemClickListener { item: MenuItem? ->
+            Utils.filterPopup(
+                requireActivity()
+            ) { readUsers() }
+            true
+        }
+        super.onCreateOptionsMenu(menu, inflater)
     }
-
 }

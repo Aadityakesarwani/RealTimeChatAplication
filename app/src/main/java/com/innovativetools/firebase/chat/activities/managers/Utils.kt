@@ -1,360 +1,272 @@
-package com.innovativetools.firebase.chat.activities.managers;
+package com.innovativetools.firebase.chat.activities.managers
 
-import static android.os.Build.VERSION.SDK_INT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.CLICK_DELAY_TIME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.DEFAULT_UPDATE_URL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.DEFAULT_UPDATE_URL_2;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ACTIVE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GENDER;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_LASTSEEN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SEARCH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SEND_MESSAGES;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_VERSION_CODE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_VERSION_NAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXT_MP3;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXT_VCF;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_FEMALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_MALE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.GEN_UNSPECIFIED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_DEFAULTS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_FOLDER;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHATS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_GROUPS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_OTHERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_TOKENS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SDPATH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SENT_FILE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SETTING_ALL_PARTICIPANTS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SETTING_ONLY_ADMIN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_OFFLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_AUDIO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_DOCUMENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_EMAIL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_IMAGE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_LOCATION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_RECORDING;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_TEXT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_VIDEO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
-import android.database.Cursor;
-import android.graphics.Typeface;
-import android.location.LocationManager;
-import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
-import android.text.Html;
-import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-import android.util.Patterns;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
-import android.webkit.MimeTypeMap;
-import android.widget.CheckBox;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.TextView;
+import android.annotation.SuppressLint
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes.getTypeName
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes.getDirectoryByType
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes.getExtension
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes.getTargetUri
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.text.TextUtils
+import kotlin.Throws
+import android.text.format.DateUtils
+import com.bumptech.glide.Glide
+import com.innovativetools.firebase.chat.activities.R
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import jp.wasabeef.glide.transformations.BlurTransformation
+import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import kotlin.jvm.JvmOverloads
+import android.app.Activity
+import android.content.res.Resources.NotFoundException
+import android.os.Build.VERSION
+import com.google.firebase.storage.FirebaseStorage
+import androidx.cardview.widget.CardView
+import android.app.AlertDialog
+import android.app.Dialog
+import android.content.*
+import com.innovativetools.firebase.chat.activities.constants.IDialogListener
+import com.innovativetools.firebase.chat.activities.constants.IFilterListener
+import android.media.MediaPlayer
+import com.innovativetools.firebase.chat.activities.views.customimage.ColorGenerator
+import android.webkit.MimeTypeMap
+import com.innovativetools.firebase.chat.activities.LoginActivity
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import android.content.pm.PackageManager
+import android.database.Cursor
+import com.innovativetools.firebase.chat.activities.constants.ISendMessage
+import android.text.Html
+import android.provider.MediaStore
+import android.media.MediaMetadataRetriever
+import android.provider.ContactsContract
+import android.location.LocationManager
+import android.graphics.Typeface
+import android.net.Uri
+import android.os.*
+import android.text.format.Time
+import android.util.Log
+import android.util.Patterns
+import android.view.*
+import android.view.inputmethod.InputMethodManager
+import android.widget.*
+import androidx.appcompat.widget.AppCompatButton
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.core.content.pm.PackageInfoCompat
+import androidx.core.content.res.ResourcesCompat
+import com.bumptech.glide.load.resource.bitmap.CenterInside
+import com.bumptech.glide.request.RequestOptions
+import com.google.firebase.database.Query
+import com.innovativetools.firebase.chat.activities.BuildConfig
+import com.innovativetools.firebase.chat.activities.fcmmodels.Token
+import com.innovativetools.firebase.chat.activities.models.*
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import com.innovativetools.firebase.chat.activities.views.files.FileUtils
+import java.io.*
+import java.lang.Exception
+import java.lang.StringBuilder
+import java.text.DateFormat
+import java.text.DecimalFormat
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.*
 
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.core.content.pm.PackageInfoCompat;
-import androidx.core.content.res.ResourcesCompat;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.bitmap.CenterCrop;
-import com.bumptech.glide.load.resource.bitmap.CenterInside;
-import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
-import com.innovativetools.firebase.chat.activities.BuildConfig;
-import com.innovativetools.firebase.chat.activities.LoginActivity;
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.constants.IDialogListener;
-import com.innovativetools.firebase.chat.activities.constants.IFilterListener;
-import com.innovativetools.firebase.chat.activities.constants.ISendMessage;
-import com.innovativetools.firebase.chat.activities.fcmmodels.Token;
-import com.innovativetools.firebase.chat.activities.models.AttachmentTypes;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-import com.innovativetools.firebase.chat.activities.models.LocationAddress;
-import com.innovativetools.firebase.chat.activities.models.Others;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.innovativetools.firebase.chat.activities.views.customimage.ColorGenerator;
-import com.innovativetools.firebase.chat.activities.views.files.FileUtils;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+object Utils {
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimeZone;
-
-/**
- * @author : Prashant Adesara
- * @url https://www.bytesbee.com
- * Util class set Default parameter and access in application
- */
-public class Utils {
-
-    public static final boolean IS_TRIAL = false;
-    private static final int DEFAULT_VIBRATE = 500;
-    public static boolean online = true, offline = true;
-    public static boolean male = true, female = true, notset = true;
-    public static boolean withPicture = true, withoutPicture = true;
-    private static int strSelectedGender = GEN_UNSPECIFIED;
-    private static int settingIndex = SETTING_ALL_PARTICIPANTS;
-
-    static final int ONE_MB = 1024;
-    public static int MAX_SIZE_AUDIO = 10; // 10 MB Maximum
-    public static int MAX_SIZE_VIDEO = 15; // 15 MB Maximum
-    public static int MAX_SIZE_DOCUMENT = 5; // 5 MB Maximum
-
-    final static String DEF_TEXT = "Please update your app to get attachment options and many new features.";
-    public static String UPDATE_TEXT = "";
-
-    public static String getDefaultMessage() {
-        if (Utils.isEmpty(UPDATE_TEXT)) {
-            return DEF_TEXT;
+    const val IS_TRIAL = false
+    private const val DEFAULT_VIBRATE = 500
+    var online = true
+    var offline = true
+    var male = true
+    var female = true
+    var notset = true
+    var withPicture = true
+    var withoutPicture = true
+    private var strSelectedGender = IConstants.GEN_UNSPECIFIED
+    private var settingIndex = IConstants.SETTING_ALL_PARTICIPANTS
+    const val ONE_MB = 1024
+    var MAX_SIZE_AUDIO = 10 // 10 MB Maximum
+    var MAX_SIZE_VIDEO = 15 // 15 MB Maximum
+    var MAX_SIZE_DOCUMENT = 5 // 5 MB Maximum
+    const val DEF_TEXT = "Please update your app to get attachment options and many new features."
+    var UPDATE_TEXT = ""
+    val defaultMessage: String
+        get() = if (isEmpty(UPDATE_TEXT)) {
+            DEF_TEXT
         } else {
-            return UPDATE_TEXT;
+            UPDATE_TEXT
         }
-    }
+    val audioSizeLimit: Int
+        get() = MAX_SIZE_AUDIO * ONE_MB
+    val videoSizeLimit: Int
+        get() = MAX_SIZE_VIDEO * ONE_MB
+    val documentSizeLimit: Int
+        get() = MAX_SIZE_DOCUMENT * ONE_MB
 
-    public static int getAudioSizeLimit() {
-        return MAX_SIZE_AUDIO * ONE_MB;
-    }
-
-    public static int getVideoSizeLimit() {
-        return MAX_SIZE_VIDEO * ONE_MB;
-    }
-
-    public static int getDocumentSizeLimit() {
-        return MAX_SIZE_DOCUMENT * ONE_MB;
-    }
-
-    public static void sout(String msg) {
+    @JvmStatic
+    fun sout(msg: String) {
         if (IS_TRIAL) {
-            System.out.println("Pra :: " + msg);
+            println("Pra :: $msg")
         }
     }
 
-    public static boolean isEmpty(final Object s) {
+    @JvmStatic
+    fun isEmpty(s: Any?): Boolean {
         if (s == null) {
-            return true;
+            return true
         }
-        if ((s instanceof String) && (((String) s).trim().length() == 0)) {
-            return true;
+        if (s is String && s.trim { it <= ' ' }.length == 0) {
+            return true
         }
-        if (s instanceof Map) {
-            return ((Map<?, ?>) s).isEmpty();
+        if (s is Map<*, *>) {
+            return s.isEmpty()
         }
-        if (s instanceof List) {
-            return ((List<?>) s).isEmpty();
+        if (s is List<*>) {
+            return s.isEmpty()
         }
-        if (s instanceof Object[]) {
-            return (((Object[]) s).length == 0);
-        }
-        return false;
+        return if (s is Array<*>) {
+            (s as Array<*>).size == 0
+        } else false
     }
 
-    public static void getErrors(final Exception e) {
+    @JvmStatic
+    fun getErrors(e: Exception?) {
         if (IS_TRIAL) {
-            final String stackTrace = "Pra ::" + Log.getStackTraceString(e);
-            System.out.println(stackTrace);
+            val stackTrace = "Pra ::" + Log.getStackTraceString(e)
+            println(stackTrace)
         }
     }
 
-    public static boolean isValidEmail(CharSequence target) {
-        return (!TextUtils.isEmpty(target) && Patterns.EMAIL_ADDRESS.matcher(target).matches());
+    fun isValidEmail(target: CharSequence?): Boolean {
+        return !TextUtils.isEmpty(target) && Patterns.EMAIL_ADDRESS.matcher(target).matches()
     }
 
-    public static String getDateTime() {
-        final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        final Date date = new Date();
+    val dateTime: String
+        @SuppressLint("SimpleDateFormat")
+        get() {
+            val dateFormat: DateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val date = Date()
+            return dateFormat.format(date)
+        }
 
-        return dateFormat.format(date);
-    }
+    //dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    val dateTimeStampName: String
+        get() {
+            val dateFormat: DateFormat = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+            //dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            val date = Date()
+            return dateFormat.format(date)
+        }
 
-    public static String getDateTimeStampName() {
-        final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
-        //dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        final Date date = new Date();
-        return dateFormat.format(date);
-    }
-
-    public static String getCapsWord(String name) {
-        StringBuilder sb = new StringBuilder(name);
-        sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
-        return sb.toString();
+    fun getCapsWord(name: String?): String {
+        val sb = name?.let { StringBuilder(it) }
+        sb?.get(0)?.let { sb.setCharAt(0, it.uppercaseChar()) }
+        return sb.toString()
     }
 
     /**
      * Gets timestamp in millis and converts it to HH:mm (e.g. 16:44).
      */
-    public static String formatDateTime(long timeInMillis) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        return dateFormat.format(timeInMillis);
+    fun formatDateTime(timeInMillis: Long): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return dateFormat.format(timeInMillis)
     }
 
     /**
      * Gets timestamp in millis and converts it to HH:mm (e.g. 16:44).
      */
-    public static String formatTime(long timeInMillis) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        return dateFormat.format(timeInMillis);
+    fun formatTime(timeInMillis: Long): String {
+        val dateFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        return dateFormat.format(timeInMillis)
     }
 
     /**
      * Gets timestamp in millis and converts it to HH:mm (e.g. 16:44).
      */
-    public static String formatLocalTime(long timeInMillis) {
-        SimpleDateFormat dateFormatUTC = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        dateFormatUTC.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date date = null;
+    fun formatLocalTime(timeInMillis: Long): String {
+        val dateFormatUTC = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        dateFormatUTC.timeZone = TimeZone.getTimeZone("UTC")
+        var date: Date? = null
         try {
-            date = dateFormatUTC.parse(formatTime(timeInMillis));
-        } catch (Exception ignored) {
+            date = dateFormatUTC.parse(formatTime(timeInMillis))
+        } catch (ignored: Exception) {
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        dateFormat.setTimeZone(TimeZone.getDefault());
-        if (date == null) {
-            return dateFormat.format(timeInMillis);
-        }
-        return dateFormat.format(date);
+        val dateFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        dateFormat.timeZone = TimeZone.getDefault()
+        return if (date == null) {
+            dateFormat.format(timeInMillis)
+        } else dateFormat.format(date)
     }
 
-    public static String formatLocalFullTime(long timeInMillis) {
-        SimpleDateFormat dateFormatUTC = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        dateFormatUTC.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date date = null;
+    fun formatLocalFullTime(timeInMillis: Long): String {
+        val dateFormatUTC = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        dateFormatUTC.timeZone = TimeZone.getTimeZone("UTC")
+        var date: Date? = null
         try {
-            date = dateFormatUTC.parse(formatDateTime(timeInMillis));
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            date = dateFormatUTC.parse(formatDateTime(timeInMillis))
+        } catch (e: Exception) {
+            getErrors(e)
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        dateFormat.setTimeZone(TimeZone.getDefault());
-        if (date == null) {
-            return dateFormat.format(timeInMillis);
-        }
-        return dateFormat.format(date);
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        dateFormat.timeZone = TimeZone.getDefault()
+        return if (date == null) {
+            dateFormat.format(timeInMillis)
+        } else dateFormat.format(date)
     }
 
-    public static String formatDateTime(final Context context, final String timeInMillis) {
-        long localTime = 0L;
+    fun formatDateTime(context: Context?, timeInMillis: String?): String {
+        var localTime = 0L
         try {
-            localTime = dateToMillis(formatLocalFullTime(dateToMillis(timeInMillis)));
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            localTime = dateToMillis(formatLocalFullTime(dateToMillis(timeInMillis)))
+        } catch (e: Exception) {
+            getErrors(e)
         }
-        if (isToday(localTime)) {
-            return formatTime(context, localTime);
+        return if (isToday(localTime)) {
+            formatTime(context, localTime)
         } else {
-            return formatDateNew(localTime);
+            formatDateNew(localTime)
         }
     }
 
-    public static long dateToMillis(String dateString) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        Date date = sdf.parse(dateString);
-        assert date != null;
-        return date.getTime();
+    @Throws(ParseException::class)
+    fun dateToMillis(dateString: String?): Long {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val date = dateString?.let { sdf.parse(it) }!!
+        return date.time
     }
 
-    public static String formatFullDate(String timeString) {
-        long timeInMillis = 0;
+    fun formatFullDate(timeString: String?): String {
+        var timeInMillis: Long = 0
         try {
-            timeInMillis = dateToMillis(timeString);
-        } catch (ParseException e) {
-            e.printStackTrace();
+            timeInMillis = dateToMillis(timeString)
+        } catch (e: ParseException) {
+            e.printStackTrace()
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-        return dateFormat.format(timeInMillis).toUpperCase();
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault())
+        return dateFormat.format(timeInMillis).uppercase(Locale.getDefault())
     }
 
     /**
      * Formats timestamp to 'date month' format (e.g. 'February 3').
      */
-    public static String formatDateNew(long timeInMillis) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd yy HH:mm", Locale.getDefault());
-        return dateFormat.format(timeInMillis);
+    fun formatDateNew(timeInMillis: Long): String {
+        val dateFormat = SimpleDateFormat("MMM dd yy HH:mm", Locale.getDefault())
+        return dateFormat.format(timeInMillis)
     }
 
     /**
      * Returns whether the given date is today, based on the user's current locale.
      */
-    public static boolean isToday(long timeInMillis) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
-        dateFormat.setTimeZone(TimeZone.getDefault());
-        String date = dateFormat.format(timeInMillis);
-        return date.equals(dateFormat.format(Calendar.getInstance().getTimeInMillis()));
+    fun isToday(timeInMillis: Long): Boolean {
+        val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+        dateFormat.timeZone = TimeZone.getDefault()
+        val date = dateFormat.format(timeInMillis)
+        return date == dateFormat.format(Calendar.getInstance().timeInMillis)
     }
 
     /**
@@ -364,1430 +276,1507 @@ public class Utils {
      * @param millisSecond The time in milliseconds of the second date.
      * @return Whether {@param millisFirst} and {@param millisSecond} are off the same day.
      */
-    public static boolean hasSameDate(long millisFirst, long millisSecond) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
-        return dateFormat.format(millisFirst).equals(dateFormat.format(millisSecond));
+    fun hasSameDate(millisFirst: Long, millisSecond: Long): Boolean {
+        val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+        return dateFormat.format(millisFirst) == dateFormat.format(millisSecond)
     }
 
-    public static String formatLocalTime(Context context, long when) {
-        Time then = new Time();
-        then.set(when);
-        Time now = new Time();
-        now.setToNow();
-
-        int flags = DateUtils.FORMAT_NO_NOON | DateUtils.FORMAT_NO_MIDNIGHT | DateUtils.FORMAT_ABBREV_ALL;
-
-        if (then.year != now.year) {
-            flags |= DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_DATE;
+    fun formatLocalTime(context: Context?, `when`: Long): String {
+        val then = Time()
+        then.set(`when`)
+        val now = Time()
+        now.setToNow()
+        var flags =
+            DateUtils.FORMAT_NO_NOON or DateUtils.FORMAT_NO_MIDNIGHT or DateUtils.FORMAT_ABBREV_ALL
+        flags = if (then.year != now.year) {
+            flags or (DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_SHOW_DATE)
         } else if (then.yearDay != now.yearDay) {
-            flags |= DateUtils.FORMAT_SHOW_DATE;
+            flags or DateUtils.FORMAT_SHOW_DATE
         } else {
-            flags |= DateUtils.FORMAT_SHOW_TIME;
+            flags or DateUtils.FORMAT_SHOW_TIME
         }
-
-        return DateUtils.formatDateTime(context, when, flags);
+        return DateUtils.formatDateTime(context, `when`, flags)
     }
 
-    public static String formatTime(Context context, long when) {
-        Time then = new Time();
-        then.set(when);
-        Time now = new Time();
-        now.setToNow();
-
-        int flags = DateUtils.FORMAT_NO_NOON | DateUtils.FORMAT_NO_MIDNIGHT | DateUtils.FORMAT_ABBREV_ALL;
-
-        if (then.year != now.year) {
-            flags |= DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_DATE;
+    fun formatTime(context: Context?, `when`: Long): String {
+        val then = Time()
+        then.set(`when`)
+        val now = Time()
+        now.setToNow()
+        var flags =
+            DateUtils.FORMAT_NO_NOON or DateUtils.FORMAT_NO_MIDNIGHT or DateUtils.FORMAT_ABBREV_ALL
+        flags = if (then.year != now.year) {
+            flags or (DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_SHOW_DATE)
         } else if (then.yearDay != now.yearDay) {
-            flags |= DateUtils.FORMAT_SHOW_DATE;
+            flags or DateUtils.FORMAT_SHOW_DATE
         } else {
-            flags |= DateUtils.FORMAT_SHOW_TIME;
+            flags or DateUtils.FORMAT_SHOW_TIME
         }
-
-        return DateUtils.formatDateTime(context, when, flags);
+        return DateUtils.formatDateTime(context, `when`, flags)
     }
 
-    public static <T> ArrayList<T> removeDuplicates(ArrayList<T> list) {
+    fun <T> removeDuplicates(list: ArrayList<User>?): ArrayList<User>? {
         // Create a new LinkedHashSet
 
         // Add the elements to set
-        Set<T> set = new LinkedHashSet<>(list);
+        val set: LinkedHashSet<User> = LinkedHashSet(list)
 
         // Clear the list
-        list.clear();
+        if (list != null) {
+            list.clear()
+        }
 
         // add the elements of set
         // with no duplicates to the list
-        list.addAll(set);
+        list?.addAll(set)
 
         // return the list
-        return list;
+        return list
     }
 
-    public static void setProfileImage(Context context, String imgUrl, ImageView mImageView) {
+    fun setProfileImage(context: Context?, imgUrl: String, mImageView: ImageView?) {
         try {
-
-            if (!imgUrl.equalsIgnoreCase(IMG_DEFAULTS)) {
+            if (!imgUrl.equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
 //                Picasso.get().load(imgUrl).fit().placeholder(R.drawable.profile_avatar).into(mImageView);
-                Glide.with(context).load(imgUrl).placeholder(R.drawable.profile_avatar)
-                        .thumbnail(0.5f)
-                        .into(mImageView);
+                Glide.with(context!!).load(imgUrl).placeholder(R.drawable.profile_avatar)
+                    .thumbnail(0.5f)
+                    .into(mImageView!!)
             } else {
 //                Picasso.get().load(R.drawable.profile_avatar).fit().into(mImageView);
-                Glide.with(context).load(R.drawable.profile_avatar).diskCacheStrategy(DiskCacheStrategy.ALL).into(mImageView);
+                Glide.with(context!!).load(R.drawable.profile_avatar)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL).into(
+                    mImageView!!
+                )
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    public static void setProfileBlurImage(Context context, String imgUrl, ImageView mImageView) {
+    fun setProfileBlurImage(context: Context?, imgUrl: String, mImageView: ImageView?) {
         try {
 //            BlurTransformation blur = new BlurTransformation(context, 25, 1);
-            jp.wasabeef.glide.transformations.BlurTransformation blur = new jp.wasabeef.glide.transformations.BlurTransformation(25, 1);
-
-            if (!imgUrl.equalsIgnoreCase(IMG_DEFAULTS)) {
+            val blur = BlurTransformation(25, 1)
+            if (!imgUrl.equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
 
 //                Picasso.get().load(imgUrl).transform(blur).placeholder(R.drawable.profile_avatar).into(mImageView);
-                Glide.with(context).load(imgUrl).placeholder(R.drawable.profile_avatar)
-                        .thumbnail(0.5f)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .apply(RequestOptions.bitmapTransform(blur))
-                        .into(mImageView);
+                Glide.with(context!!).load(imgUrl).placeholder(R.drawable.profile_avatar)
+                    .thumbnail(0.5f)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .apply(RequestOptions.bitmapTransform(blur))
+                    .into(mImageView!!)
             } else {
 
 //                Picasso.get().load(R.drawable.profile_avatar).transform(blur).placeholder(R.drawable.profile_avatar).into(mImageView);
-                Glide.with(context).load(R.drawable.profile_avatar).diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .apply(RequestOptions.bitmapTransform(blur))
-                        .into(mImageView);
+                Glide.with(context!!).load(R.drawable.profile_avatar)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .apply(RequestOptions.bitmapTransform(blur))
+                    .into(mImageView!!)
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void setGroupImage(Context mContext, String imgUrl, ImageView mImageView) {
+    fun setGroupImage(mContext: Context?, imgUrl: String, mImageView: ImageView?) {
         try {
-
-            if (!imgUrl.equalsIgnoreCase(IMG_DEFAULTS)) {
+            if (!imgUrl.equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
 //                Picasso.get().load(imgUrl).fit().placeholder(R.drawable.img_group_default).into(mImageView);
-                Glide.with(mContext).load(imgUrl).placeholder(R.drawable.img_group_default)
-                        .thumbnail(0.5f)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .centerCrop()
-                        .into(mImageView);
+                Glide.with(mContext!!).load(imgUrl).placeholder(R.drawable.img_group_default)
+                    .thumbnail(0.5f)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .centerCrop()
+                    .into(mImageView!!)
             } else {
 //                Picasso.get().load(R.drawable.img_group_default).fit().into(mImageView);
-                Glide.with(mContext).load(R.drawable.img_group_default).diskCacheStrategy(DiskCacheStrategy.ALL).into(mImageView);
+                Glide.with(mContext!!).load(R.drawable.img_group_default)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL).into(
+                    mImageView!!
+                )
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    public static void setGroupParticipateImage(Context mContext, String imgUrl, ImageView mImageView) {
+    fun setGroupParticipateImage(mContext: Context?, imgUrl: String, mImageView: ImageView?) {
         try {
-            if (!imgUrl.equalsIgnoreCase(IMG_DEFAULTS)) {
+            if (!imgUrl.equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
 //                Picasso.get().load(imgUrl).placeholder(R.drawable.img_group_default).into(mImageView);
-                Glide.with(mContext).load(imgUrl).placeholder(R.drawable.img_group_default)
-                        .thumbnail(0.5f)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .centerCrop()
-                        .into(mImageView);
+                Glide.with(mContext!!).load(imgUrl).placeholder(R.drawable.img_group_default)
+                    .thumbnail(0.5f)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .centerCrop()
+                    .into(mImageView!!)
             } else {
 //                Picasso.get().load(R.drawable.img_group_default).into(mImageView);
-                Glide.with(mContext).load(R.drawable.img_group_default).diskCacheStrategy(DiskCacheStrategy.ALL).into(mImageView);
+                Glide.with(mContext!!).load(R.drawable.img_group_default)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL).into(
+                    mImageView!!
+                )
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    public static void setChatImage(Context mContext, String imgUrl, ImageView mImageView) {
+    fun setChatImage(mContext: Context?, imgUrl: String, mImageView: ImageView?) {
         try {
-            final int roundedCorner = 16;
-            final GranularRoundedCorners gCorner = new GranularRoundedCorners(roundedCorner, roundedCorner, roundedCorner, roundedCorner);
-            if (!imgUrl.equalsIgnoreCase(IMG_DEFAULTS)) {
+            val roundedCorner = 16
+            val gCorner = GranularRoundedCorners(
+                roundedCorner.toFloat(),
+                roundedCorner.toFloat(),
+                roundedCorner.toFloat(),
+                roundedCorner.toFloat()
+            )
+            if (!imgUrl.equals(IConstants.IMG_DEFAULTS, ignoreCase = true)) {
 //                Picasso.get().load(imgUrl).placeholder(R.drawable.image_load).fit().centerCrop().into(mImageView);
-                Glide.with(mContext).load(imgUrl).placeholder(R.drawable.image_load)
-                        .thumbnail(0.5f)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .centerCrop()
-                        .transform(new CenterCrop(), gCorner)
-                        .into(mImageView);
+                Glide.with(mContext!!).load(imgUrl).placeholder(R.drawable.image_load)
+                    .thumbnail(0.5f)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .centerCrop()
+                    .transform(CenterCrop(), gCorner)
+                    .into(mImageView!!)
             } else {
 //                Picasso.get().load(R.drawable.image_load).fit().centerCrop().into(mImageView);
-                Glide.with(mContext).load(R.drawable.image_load).diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .transform(new CenterCrop(), gCorner)
-                        .into(mImageView);
+                Glide.with(mContext!!).load(R.drawable.image_load)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .transform(CenterCrop(), gCorner)
+                    .into(mImageView!!)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    public static void uploadToken(String referenceToken) {
+    fun uploadToken(referenceToken: String?) {
         try {
-            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
             if (firebaseUser != null) {
-                DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_TOKENS);
-                Token token = new Token(referenceToken);
-                reference.child(firebaseUser.getUid()).setValue(token);
+                val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_TOKENS)
+                val token = Token(referenceToken)
+                reference.child(firebaseUser.uid).setValue(token)
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void uploadTypingStatus() {
+    fun uploadTypingStatus() {
         try {
-            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
             if (firebaseUser != null) {
-                DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_OTHERS);
-                Others token = new Others(FALSE);
-                reference.child(firebaseUser.getUid()).setValue(token);
+                val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_OTHERS)
+                val token = Others(IConstants.FALSE)
+                reference.child(firebaseUser.uid).setValue(token)
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    @SuppressWarnings("deprecation")
-    public static void setWindow(final Window w) {
+    fun setWindow(w: Window) {
         //make status bar transparent
 //        w.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 //        w.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        w.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        w.setStatusBarColor(ContextCompat.getColor(w.getContext(), R.color.black));
-        w.setNavigationBarColor(ContextCompat.getColor(w.getContext(), R.color.black));
+        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        w.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        w.statusBarColor = ContextCompat.getColor(w.context, R.color.black)
+        w.navigationBarColor = ContextCompat.getColor(w.context, R.color.black)
     }
 
-    public static void RTLSupport(Window window) {
+    fun RTLSupport(window: Window) {
         try {
-            window.getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            window.decorView.layoutDirection = View.LAYOUT_DIRECTION_RTL
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void shareApp(final Activity mActivity, final String title) {
+    @JvmOverloads
+    fun shareApp(
+        mActivity: Activity,
+        title: String? = mActivity.resources.getString(R.string.strShareTitle)
+    ) {
         try {
-            final String app_name = android.text.Html.fromHtml(title).toString();
-            final String share_text = android.text.Html.fromHtml(mActivity.getResources().getString(R.string.strShareContent)).toString();
-            final Intent sendIntent = new Intent();
-            sendIntent.setAction(Intent.ACTION_SEND);
-            sendIntent.putExtra(Intent.EXTRA_TEXT, app_name + "\n\n" + share_text + "\n\n" + "https://play.google.com/store/apps/details?id=" + mActivity.getPackageName());
-            sendIntent.setType("text/plain");
-            mActivity.startActivity(sendIntent);
-        } catch (Resources.NotFoundException e) {
-            Utils.getErrors(e);
+            val app_name = Html.fromHtml(title).toString()
+            val share_text =
+                Html.fromHtml(mActivity.resources.getString(R.string.strShareContent)).toString()
+            val sendIntent = Intent()
+            sendIntent.action = Intent.ACTION_SEND
+            sendIntent.putExtra(
+                Intent.EXTRA_TEXT, """
+     $app_name
+     
+     $share_text
+     
+     https://play.google.com/store/apps/details?id=${mActivity.packageName}
+     """.trimIndent()
+            )
+            sendIntent.type = "text/plain"
+            mActivity.startActivity(sendIntent)
+        } catch (e: NotFoundException) {
+            getErrors(e)
         }
     }
 
-    public static void shareApp(final Activity mActivity) {
-        shareApp(mActivity, mActivity.getResources().getString(R.string.strShareTitle));
+    fun sortByUser(mUsers: ArrayList<User>): ArrayList<User> {
+        Collections.sort(mUsers) { s1, s2 -> // notice the cast to (Integer) to invoke compareTo
+            s1.username!!.compareTo(s2.username!!)
+        }
+        return mUsers
     }
 
-    public static ArrayList<User> sortByUser(ArrayList<User> mUsers) {
-        Collections.sort(mUsers, new Comparator<User>() {
-            public int compare(User s1, User s2) {
-                // notice the cast to (Integer) to invoke compareTo
-                return (s1.getUsername()).compareTo(s2.getUsername());
-            }
-        });
-        return mUsers;
-    }
-
-    public static void rateApp(final Activity mActivity) {
-        final String appName = mActivity.getPackageName();
+    fun rateApp(mActivity: Activity) {
+        val appName = mActivity.packageName
         try {
-            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(DEFAULT_UPDATE_URL_2 + appName)));
-        } catch (android.content.ActivityNotFoundException anfe) {
-            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(DEFAULT_UPDATE_URL + appName)));
+            mActivity.startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(IConstants.DEFAULT_UPDATE_URL_2 + appName)
+                )
+            )
+        } catch (anfe: ActivityNotFoundException) {
+            mActivity.startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(IConstants.DEFAULT_UPDATE_URL + appName)
+                )
+            )
         }
     }
 
-    public static Map<String, User> sortByUser(Map<String, User> unsortMap, final boolean order) {
-
-        List<Entry<String, User>> list = new LinkedList<>(unsortMap.entrySet());
-
-        Collections.sort(list, new Comparator<Entry<String, User>>() {
-
-            public int compare(Entry<String, User> o1, Entry<String, User> o2) {
-                try {
-                    return (o1.getValue().getUsername()).compareTo(o2.getValue().getUsername());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return 0;
+    fun sortByUser(unsortMap: MutableMap<String, User?>?, order: Boolean): Map<String, User> {
+        val list: List<Map.Entry<String, User>> = unsortMap?.entries?.let { LinkedList(it) } as List<Map.Entry<String, User>>
+        Collections.sort(list, Comparator<Map.Entry<String?, User>> { (_, value), (_, value1) ->
+            try {
+                return@Comparator value.username!!.compareTo(value1.username!!)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        });
-
-        Map<String, User> sortedMap = new LinkedHashMap<>();
-        for (Entry<String, User> entry : list) {
-            sortedMap.put(entry.getKey(), entry.getValue());
+            0
+        })
+        val sortedMap: MutableMap<String, User> = LinkedHashMap()
+        for ((key, value) in list) {
+            sortedMap[key] = value
         }
-
-        return sortedMap;
+        return sortedMap
     }
 
-    public static Map<String, String> sortByString(Map<String, String> unsortMap, final boolean order) {
-
-        List<Entry<String, String>> list = new LinkedList<>(unsortMap.entrySet());
-
-        Collections.sort(list, new Comparator<Entry<String, String>>() {
-            final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-            public int compare(Entry<String, String> o1, Entry<String, String> o2) {
+    fun sortByString(unsortMap: Map<String, String>, order: Boolean): Map<String, String> {
+        val list: List<Map.Entry<String, String>> = LinkedList(unsortMap.entries)
+        Collections.sort(list, object : Comparator<Map.Entry<String?, String?>> {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            override fun compare(
+                o1: Map.Entry<String?, String?>,
+                o2: Map.Entry<String?, String?>
+            ): Int {
                 try {
-                    if (order) {
-                        return dateFormat.parse(o1.getValue()).compareTo(dateFormat.parse(o2.getValue()));
+                    return if (order) {
+                        dateFormat.parse(o1.value).compareTo(dateFormat.parse(o2.value))
                     } else {
-                        return dateFormat.parse(o2.getValue()).compareTo(dateFormat.parse(o1.getValue()));
+                        dateFormat.parse(o2.value).compareTo(dateFormat.parse(o1.value))
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                return 0;
+                return 0
             }
-        });
-
-        Map<String, String> sortedMap = new LinkedHashMap<>();
-        for (Entry<String, String> entry : list) {
-            sortedMap.put(entry.getKey(), entry.getValue());
+        })
+        val sortedMap: MutableMap<String, String> = LinkedHashMap()
+        for ((key, value) in list) {
+            sortedMap[key] = value
         }
-
-        return sortedMap;
+        return sortedMap
     }
 
-    public static void printMap(Map<String, Chat> map) {
-        for (Entry<String, Chat> entry : map.entrySet()) {
-            Utils.sout("Key : " + entry.getKey() + " Value : " + entry.getValue().getMessage() + " >> " + entry.getValue().getDatetime());
+    fun printMap(map: Map<String, Chat>) {
+        for ((key, value) in map) {
+            sout("Key : " + key + " Value : " + value.message + " >> " + value.datetime)
         }
     }
 
-    public static Map<String, Chat> sortByChatDateTime(Map<String, Chat> unsortMap, final boolean order) {
-
-        List<Entry<String, Chat>> list = new LinkedList<>(unsortMap.entrySet());
-
-        Collections.sort(list, new Comparator<Entry<String, Chat>>() {
-            final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-            public int compare(Entry<String, Chat> o1, Entry<String, Chat> o2) {
+    fun sortByChatDateTime(unsortMap: MutableMap<String?, Chat?>, order: Boolean): Map<String, Chat> {
+        val list: List<Map.Entry<String, Chat>> = LinkedList(unsortMap.entries) as List<Map.Entry<String, Chat>>
+        Collections.sort(list, object : Comparator<Map.Entry<String?, Chat>> {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            override fun compare(o1: Map.Entry<String?, Chat>, o2: Map.Entry<String?, Chat>): Int {
                 try {
-                    if (order) {
-                        return dateFormat.parse(o1.getValue().getDatetime()).compareTo(dateFormat.parse(o2.getValue().getDatetime()));
+                    return if (order) {
+                        dateFormat.parse(o1.value.datetime)
+                            .compareTo(dateFormat.parse(o2.value.datetime))
                     } else {
-                        return dateFormat.parse(o2.getValue().getDatetime()).compareTo(dateFormat.parse(o1.getValue().getDatetime()));
+                        dateFormat.parse(o2.value.datetime)
+                            .compareTo(dateFormat.parse(o1.value.datetime))
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                return 0;
+                return 0
             }
-        });
-
-        Map<String, Chat> sortedMap = new LinkedHashMap<>();
-        for (Entry<String, Chat> entry : list) {
-            sortedMap.put(entry.getKey(), entry.getValue());
+        })
+        val sortedMap: MutableMap<String, Chat> = LinkedHashMap()
+        for ((key, value) in list) {
+            sortedMap[key] = value
         }
-
-        return sortedMap;
+        return sortedMap
     }
 
-    public static Map<String, Groups> sortByGroupDateTime(Map<String, Groups> unsortMap, final boolean order) {
-
-        List<Entry<String, Groups>> list = new LinkedList<>(unsortMap.entrySet());
-
-        Collections.sort(list, new Comparator<Entry<String, Groups>>() {
-            final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-            public int compare(Entry<String, Groups> o1, Entry<String, Groups> o2) {
+    fun sortByGroupDateTime(unsortMap: Map<String?, Groups?>, order: Boolean): Map<String, Groups> {
+        val list: LinkedList<Map.Entry<String?, Groups?>> = LinkedList(unsortMap.entries)
+        Collections.sort(list, object : Comparator<Map.Entry<String?, Groups?>> {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            override fun compare(
+                o1: Map.Entry<String?, Groups?>,
+                o2: Map.Entry<String?, Groups?>
+            ): Int {
                 try {
-                    if (order) {
-                        return dateFormat.parse(o1.getValue().getLastMsgTime()).compareTo(dateFormat.parse(o2.getValue().getLastMsgTime()));
+                    return if (order) {
+                        dateFormat.parse(o1.value?.lastMsgTime)
+                            .compareTo(dateFormat.parse(o2.value?.lastMsgTime))
                     } else {
-                        return dateFormat.parse(o2.getValue().getLastMsgTime()).compareTo(dateFormat.parse(o1.getValue().getLastMsgTime()));
+                        dateFormat.parse(o2.value?.lastMsgTime)
+                            .compareTo(dateFormat.parse(o1.value?.lastMsgTime))
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                return 0;
+                return 0
             }
-        });
-
-        Map<String, Groups> sortedMap = new LinkedHashMap<>();
-        for (Entry<String, Groups> entry : list) {
-            sortedMap.put(entry.getKey(), entry.getValue());
+        })
+        val sortedMap: MutableMap<String, Groups> = LinkedHashMap()
+        for ((key, value) in list) {
+            sortedMap[key!!] = value!!
         }
-
-        return sortedMap;
+        return sortedMap
     }
 
-    public static void setVibrate(final Context mContext) {
+    fun setVibrate(mContext: Context) {
         // Vibrate for 500 milliseconds
-        setVibrate(mContext, DEFAULT_VIBRATE);
+        setVibrate(mContext, DEFAULT_VIBRATE.toLong())
     }
 
-    public static void setVibrate(final Context mContext, long vibrate) {
+    fun setVibrate(mContext: Context, vibrate: Long) {
         try {
-            Vibrator vib = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-            if (SDK_INT >= Build.VERSION_CODES.O) {
-                vib.vibrate(VibrationEffect.createOneShot(vibrate, VibrationEffect.DEFAULT_AMPLITUDE));
+            val vib = mContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vib.vibrate(
+                    VibrationEffect.createOneShot(
+                        vibrate,
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
             } else {
-                vib.vibrate(vibrate); //deprecated in API 26
+                vib.vibrate(vibrate) //deprecated in API 26
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    public static void deleteUploadedFilesFromCloud(final FirebaseStorage storage, final Chat chat) {
+    fun deleteUploadedFilesFromCloud(storage: FirebaseStorage, chat: Chat) {
         try {
-            if (!Utils.isEmpty(chat.getAttachmentType())) {
-                String url = "";
-                final String type = chat.getAttachmentType();
-                switch (type) {
-                    case TYPE_IMAGE:
-                        url = chat.getImgPath();
-                        break;
-                    case TYPE_RECORDING:
-                    case TYPE_DOCUMENT:
-                    case TYPE_AUDIO:
-                    case TYPE_CONTACT:
-                    case TYPE_VIDEO:
-                        url = chat.getAttachmentPath();
-                        break;
-//                    case TYPE_LOCATION:// is SAME AS TEXT CONTENT, there were no need of any PATH(File) uploaded to cloud:
+            if (!isEmpty(chat.attachmentType)) {
+                var url: String? = ""
+                val type = chat.attachmentType
+                when (type) {
+                    IConstants.TYPE_IMAGE -> url = chat.imgPath
+                    IConstants.TYPE_RECORDING, IConstants.TYPE_DOCUMENT, IConstants.TYPE_AUDIO, IConstants.TYPE_CONTACT, IConstants.TYPE_VIDEO -> url =
+                        chat.attachmentPath
                 }
-
-                if (!type.equalsIgnoreCase(TYPE_LOCATION) || type.equalsIgnoreCase(TYPE_TEXT)) {
-                    Utils.sout("AttachmentDelete:::  " + url);
-                    StorageReference removeRef = storage.getReferenceFromUrl(url);
-                    removeRef.delete();
-                    if (type.equalsIgnoreCase(TYPE_VIDEO)) {
-                        StorageReference removeThumbnail = storage.getReferenceFromUrl(chat.getAttachmentData());
-                        removeThumbnail.delete();
+                if (!type.equals(IConstants.TYPE_LOCATION, ignoreCase = true) || type.equals(
+                        IConstants.TYPE_TEXT,
+                        ignoreCase = true
+                    )
+                ) {
+                    sout("AttachmentDelete:::  $url")
+                    val removeRef = storage.getReferenceFromUrl(url!!)
+                    removeRef.delete()
+                    if (type.equals(IConstants.TYPE_VIDEO, ignoreCase = true)) {
+                        val removeThumbnail = storage.getReferenceFromUrl(chat.attachmentData!!)
+                        removeThumbnail.delete()
                     }
                 }
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    private static Dialog bottomDialog;
-
-    public static void selectGenderPopup(final Activity mContext, final String userId, final int selectGender) {
+    private var bottomDialog: Dialog? = null
+    fun selectGenderPopup(mContext: Activity, userId: String?, selectGender: Int) {
 //        String[] strArray = mContext.getResources().getStringArray(R.array.arrGender);
-        int index = GEN_UNSPECIFIED;
-        if (selectGender != GEN_UNSPECIFIED) {
+        var index = IConstants.GEN_UNSPECIFIED
+        if (selectGender != IConstants.GEN_UNSPECIFIED) {
 //            index = Arrays.asList(strArray).indexOf(selectGender);
-            index = selectGender;
-            strSelectedGender = selectGender;
+            index = selectGender
+            strSelectedGender = selectGender
         }
-
-        final CardView view = (CardView) mContext.getLayoutInflater().inflate(R.layout.dialog_gender, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        val view = mContext.layoutInflater.inflate(R.layout.dialog_gender, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        final RadioGroup radioGenderGroup = view.findViewById(R.id.rdoGroupGender);
-        final RadioButton radioMale = view.findViewById(R.id.rdoMale);
-        final RadioButton radioFemale = view.findViewById(R.id.rdoFemale);
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
+        val radioGenderGroup = view.findViewById<RadioGroup>(R.id.rdoGroupGender)
+        val radioMale = view.findViewById<RadioButton>(R.id.rdoMale)
+        val radioFemale = view.findViewById<RadioButton>(R.id.rdoFemale)
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
         if (bottomDialog != null) {
-            bottomDialog.dismiss();
+            bottomDialog!!.dismiss()
         }
-
-        bottomDialog = new Dialog(mContext, R.style.BottomDialog);
-        bottomDialog.setContentView(view);
-
-        if (index == GEN_MALE) {
-            radioMale.setChecked(true);
-            radioFemale.setChecked(false);
-        } else if (index == GEN_FEMALE) {
-            radioMale.setChecked(false);
-            radioFemale.setChecked(true);
+        bottomDialog = Dialog(mContext, R.style.BottomDialog)
+        bottomDialog!!.setContentView(view)
+        if (index == IConstants.GEN_MALE) {
+            radioMale.isChecked = true
+            radioFemale.isChecked = false
+        } else if (index == IConstants.GEN_FEMALE) {
+            radioMale.isChecked = false
+            radioFemale.isChecked = true
         } else {
-            radioMale.setChecked(false);
-            radioFemale.setChecked(false);
+            radioMale.isChecked = false
+            radioFemale.isChecked = false
         }
-
-        radioGenderGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @SuppressLint("ResourceType")
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton rb = group.findViewById(checkedId);
-                if (null != rb && checkedId > -1) {
-                    if (checkedId == R.id.rdoMale) {
-                        strSelectedGender = GEN_MALE;
-                    } else {
-                        strSelectedGender = GEN_FEMALE;
-                    }
+        radioGenderGroup.setOnCheckedChangeListener { group, checkedId ->
+            val rb = group.findViewById<RadioButton>(checkedId)
+            if (null != rb && checkedId > -1) {
+                if (checkedId == R.id.rdoMale) {
+                    strSelectedGender = IConstants.GEN_MALE
+                } else {
+                    strSelectedGender = IConstants.GEN_FEMALE
                 }
-
             }
-        });
+        }
 
         //===================== START
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                bottomDialog.dismiss();
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                bottomDialog!!.dismiss()
             }
-        });
-
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                if (Utils.isEmpty(strSelectedGender)) {
-                    final Screens screens = new Screens(mContext);
-                    screens.showToast(R.string.msgSelectGender);
+        })
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                if (isEmpty(strSelectedGender)) {
+                    val screens = Screens(mContext)
+                    screens.showToast(R.string.msgSelectGender)
                 } else {
-                    Utils.updateGender(userId, strSelectedGender);
+                    updateGender(userId, strSelectedGender)
                 }
-                bottomDialog.dismiss();
+                bottomDialog!!.dismiss()
             }
-        });
-
-        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        layoutParams.width = mContext.getResources().getDisplayMetrics().widthPixels;
-        view.setLayoutParams(layoutParams);
+        })
+        val layoutParams = view.layoutParams
+        layoutParams.width = mContext.resources.displayMetrics.widthPixels
+        view.layoutParams = layoutParams
 
         //https://github.com/jianjunxiao/BottomDialog
 //        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
 //        params.width = mContext.getResources().getDisplayMetrics().widthPixels - CompatUtils.dp2px(mContext, 16f);
 //        params.bottomMargin = CompatUtils.dp2px(mContext, 8f);
 //        view.setLayoutParams(params);
-
-        bottomDialog.getWindow().setGravity(Gravity.BOTTOM);
-        bottomDialog.setCanceledOnTouchOutside(false);
-        bottomDialog.setCancelable(false);
-        bottomDialog.getWindow().setWindowAnimations(R.style.BottomDialog_Animation);
-        bottomDialog.show();
+        bottomDialog!!.window!!.setGravity(Gravity.BOTTOM)
+        bottomDialog!!.setCanceledOnTouchOutside(false)
+        bottomDialog!!.setCancelable(false)
+        bottomDialog!!.window!!.setWindowAnimations(R.style.BottomDialog_Animation)
+        bottomDialog!!.show()
         //=====================
     }
 
-    public static void showYesNoDialog(final Activity mActivity, int title, int message, final IDialogListener iDialogListener) {
-        showYesNoDialog(mActivity, title == ZERO ? "" : mActivity.getString(title), mActivity.getString(message), iDialogListener);
+    fun showYesNoDialog(
+        mActivity: Activity,
+        title: Int,
+        message: Int,
+        iDialogListener: IDialogListener
+    ) {
+        showYesNoDialog(
+            mActivity,
+            if (title == IConstants.ZERO) "" else mActivity.getString(title),
+            mActivity.getString(message),
+            iDialogListener
+        )
     }
 
-    public static void showYesNoDialog(final Activity mActivity, String title, int message, final IDialogListener iDialogListener) {
-        showYesNoDialog(mActivity, title, mActivity.getString(message), iDialogListener);
+    fun showYesNoDialog(
+        mActivity: Activity,
+        title: String?,
+        message: Int,
+        iDialogListener: IDialogListener
+    ) {
+        showYesNoDialog(mActivity, title, mActivity.getString(message), iDialogListener)
     }
 
-    public static void showYesNoDialog(final Activity mActivity, String title, String message, final IDialogListener iDialogListener) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-
-        CardView view = (CardView) mActivity.getLayoutInflater().inflate(R.layout.dialog_custom, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    fun showYesNoDialog(
+        mActivity: Activity,
+        title: String?,
+        message: String?,
+        iDialogListener: IDialogListener
+    ) {
+        val builder = AlertDialog.Builder(mActivity)
+        val view = mActivity.layoutInflater.inflate(R.layout.dialog_custom, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        final TextView txtTitle = view.findViewById(R.id.txtTitle);
-        final TextView txtMessage = view.findViewById(R.id.txtMessage);
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
-        if (Utils.isEmpty(title)) {
-            txtTitle.setVisibility(View.GONE);
+        val txtTitle = view.findViewById<TextView>(R.id.txtTitle)
+        val txtMessage = view.findViewById<TextView>(R.id.txtMessage)
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
+        if (isEmpty(title)) {
+            txtTitle.visibility = View.GONE
         } else {
-            txtTitle.setVisibility(View.VISIBLE);
-            txtTitle.setText(title);
+            txtTitle.visibility = View.VISIBLE
+            txtTitle.text = title
         }
-        txtMessage.setText(message);
-
-        builder.setView(view);
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
+        txtMessage.text = message
+        builder.setView(view)
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
             }
-        });
-
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                iDialogListener.yesButton();
-                alert.dismiss();
+        })
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                iDialogListener.yesButton()
+                alert.dismiss()
             }
-        });
-
-        alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(false);
-        alert.show();
-
+        })
+        alert.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(false)
+        alert.show()
     }
 
-    public static void showOKDialog(final Activity mActivity, int title, int message, final IDialogListener iDialogListener) {
-        showOKDialog(mActivity, mActivity.getString(title), mActivity.getString(message), iDialogListener);
+    fun showOKDialog(
+        mActivity: Activity,
+        title: Int,
+        message: Int,
+        iDialogListener: IDialogListener
+    ) {
+        showOKDialog(
+            mActivity,
+            mActivity.getString(title),
+            mActivity.getString(message),
+            iDialogListener
+        )
     }
 
-    public static void showOKDialog(final Activity mActivity, String title, String message, final IDialogListener iDialogListener) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-
-        CardView view = (CardView) mActivity.getLayoutInflater().inflate(R.layout.dialog_custom, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    fun showOKDialog(
+        mActivity: Activity,
+        title: String?,
+        message: String?,
+        iDialogListener: IDialogListener
+    ) {
+        val builder = AlertDialog.Builder(mActivity)
+        val view = mActivity.layoutInflater.inflate(R.layout.dialog_custom, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        final TextView txtTitle = view.findViewById(R.id.txtTitle);
-        final TextView txtMessage = view.findViewById(R.id.txtMessage);
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
-        if (Utils.isEmpty(title)) {
-            txtTitle.setVisibility(View.GONE);
+        val txtTitle = view.findViewById<TextView>(R.id.txtTitle)
+        val txtMessage = view.findViewById<TextView>(R.id.txtMessage)
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
+        if (isEmpty(title)) {
+            txtTitle.visibility = View.GONE
         } else {
-            txtTitle.setVisibility(View.VISIBLE);
-            txtTitle.setText(title);
+            txtTitle.visibility = View.VISIBLE
+            txtTitle.text = title
         }
-        txtMessage.setText(message);
-
-        builder.setView(view);
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
+        txtMessage.text = message
+        builder.setView(view)
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
             }
-        });
-        btnCancel.setVisibility(View.GONE);
-        btnDone.setText(R.string.strOK);
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                iDialogListener.yesButton();
-                alert.dismiss();
+        })
+        btnCancel.visibility = View.GONE
+        btnDone.setText(R.string.strOK)
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                iDialogListener.yesButton()
+                alert.dismiss()
             }
-        });
-
-        alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(false);
-        alert.show();
-
+        })
+        alert.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(false)
+        alert.show()
     }
 
-    public static void showOKDialog(final Activity mActivity, String title, String message, int strOk, int strCancel, final IDialogListener iDialogListener) {
-        showOKDialog(mActivity, title, message, mActivity.getString(strOk), mActivity.getString(strCancel), iDialogListener);
+    fun showOKDialog(
+        mActivity: Activity,
+        title: String?,
+        message: String?,
+        strOk: Int,
+        strCancel: Int,
+        iDialogListener: IDialogListener
+    ) {
+        showOKDialog(
+            mActivity,
+            title,
+            message,
+            mActivity.getString(strOk),
+            mActivity.getString(strCancel),
+            iDialogListener
+        )
     }
 
-    public static void showOKDialog(final Activity mActivity, String title, String message, String strOk, String strCancel, final IDialogListener iDialogListener) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-
-        CardView view = (CardView) mActivity.getLayoutInflater().inflate(R.layout.dialog_custom, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    fun showOKDialog(
+        mActivity: Activity,
+        title: String?,
+        message: String?,
+        strOk: String?,
+        strCancel: String?,
+        iDialogListener: IDialogListener
+    ) {
+        val builder = AlertDialog.Builder(mActivity)
+        val view = mActivity.layoutInflater.inflate(R.layout.dialog_custom, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        final TextView txtTitle = view.findViewById(R.id.txtTitle);
-        final TextView txtMessage = view.findViewById(R.id.txtMessage);
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
-        if (Utils.isEmpty(title)) {
-            txtTitle.setVisibility(View.GONE);
+        val txtTitle = view.findViewById<TextView>(R.id.txtTitle)
+        val txtMessage = view.findViewById<TextView>(R.id.txtMessage)
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
+        if (isEmpty(title)) {
+            txtTitle.visibility = View.GONE
         } else {
-            txtTitle.setVisibility(View.VISIBLE);
-            txtTitle.setText(title);
+            txtTitle.visibility = View.VISIBLE
+            txtTitle.text = title
         }
-        if (!Utils.isEmpty(strOk)) {
-            btnDone.setText(strOk);
+        if (!isEmpty(strOk)) {
+            btnDone.text = strOk
         } else {
-            btnDone.setText(R.string.strOK);
+            btnDone.setText(R.string.strOK)
         }
-
-        if (!Utils.isEmpty(strCancel)) {
-            btnCancel.setText(strCancel);
+        if (!isEmpty(strCancel)) {
+            btnCancel.text = strCancel
         }
-        txtMessage.setText(message);
-
-        builder.setView(view);
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
+        txtMessage.text = message
+        builder.setView(view)
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
             }
-        });
-
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                iDialogListener.yesButton();
-                alert.dismiss();
+        })
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                iDialogListener.yesButton()
+                alert.dismiss()
             }
-        });
-
-        alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(false);
-        alert.show();
-
+        })
+        alert.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(false)
+        alert.show()
     }
 
-    public static void updateOnlineStatus(final String userId, final int status) {
+    fun updateOnlineStatus(userId: String?, status: Int) {
         try {
-            DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_IS_ONLINE, status);
-            hashMap.put(EXTRA_VERSION_CODE, BuildConfig.VERSION_CODE);
-            hashMap.put(EXTRA_VERSION_NAME, BuildConfig.VERSION_NAME);
-            if (status == STATUS_OFFLINE)
-                hashMap.put(EXTRA_LASTSEEN, Utils.getDateTime());
-            reference.updateChildren(hashMap);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                userId!!
+            )
+            val hashMap = HashMap<String, Any>()
+            hashMap[IConstants.EXTRA_IS_ONLINE] = status
+            hashMap[IConstants.EXTRA_VERSION_CODE] = BuildConfig.VERSION_CODE
+            hashMap[IConstants.EXTRA_VERSION_NAME] = BuildConfig.VERSION_NAME
+            if (status == IConstants.STATUS_OFFLINE) hashMap[IConstants.EXTRA_LASTSEEN] = dateTime
+            reference.updateChildren(hashMap)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void updateOfflineStatus(final String userId, final int status) {
+    fun updateOfflineStatus(userId: String?, status: Int) {
         try {
-            DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_IS_ONLINE, status);
-            reference.updateChildren(hashMap);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                userId!!
+            )
+            val hashMap = HashMap<String, Any>()
+            hashMap[IConstants.EXTRA_IS_ONLINE] = status
+            reference.updateChildren(hashMap)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void updateGender(final String userId, final int strGender) {
+    fun updateGender(userId: String?, strGender: Int) {
         try {
-            DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_GENDER, strGender);
-            reference.updateChildren(hashMap);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                userId!!
+            )
+            val hashMap = HashMap<String, Any>()
+            hashMap[IConstants.EXTRA_GENDER] = strGender
+            reference.updateChildren(hashMap)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void updateUserActive(final String userId) {
+    fun updateUserActive(userId: String?) {
         try {
-            final DatabaseReference referenceUpdate = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_ACTIVE, FALSE);
-            referenceUpdate.updateChildren(hashMap);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val referenceUpdate =
+                FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                    userId!!
+                )
+            val hashMap = HashMap<String, Any>()
+            hashMap[IConstants.EXTRA_ACTIVE] = IConstants.FALSE
+            referenceUpdate.updateChildren(hashMap)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void updateGenericUserField(final String userId, final String fieldKey, final Object fieldValue) {
+    @JvmStatic
+    fun updateGenericUserField(userId: String?, fieldKey: String, fieldValue: Any) {
         try {
-            final DatabaseReference referenceUpdate = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(fieldKey, fieldValue);
-            referenceUpdate.updateChildren(hashMap);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val referenceUpdate =
+                FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                    userId!!
+                )
+            val hashMap = HashMap<String, Any>()
+            hashMap[fieldKey] = fieldValue
+            referenceUpdate.updateChildren(hashMap)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void filterPopup(final Activity context, final IFilterListener filterListener) {
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(context.getText(R.string.strFilterTitle));
-
-        LinearLayout view = (LinearLayout) context.getLayoutInflater().inflate(R.layout.dialog_search_filter, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    fun filterPopup(context: Activity, filterListener: IFilterListener) {
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle(context.getText(R.string.strFilterTitle))
+        val view =
+            context.layoutInflater.inflate(R.layout.dialog_search_filter, null) as LinearLayout
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-
-        builder.setView(view);
-
-        final CheckBox mOnlineChk = view.findViewById(R.id.chkOnline);
-        final CheckBox mOfflineChk = view.findViewById(R.id.chkOffline);
-        final CheckBox mMaleChk = view.findViewById(R.id.chkMale);
-        final CheckBox mFemaleChk = view.findViewById(R.id.chkFemale);
-        final CheckBox mNotSetChk = view.findViewById(R.id.chkNotSet);
-        final CheckBox mWithPicture = view.findViewById(R.id.chkWithPicture);
-        final CheckBox mWithoutPicture = view.findViewById(R.id.chkWithoutPicture);
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
-        mOnlineChk.setChecked(online);
-        mOfflineChk.setChecked(offline);
-        mMaleChk.setChecked(male);
-        mFemaleChk.setChecked(female);
-        mNotSetChk.setChecked(notset);
-        mWithPicture.setChecked(withPicture);
-        mWithoutPicture.setChecked(withoutPicture);
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
+        builder.setView(view)
+        val mOnlineChk = view.findViewById<CheckBox>(R.id.chkOnline)
+        val mOfflineChk = view.findViewById<CheckBox>(R.id.chkOffline)
+        val mMaleChk = view.findViewById<CheckBox>(R.id.chkMale)
+        val mFemaleChk = view.findViewById<CheckBox>(R.id.chkFemale)
+        val mNotSetChk = view.findViewById<CheckBox>(R.id.chkNotSet)
+        val mWithPicture = view.findViewById<CheckBox>(R.id.chkWithPicture)
+        val mWithoutPicture = view.findViewById<CheckBox>(R.id.chkWithoutPicture)
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
+        mOnlineChk.isChecked = online
+        mOfflineChk.isChecked = offline
+        mMaleChk.isChecked = male
+        mFemaleChk.isChecked = female
+        mNotSetChk.isChecked = notset
+        mWithPicture.isChecked = withPicture
+        mWithoutPicture.isChecked = withoutPicture
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
             }
-        });
-
-        final Screens screens = new Screens(context);
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                if (!mOfflineChk.isChecked() && !mOnlineChk.isChecked()) {
-                    screens.showToast(context.getString(R.string.msgErrorUserOnline));
-                    return;
+        })
+        val screens = Screens(context)
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                if (!mOfflineChk.isChecked && !mOnlineChk.isChecked) {
+                    screens.showToast(context.getString(R.string.msgErrorUserOnline))
+                    return
                 }
-                if (!mMaleChk.isChecked() && !mFemaleChk.isChecked() && !mNotSetChk.isChecked()) {
-                    screens.showToast(context.getString(R.string.msgErrorGender));
-                    return;
+                if (!mMaleChk.isChecked && !mFemaleChk.isChecked && !mNotSetChk.isChecked) {
+                    screens.showToast(context.getString(R.string.msgErrorGender))
+                    return
                 }
-                if (!mWithPicture.isChecked() && !mWithoutPicture.isChecked()) {
-                    screens.showToast(context.getString(R.string.msgErrorProfilePicture));
-                    return;
+                if (!mWithPicture.isChecked && !mWithoutPicture.isChecked) {
+                    screens.showToast(context.getString(R.string.msgErrorProfilePicture))
+                    return
                 }
-                online = mOnlineChk.isChecked();
-                offline = mOfflineChk.isChecked();
-                male = mMaleChk.isChecked();
-                female = mFemaleChk.isChecked();
-                notset = mNotSetChk.isChecked();
-                withPicture = mWithPicture.isChecked();
-                withoutPicture = mWithoutPicture.isChecked();
-
-                filterListener.showFilterUsers();
-                alert.dismiss();
+                online = mOnlineChk.isChecked
+                offline = mOfflineChk.isChecked
+                male = mMaleChk.isChecked
+                female = mFemaleChk.isChecked
+                notset = mNotSetChk.isChecked
+                withPicture = mWithPicture.isChecked
+                withoutPicture = mWithoutPicture.isChecked
+                filterListener.showFilterUsers()
+                alert.dismiss()
             }
-        });
-
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(false);
-        if (SessionManager.get().isRTLOn()) {
-            alert.getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        })
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(false)
+        if (SessionManager.get()!!.isRTLOn) {
+            alert.window!!.decorView.layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            alert.getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            alert.window!!.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
-        alert.show();
+        alert.show()
     }
 
-    public static void chatSendSound(Context context) {
+    fun chatSendSound(context: Context) {
         try {
-            MediaPlayer mediaPlayer = new MediaPlayer();
-            AssetFileDescriptor afd = context.getAssets().openFd("chat_tone.mp3");
-            mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val mediaPlayer = MediaPlayer()
+            val afd = context.assets.openFd("chat_tone.mp3")
+            mediaPlayer.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static Query getQuerySortBySearch() {
-        return FirebaseDatabase.getInstance().getReference(REF_USERS).orderByChild(EXTRA_SEARCH).startAt("").endAt("" + "\uf8ff");
+    val querySortBySearch: Query
+        get() = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+            .orderByChild(IConstants.EXTRA_SEARCH).startAt("").endAt("" + "\uf8ff")
+    val groupUniqueId: String?
+        get() = FirebaseDatabase.getInstance().reference.child(IConstants.REF_GROUPS).child("")
+            .push().key
+    val chatUniqueId: String?
+        get() = FirebaseDatabase.getInstance().reference.child(IConstants.REF_CHATS).child("")
+            .push().key
+
+    @SuppressLint("SuspiciousIndentation")
+    fun getImageColor(strName: String?): Int?{
+        val generator = ColorGenerator.DEFAULT
+            return generator?.getColor(strName!!)
     }
 
-    public static String getGroupUniqueId() {
-        return FirebaseDatabase.getInstance().getReference().child(REF_GROUPS).child("").push().getKey();
+    fun getExtension(context: Context, uri: Uri?): String? {
+        val contentResolver = context.contentResolver
+        val mimeTypeMap = MimeTypeMap.getSingleton()
+        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri!!))
     }
 
-    public static String getChatUniqueId() {
-        return FirebaseDatabase.getInstance().getReference().child(REF_CHATS).child("").push().getKey();
-    }
-
-    public static int getImageColor(String strName) {
-        final ColorGenerator generator = ColorGenerator.DEFAULT;
-        return generator.getColor(strName);
-    }
-
-    public static String getExtension(Context context, final Uri uri) {
-        final ContentResolver contentResolver = context.getContentResolver();
-        final MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri));
-    }
-
-    public static void readStatus(int status) {
+    fun readStatus(status: Int) {
         try {
-            final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
             if (firebaseUser != null) {
-                Utils.updateOnlineStatus(firebaseUser.getUid(), status);
+                updateOnlineStatus(firebaseUser.uid, status)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    public static void logout(final Activity mActivity) {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> Utils.showYesNoDialog(mActivity, R.string.logout_title, R.string.logout_message, new IDialogListener() {
-            @Override
-            public void yesButton() {
-                revokeGoogle(mActivity);
-                final Screens screens = new Screens(mActivity);
-                Utils.readStatus(STATUS_OFFLINE);
-                FirebaseAuth.getInstance().signOut();
-                screens.showClearTopScreen(LoginActivity.class);
+    fun logout(mActivity: Activity) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            showYesNoDialog(mActivity, R.string.logout_title, R.string.logout_message) {
+                revokeGoogle(mActivity)
+                val screens = Screens(mActivity)
+                readStatus(IConstants.STATUS_OFFLINE)
+                FirebaseAuth.getInstance().signOut()
+                screens.showClearTopScreen(LoginActivity::class.java)
             }
-        }), CLICK_DELAY_TIME);
-
+        }, IConstants.CLICK_DELAY_TIME)
     }
 
-    private static void revokeGoogle(Context context) {
+    private fun revokeGoogle(context: Context) {
         try {
             // [START config_signin]
             // Configure Google Sign In
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(context.getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build();
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(context.getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
             // [END config_signin]
-
-            final GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(context, gso);
-            mGoogleSignInClient.signOut();
-            Utils.sout("Sign out Google");
+            val mGoogleSignInClient = GoogleSignIn.getClient(context, gso)
+            mGoogleSignInClient.signOut()
+            sout("Sign out Google")
             //mGoogleSignInClient.revokeAccess();
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static int getAppVersionCode(Context context) {
-        long appVersionDetails = 1;
+    fun getAppVersionCode(context: Context): Int {
+        var appVersionDetails: Long = 1
         try {
-            final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            appVersionDetails = PackageInfoCompat.getLongVersionCode(packageInfo); //packageInfo.versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            Utils.getErrors(e);
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            appVersionDetails =
+                PackageInfoCompat.getLongVersionCode(packageInfo) //packageInfo.versionCode;
+        } catch (e: PackageManager.NameNotFoundException) {
+            getErrors(e)
         }
-        return (int) appVersionDetails;
+        return appVersionDetails.toInt()
     }
 
-    public static void closeKeyboard(Context context, View view) {
+    fun closeKeyboard(context: Context, view: View?) {
         if (view != null) {
-            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null)
-                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm?.hideSoftInputFromWindow(view.windowToken, 0)
         }
     }
 
-    public static byte[] readAsByteArray(InputStream ios) throws IOException {
-        ByteArrayOutputStream ous = null;
+    @Throws(IOException::class)
+    fun readAsByteArray(ios: InputStream?): ByteArray {
+        var ous: ByteArrayOutputStream? = null
         try {
-            byte[] buffer = new byte[4096];
-            ous = new ByteArrayOutputStream();
-            int read;
-            while ((read = ios.read(buffer)) != -1) {
-                ous.write(buffer, 0, read);
+            val buffer = ByteArray(4096)
+            ous = ByteArrayOutputStream()
+            var read: Int
+            while (ios!!.read(buffer).also { read = it } != -1) {
+                ous.write(buffer, 0, read)
             }
         } finally {
             try {
-                if (ous != null)
-                    ous.close();
-            } catch (IOException ignored) {
+                ous?.close()
+            } catch (ignored: IOException) {
             }
-
             try {
-                if (ios != null)
-                    ios.close();
-            } catch (IOException ignored) {
+                ios?.close()
+            } catch (ignored: IOException) {
             }
         }
-        return ous.toByteArray();
+        return ous!!.toByteArray()
     }
 
-    public static String getSettingString(final Activity mContext, int val) {
-        if (val == SETTING_ALL_PARTICIPANTS) {
-            return mContext.getString(R.string.lblAllParticipants);
+    fun getSettingString(mContext: Activity, `val`: Int): String {
+        return if (`val` == IConstants.SETTING_ALL_PARTICIPANTS) {
+            mContext.getString(R.string.lblAllParticipants)
         } else {
-            return mContext.getString(R.string.lblOnlyAdmin);
-        }
-    }
-
-    public static int getSettingValue(final Activity mContext, String val) {
-        if (val.equalsIgnoreCase(mContext.getString(R.string.lblAllParticipants))) {
-            return SETTING_ALL_PARTICIPANTS;
-        } else {
-            return SETTING_ONLY_ADMIN;
+            mContext.getString(R.string.lblOnlyAdmin)
         }
     }
 
-    private static String settingValue;
-
-    public static void selectSendMessages(final Activity mContext, final String groupId, final int selectSetting, final ISendMessage iSendMessage) {
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-
-        CardView view = (CardView) mContext.getLayoutInflater().inflate(R.layout.dialog_send_messages, null);
-
-        if (SessionManager.get().isRTLOn()) {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+    fun getSettingValue(mContext: Activity, `val`: String?): Int {
+        return if (`val`.equals(
+                mContext.getString(R.string.lblAllParticipants),
+                ignoreCase = true
+            )
+        ) {
+            IConstants.SETTING_ALL_PARTICIPANTS
         } else {
-            view.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            IConstants.SETTING_ONLY_ADMIN
         }
-
-        final RadioGroup radioGroup = view.findViewById(R.id.rdoGroup);
-        final RadioButton radioParticipants = view.findViewById(R.id.rdoAllParticipants);
-        final RadioButton radioAdmin = view.findViewById(R.id.rdoOnlyAdmins);
-        final AppCompatButton btnCancel = view.findViewById(R.id.btnCancel);
-        final AppCompatButton btnDone = view.findViewById(R.id.btnDone);
-
-        builder.setView(view);
-
-        settingIndex = selectSetting;
-
-        if (selectSetting == SETTING_ALL_PARTICIPANTS) {
-            radioParticipants.setChecked(true);
-            radioAdmin.setChecked(false);
-            settingValue = mContext.getString(R.string.lblAllParticipants);
-        } else if (selectSetting == SETTING_ONLY_ADMIN) {
-            radioParticipants.setChecked(false);
-            radioAdmin.setChecked(true);
-            settingValue = mContext.getString(R.string.lblOnlyAdmin);
-        } else {
-            radioParticipants.setChecked(true);
-            radioAdmin.setChecked(false);
-            settingValue = mContext.getString(R.string.lblAllParticipants);
-        }
-
-        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @SuppressLint("ResourceType")
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton rb = group.findViewById(checkedId);
-                if (null != rb && checkedId > -1) {
-                    settingValue = rb.getText().toString();
-                    settingIndex = Utils.getSettingValue(mContext, settingValue);
-                }
-            }
-        });
-
-        final AlertDialog alert = builder.create();
-
-        btnCancel.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                alert.dismiss();
-            }
-        });
-
-        btnDone.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                Utils.updateSendMessageSetting(groupId, settingIndex);
-                alert.dismiss();
-                iSendMessage.sendSetting(settingValue);
-            }
-        });
-
-        alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        alert.setCanceledOnTouchOutside(false);
-        alert.setCancelable(false);
-        alert.show();
     }
 
-    public static void updateSendMessageSetting(final String groupId, final int value) {
+    private var settingValue: String? = null
+    fun selectSendMessages(
+        mContext: Activity,
+        groupId: String?,
+        selectSetting: Int,
+        iSendMessage: ISendMessage
+    ) {
+        val builder = AlertDialog.Builder(mContext)
+        val view = mContext.layoutInflater.inflate(R.layout.dialog_send_messages, null) as CardView
+        if (SessionManager.get()!!.isRTLOn) {
+            view.layoutDirection = View.LAYOUT_DIRECTION_RTL
+        } else {
+            view.layoutDirection = View.LAYOUT_DIRECTION_LTR
+        }
+        val radioGroup = view.findViewById<RadioGroup>(R.id.rdoGroup)
+        val radioParticipants = view.findViewById<RadioButton>(R.id.rdoAllParticipants)
+        val radioAdmin = view.findViewById<RadioButton>(R.id.rdoOnlyAdmins)
+        val btnCancel = view.findViewById<AppCompatButton>(R.id.btnCancel)
+        val btnDone = view.findViewById<AppCompatButton>(R.id.btnDone)
+        builder.setView(view)
+        settingIndex = selectSetting
+        if (selectSetting == IConstants.SETTING_ALL_PARTICIPANTS) {
+            radioParticipants.isChecked = true
+            radioAdmin.isChecked = false
+            settingValue = mContext.getString(R.string.lblAllParticipants)
+        } else if (selectSetting == IConstants.SETTING_ONLY_ADMIN) {
+            radioParticipants.isChecked = false
+            radioAdmin.isChecked = true
+            settingValue = mContext.getString(R.string.lblOnlyAdmin)
+        } else {
+            radioParticipants.isChecked = true
+            radioAdmin.isChecked = false
+            settingValue = mContext.getString(R.string.lblAllParticipants)
+        }
+        radioGroup.setOnCheckedChangeListener { group, checkedId ->
+            val rb = group.findViewById<RadioButton>(checkedId)
+            if (null != rb && checkedId > -1) {
+                settingValue = rb.text.toString()
+                settingIndex = getSettingValue(mContext, settingValue)
+            }
+        }
+        val alert = builder.create()
+        btnCancel.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                alert.dismiss()
+            }
+        })
+        btnDone.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                updateSendMessageSetting(groupId, settingIndex)
+                alert.dismiss()
+                iSendMessage.sendSetting(settingValue)
+            }
+        })
+        alert.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+        alert.setCanceledOnTouchOutside(false)
+        alert.setCancelable(false)
+        alert.show()
+    }
+
+    fun updateSendMessageSetting(groupId: String?, value: Int) {
         try {
-            DatabaseReference reference = FirebaseDatabase.getInstance().getReference(REF_GROUPS).child(groupId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_SEND_MESSAGES, value);
-            reference.updateChildren(hashMap);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val reference =
+                FirebaseDatabase.getInstance().getReference(IConstants.REF_GROUPS).child(
+                    groupId!!
+                )
+            val hashMap = HashMap<String, Any>()
+            hashMap[IConstants.EXTRA_SEND_MESSAGES] = value
+            reference.updateChildren(hashMap)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static void setHTMLMessage(final TextView lblName, final String strMsg) {
-        if (SDK_INT >= Build.VERSION_CODES.N) {
-            lblName.setText(Html.fromHtml(strMsg, Html.FROM_HTML_MODE_LEGACY));
+    fun setHTMLMessage(lblName: TextView, strMsg: String?) {
+        if (VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            lblName.text = Html.fromHtml(strMsg, Html.FROM_HTML_MODE_LEGACY)
         } else {
-            lblName.setText(Html.fromHtml(strMsg));
+            lblName.text = Html.fromHtml(strMsg)
         }
     }
 
-    public static File getReceiveDirectory(Context context, String type) {
-        final String directoryName = AttachmentTypes.getTypeName(type);
-        final String mainPath = SLASH + context.getString(R.string.app_name) + SLASH + directoryName;
-        File file;
-        if (isAboveQ()) {
-            file = new File(SDPATH + AttachmentTypes.getDirectoryByType(type), mainPath);
+    fun getReceiveDirectory(context: Context, type: String?): File {
+        val directoryName = getTypeName(type)
+        val mainPath =
+            IConstants.SLASH + context.getString(R.string.app_name) + IConstants.SLASH + directoryName
+        val file: File
+        file = if (isAboveQ) {
+            File(IConstants.SDPATH + getDirectoryByType(type), mainPath)
         } else {
-            file = new File(Environment.getExternalStorageDirectory(), SLASH + AttachmentTypes.getDirectoryByType(type) + mainPath);
+            File(
+                Environment.getExternalStorageDirectory(),
+                IConstants.SLASH + getDirectoryByType(type) + mainPath
+            )
         }
-        return file;
+        return file
     }
 
-    public static File getSentDirectory(Context context, String type) {
-        final String directoryName = AttachmentTypes.getTypeName(type);
-        final String systemFolder = AttachmentTypes.getDirectoryByType(directoryName);// Audio, Movie or Download(System Folders)
-
-        File file;
-        if (isAboveQ()) {
-            file = new File(SDPATH + systemFolder, SLASH + context.getString(R.string.app_name) + SLASH + directoryName + SENT_FILE);
+    fun getSentDirectory(context: Context, type: String?): File {
+        val directoryName = getTypeName(type)
+        val systemFolder =
+            getDirectoryByType(directoryName) // Audio, Movie or Download(System Folders)
+        val file: File
+        if (isAboveQ) {
+            file = File(
+                IConstants.SDPATH + systemFolder,
+                IConstants.SLASH + context.getString(R.string.app_name) + IConstants.SLASH + directoryName + IConstants.SENT_FILE
+            )
         } else {
-            file = new File(Environment.getExternalStorageDirectory(), SLASH + systemFolder + SLASH + context.getString(R.string.app_name) + SLASH + directoryName + SENT_FILE);
+            file = File(
+                Environment.getExternalStorageDirectory(),
+                IConstants.SLASH + systemFolder + IConstants.SLASH + context.getString(R.string.app_name) + IConstants.SLASH + directoryName + IConstants.SENT_FILE
+            )
             if (!file.exists()) {
-                file.mkdirs();
+                file.mkdirs()
             }
         }
-        return file;
+        return file
     }
 
-    public static File getSentFile(final File directory, final String extension) {
+    fun getSentFile(directory: File?, extension: String): File {
 //        final String ext = "_" + Utils.getDateTimeName() + extension;
-        if (extension.equalsIgnoreCase(EXT_MP3)) {
-            return new File(directory, "REC" + extension);
-        } else if (extension.equalsIgnoreCase(EXT_VCF)) {
-            return new File(directory, "CONT" + extension);
+        if (extension.equals(IConstants.EXT_MP3, ignoreCase = true)) {
+            return File(directory, "REC$extension")
+        } else if (extension.equals(IConstants.EXT_VCF, ignoreCase = true)) {
+            return File(directory, "CONT$extension")
         }
-        return new File(directory, Utils.getDateTimeStampName() + extension);
+        return File(directory, dateTimeStampName + extension)
     }
 
-    public static File getDownloadDirectory(Context context, String type) {
-        String directoryName = type;
-        if (type.equalsIgnoreCase(TYPE_RECORDING)) {
-            directoryName = AttachmentTypes.getTypeName(AttachmentTypes.RECORDING);
+    fun getDownloadDirectory(context: Context, type: String): File {
+        var directoryName = type
+        if (type.equals(IConstants.TYPE_RECORDING, ignoreCase = true)) {
+            directoryName = getTypeName(AttachmentTypes.RECORDING)
         }
-        Utils.sout("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^Download Directory::: " + type + " == " + directoryName);
-        return new File(AttachmentTypes.getDirectoryByType(type), SLASH + context.getString(R.string.app_name) + SLASH + directoryName);
+        sout("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^Download Directory::: $type == $directoryName")
+        return File(
+            getDirectoryByType(type),
+            IConstants.SLASH + context.getString(R.string.app_name) + IConstants.SLASH + directoryName
+        )
     }
 
-    public static String getUniqueFileName(final File fileToUpload, int attachmentType) {
-        String pathSegment = Uri.fromFile(fileToUpload).getLastPathSegment();
-        String fileExtension = FileUtils.getExtension(pathSegment);
-        if (!Utils.isEmpty(fileExtension)) {
-            pathSegment = pathSegment.replaceAll(fileExtension, AttachmentTypes.getExtension(fileExtension, attachmentType));
+    fun getUniqueFileName(fileToUpload: File?, attachmentType: Int): String {
+        var pathSegment = Uri.fromFile(fileToUpload).lastPathSegment
+        val fileExtension = FileUtils.getExtension(pathSegment)
+        if (!isEmpty(fileExtension)) {
+            pathSegment = fileExtension?.toRegex()?.let {
+                pathSegment!!.replace(
+                    it,
+                    getExtension(fileExtension, attachmentType)
+                )
+            }
         }
 
 //        String end = "_" + System.currentTimeMillis() + fileExtension;
-        String end = "_" + Utils.getDateTimeStampName() + fileExtension;
+        val end = "_" + dateTimeStampName + fileExtension
         //        Utils.sout("----New File Name:: " + file + " >>> " + end);
-        return pathSegment.replaceAll(fileExtension, end);
+        return pathSegment!!.replace(fileExtension!!.toRegex(), end)
     }
 
-    public static String getMusicFolder() {
-        return Environment.DIRECTORY_MUSIC;
-    }
-
-    public static String getMoviesFolder() {
-        return Environment.DIRECTORY_MOVIES;
-    }
-
-    public static String getDownloadFolder() {
-        return Environment.DIRECTORY_DOWNLOADS;
-    }
+    val musicFolder: String
+        get() = Environment.DIRECTORY_MUSIC
+    val moviesFolder: String
+        get() = Environment.DIRECTORY_MOVIES
+    val downloadFolder: String
+        get() = Environment.DIRECTORY_DOWNLOADS
 
     /**
      * SAF = Storage Access Framework (Scoped Storage)
      * It is only work for Android SDK >= 29 (Android ver >= 10 -> Android Q)
      * This devices didn't use WRITE_EXT_STORAGE Persmission and use new SAF
      */
-    public static boolean isAboveQ() {
-        return SDK_INT >= Build.VERSION_CODES.Q;
-    }
+     var isAboveQ: Boolean = false
+        get() = VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     /**
      * isStoreFile = True -> It is storing the file via InputStream, False means do not store the file, just put the entry in contentResolver
      */
-    public static File moveFileToFolder(final Context mContext, boolean isStoreFile, String newFileName, File sourceFile, int attachmentType) {
+    fun moveFileToFolder(
+        mContext: Context,
+        isStoreFile: Boolean,
+        newFileName: String?,
+        sourceFile: File?,
+        attachmentType: Int
+    ): File? {
         try {
-            final ContentResolver resolver = mContext.getContentResolver();
-            final ContentValues contentValues = new ContentValues();
-            final String type = AttachmentTypes.getTypeName(attachmentType);
-            final File dest = isStoreFile ? Utils.getSentDirectory(mContext, type) : Utils.getDownloadDirectory(mContext, type);
-            Uri target;
-
-            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, newFileName);
+            val resolver = mContext.contentResolver
+            val contentValues = ContentValues()
+            val type = getTypeName(attachmentType)
+            val dest = if (isStoreFile) getSentDirectory(
+                mContext,
+                type
+            ) else getDownloadDirectory(mContext, type)
+            val target: Uri
+            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, newFileName)
             try {
-                final String mimeType = FileUtils.getMimeType(new File(newFileName));
-                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+                val mimeType = FileUtils.getMimeType(File(newFileName))
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 //Utils.sout("OKNew File to Folder::: " + isStoreFile + " >> " + newFileName + " >>> " + type + " >dest> " + dest + " ::mimeType:: " + mimeType);
-            } catch (Exception ignored) {
-
+            } catch (ignored: Exception) {
             }
-            if (Utils.isAboveQ()) {
-                String tempDest = dest.toString().replaceAll(SDPATH, "");
-                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, tempDest);
-                target = AttachmentTypes.getTargetUri(type); //MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+            target = if (isAboveQ) {
+                val tempDest = dest.toString().replace(IConstants.SDPATH.toRegex(), "")
+                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, tempDest)
+                getTargetUri(type) //MediaStore.Downloads.EXTERNAL_CONTENT_URI;
             } else {
-                contentValues.put(MediaStore.MediaColumns.DATA, dest.toString());
-                target = MediaStore.Files.getContentUri("external");
+                contentValues.put(MediaStore.MediaColumns.DATA, dest.toString())
+                MediaStore.Files.getContentUri("external")
             }
-            Uri uri = resolver.insert(target, contentValues);
+            val uri = resolver.insert(target, contentValues)
             if (isStoreFile) {
                 try {
-                    if (Utils.isAboveQ()) {
+                    if (isAboveQ) {
                         try {
-                            InputStream is = new FileInputStream(sourceFile);
-                            OutputStream os = resolver.openOutputStream(uri, "rwt");
-                            byte[] buffer = new byte[1024];
-                            for (int r; (r = is.read(buffer)) != -1; ) {
-                                os.write(buffer, 0, r);
+                            val `is`: InputStream = FileInputStream(sourceFile)
+                            val os = resolver.openOutputStream(uri!!, "rwt")
+                            val buffer = ByteArray(1024)
+                            var r: Int
+                            while (`is`.read(buffer).also { r = it } != -1) {
+                                os!!.write(buffer, 0, r)
                             }
-                            os.flush();
-                            os.close();
-                            is.close();
-                        } catch (Exception e) {
-                            Utils.getErrors(e);
+                            os!!.flush()
+                            os.close()
+                            `is`.close()
+                        } catch (e: Exception) {
+                            getErrors(e)
                         }
                     } else {
-                        final File newFile = new File(dest, newFileName);
-                        FileUtils.copyFileToDest(sourceFile, newFile);
+                        val newFile = File(dest, newFileName)
+                        FileUtils.copyFileToDest(sourceFile!!, newFile)
                     }
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                } catch (e: Exception) {
+                    getErrors(e)
                 }
             }
             //Utils.sout("moved File successfully:: " + dest.toString());
-            return dest;
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            return dest
+        } catch (e: Exception) {
+            getErrors(e)
         }
-        return null;
+        return null
     }
 
-    public static String getMimeType(final Context context, final Uri uri) {
-        String mimeType = null;
+    fun getMimeType(context: Context, uri: Uri): String? {
+        var mimeType: String? = null
         try {
-            if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-                final ContentResolver cr = context.getContentResolver();
-                mimeType = cr.getType(uri);
+            mimeType = if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
+                val cr = context.contentResolver
+                cr.getType(uri)
             } else {
-                final String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-                mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
+                val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+                MimeTypeMap.getSingleton()
+                    .getMimeTypeFromExtension(fileExtension.lowercase(Locale.getDefault()))
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
-        return mimeType;
+        return mimeType
     }
 
-    public static String getFileSize(final long size) {
-        try {
-            final int BYTES_IN_KILOBYTES = 1024;
-            final DecimalFormat dec = new DecimalFormat("###.#");
-            final String KILOBYTES = " KB";
-            final String MEGABYTES = " MB";
-            final String GIGABYTES = " GB";
-            float fileSize = 0;
-            String suffix = KILOBYTES;
-
+    fun getFileSize(size: Long): String {
+        return try {
+            val BYTES_IN_KILOBYTES = 1024
+            val dec = DecimalFormat("###.#")
+            val KILOBYTES = " KB"
+            val MEGABYTES = " MB"
+            val GIGABYTES = " GB"
+            var fileSize = 0f
+            var suffix = KILOBYTES
             if (size > BYTES_IN_KILOBYTES) {
-                fileSize = size / BYTES_IN_KILOBYTES;
+                fileSize = (size / BYTES_IN_KILOBYTES).toFloat()
                 if (fileSize > BYTES_IN_KILOBYTES) {
-                    fileSize = fileSize / BYTES_IN_KILOBYTES;
+                    fileSize = fileSize / BYTES_IN_KILOBYTES
                     if (fileSize > BYTES_IN_KILOBYTES) {
-                        fileSize = fileSize / BYTES_IN_KILOBYTES;
-                        suffix = GIGABYTES;
+                        fileSize = fileSize / BYTES_IN_KILOBYTES
+                        suffix = GIGABYTES
                     } else {
-                        suffix = MEGABYTES;
+                        suffix = MEGABYTES
                     }
                 }
             }
-            return dec.format(fileSize) + suffix;
-        } catch (Exception e) {
-            return "";
+            dec.format(fileSize.toDouble()) + suffix
+        } catch (e: Exception) {
+            ""
         }
     }
 
     //Extract file extension from full path
-    public static String getFileExtensionFromPath(String string) {
-        int index = string.lastIndexOf(".");
-        return string.substring(index + 1);
+    fun getFileExtensionFromPath(string: String): String {
+        val index = string.lastIndexOf(".")
+        return string.substring(index + 1)
     }
 
     //Used to open the file by system
-    public static Intent getOpenFileIntent(final Context context, final String path) {
-        final String fileExtension = getFileExtensionFromPath(path);
-        final File toInstall = new File(path);
+    @JvmStatic
+    fun getOpenFileIntent(context: Context, path: String): Intent {
+        val fileExtension = getFileExtensionFromPath(path)
+        val toInstall = File(path)
 
         //if it's apk make the system open apk installer
-        if (fileExtension.equalsIgnoreCase("apk")) {
-            if (SDK_INT >= Build.VERSION_CODES.N) {
-                final Uri apkUri = getUriForFileProvider(context, toInstall);
-                final Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-                intent.setData(apkUri);
-                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                return intent;
+        return if (fileExtension.equals("apk", ignoreCase = true)) {
+            if (VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val apkUri =
+                    getUriForFileProvider(
+                        context,
+                        toInstall
+                    )
+                val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                intent.data = apkUri
+                intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                intent
             } else {
-                final Uri apkUri = Uri.fromFile(toInstall);
-                final Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                return intent;
+                val apkUri = Uri.fromFile(toInstall)
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.setDataAndType(apkUri, "application/vnd.android.package-archive")
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                intent
             }
-
         } else { //else make the system open an app that can handle given type
-            if (SDK_INT >= Build.VERSION_CODES.N) {
-                final Intent newIntent = new Intent(Intent.ACTION_VIEW);
-                newIntent.setDataAndType(getUriForFileProvider(context, toInstall), Utils.getMimeType(context, Uri.fromFile(toInstall)));
-                newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                return newIntent;
+            if (VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val newIntent = Intent(Intent.ACTION_VIEW)
+                newIntent.setDataAndType(
+                    getUriForFileProvider(
+                        context,
+                        toInstall
+                    ),
+                    getMimeType(
+                        context,
+                        Uri.fromFile(toInstall)
+                    )
+                )
+                newIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                newIntent
             } else {
-                final Intent newIntent = new Intent(Intent.ACTION_VIEW);
-                newIntent.setDataAndType(getUriForFileProvider(context, toInstall), Utils.getMimeType(context, Uri.fromFile(toInstall)));
-                newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                return newIntent;
+                val newIntent = Intent(Intent.ACTION_VIEW)
+                newIntent.setDataAndType(
+                    getUriForFileProvider(
+                        context,
+                        toInstall
+                    ),
+                    getMimeType(
+                        context,
+                        Uri.fromFile(toInstall)
+                    )
+                )
+                newIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                newIntent
             }
         }
     }
 
-    public static void openPlayingVideo(final Context context, final File file) {
+    fun openPlayingVideo(context: Context, file: File?) {
         try {
-            final Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(getUriForFileProvider(context, file), Utils.getMimeType(context, Uri.fromFile(file)));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            context.startActivity(intent);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.setDataAndType(
+                getUriForFileProvider(context, file),
+                getMimeType(context, Uri.fromFile(file))
+            )
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static Uri getUriForFileProvider(Context context, File file) {
-        return FileProvider.getUriForFile(context, context.getString(R.string.authority), file);
+    fun getUriForFileProvider(context: Context, file: File?): Uri {
+        return FileProvider.getUriForFile(context, context.getString(R.string.authority), file!!)
     }
 
-    private static long getVideoDurationValidation(Context context, File file) {
+    private fun getVideoDurationValidation(context: Context, file: File): Long {
         try {
-            final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(context, Uri.fromFile(file));
-            final String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            final long durationMs = Long.parseLong(time);
-            retriever.release();
-            return durationMs;
-        } catch (Exception ignored) {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, Uri.fromFile(file))
+            val time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val durationMs = time!!.toLong()
+            retriever.release()
+            return durationMs
+        } catch (ignored: Exception) {
         }
-        return 0;
+        return 0
     }
 
-    public static String getVideoDuration(Context context, File file) {
-        return convertSecondsToHMmSs(getVideoDurationValidation(context, file));
+    fun getVideoDuration(context: Context, file: File): String {
+        return convertSecondsToHMmSs(getVideoDurationValidation(context, file))
     }
 
-    public static String convertSecondsToHMmSs(final long mySec) {
-        final long seconds = mySec / 1000;
-        long s = seconds % 60;
-        long m = (seconds / 60) % 60;
-        long h = (seconds / (60 * 60)) % 24;
-        return String.format(Locale.getDefault(), "%02d:%02d", m, s);
+    @JvmStatic
+    fun convertSecondsToHMmSs(mySec: Long): String {
+        val seconds = mySec / 1000
+        val s = seconds % 60
+        val m = seconds / 60 % 60
+        val h = seconds / (60 * 60) % 24
+        return String.format(Locale.getDefault(), "%02d:%02d", m, s)
     }
 
-    public static Cursor contactsCursor(final Context context, final String searchText) {
-        try {
-            final String search = Utils.isEmpty(searchText) ? null : Uri.encode(searchText);
-            final Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, search);
-            return context.getContentResolver().query(uri, null, null, null, null);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static void openCallIntent(final Context context, final String number) {
-        try {
-            final Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(Uri.parse("tel:" + number));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        } catch (Exception ignored) {
+    fun contactsCursor(context: Context, searchText: String?): Cursor? {
+        return try {
+            val search = if (isEmpty(searchText)) null else Uri.encode(searchText)
+            val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, search)
+            context.contentResolver.query(uri, null, null, null, null)
+        } catch (e: Exception) {
+            null
         }
     }
 
-    public static boolean isGPSEnabled(Context context) {
-        final LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        assert locationManager != null;
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-    }
-
-    private static final String staticMap = "https://maps.googleapis.com/maps/api/staticmap?key=%s&center=%s,%s&zoom=18&size=280x160&scale=2&format=jpg&markers=color:red|%s,%s|scale:4";
-
-    public static void showStaticMap(final Context mContext, final LocationAddress locationAddress, int topLeft, int topRight, ImageView imgLocation) {
-        Glide.with(mContext).load(String.format(staticMap, mContext.getString(R.string.key_maps), locationAddress.getLatitude(), locationAddress.getLongitude(), locationAddress.getLatitude(), locationAddress.getLongitude()))
-                .transform(new CenterInside(), new GranularRoundedCorners(topLeft, topRight, 4, 4))
-                .into(imgLocation);
-    }
-
-    public static void openMapWithAddress(final Context mContext, final LocationAddress locationAddress) {
+    fun openCallIntent(context: Context, number: String) {
         try {
-            final Uri gmmIntentUri = Uri.parse("geo:" + locationAddress.getLatitude() + "," + locationAddress.getLongitude() + "?q=" + Uri.encode(locationAddress.getAddress()));
-            final Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-            mapIntent.setPackage("com.google.android.apps.maps");
-            if (mapIntent.resolveActivity(mContext.getPackageManager()) != null) {
-                mContext.startActivity(mapIntent);
+            val intent = Intent(Intent.ACTION_DIAL)
+            intent.data = Uri.parse("tel:$number")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (ignored: Exception) {
+        }
+    }
+
+    fun isGPSEnabled(context: Context): Boolean {
+        val locationManager =
+            (context.getSystemService(Context.LOCATION_SERVICE) as LocationManager)
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+
+    private const val staticMap =
+        "https://maps.googleapis.com/maps/api/staticmap?key=%s&center=%s,%s&zoom=18&size=280x160&scale=2&format=jpg&markers=color:red|%s,%s|scale:4"
+
+    fun showStaticMap(
+        mContext: Context,
+        locationAddress: LocationAddress,
+        topLeft: Int,
+        topRight: Int,
+        imgLocation: ImageView?
+    ) {
+        Glide.with(mContext).load(
+            String.format(
+                staticMap,
+                mContext.getString(R.string.key_maps),
+                locationAddress.latitude,
+                locationAddress.longitude,
+                locationAddress.latitude,
+                locationAddress.longitude
+            )
+        )
+            .transform(
+                CenterInside(), GranularRoundedCorners(
+                    topLeft.toFloat(), topRight.toFloat(), 4F, 4F
+                )
+            )
+            .into(imgLocation!!)
+    }
+
+    fun openMapWithAddress(mContext: Context, locationAddress: LocationAddress) {
+        try {
+            val gmmIntentUri = Uri.parse(
+                "geo:" + locationAddress.latitude + "," + locationAddress.longitude + "?q=" + Uri.encode(
+                    locationAddress.address
+                )
+            )
+            val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+            mapIntent.setPackage("com.google.android.apps.maps")
+            if (mapIntent.resolveActivity(mContext.packageManager) != null) {
+                mContext.startActivity(mapIntent)
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public static File createImageFile(Context context) throws IOException {
-        String timeStamp = Utils.getDateTimeStampName();
-        String imageFileName = "PIC_" + timeStamp;
-        File image, storageDir;
-
-        if (Utils.isAboveQ()) {
-            storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES + File.separator + IMG_FOLDER);
-            image = File.createTempFile(imageFileName, ".jpg", storageDir);
-//            String currentPhotoPath = image.getAbsolutePath();
+    @Throws(IOException::class)
+    fun createImageFile(context: Context): File {
+        val timeStamp = dateTimeStampName
+        val imageFileName = "PIC_$timeStamp"
+        val image: File
+        val storageDir: File?
+        if (isAboveQ) {
+            storageDir =
+                context.getExternalFilesDir(Environment.DIRECTORY_PICTURES + File.separator + IConstants.IMG_FOLDER)
+            image = File.createTempFile(imageFileName, ".jpg", storageDir)
+            //            String currentPhotoPath = image.getAbsolutePath();
         } else {
-            storageDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + IMG_FOLDER);
+            storageDir =
+                File(Environment.getExternalStorageDirectory().absolutePath + File.separator + IConstants.IMG_FOLDER)
             if (!storageDir.exists()) {
-                storageDir.mkdirs();
+                storageDir.mkdirs()
             }
-            image = new File(storageDir, imageFileName + ".jpg");
-            image.createNewFile();
+            image = File(storageDir, "$imageFileName.jpg")
+            image.createNewFile()
         }
-        return image;
+        return image
     }
 
-    public static File getCacheFolder(Context context) {
-        return context.getExternalFilesDir(null);
+    fun getCacheFolder(context: Context): File? {
+        return context.getExternalFilesDir(null)
     }
 
-    public static void deleteRecursive(File fileOrDirectory) {
+    fun deleteRecursive(fileOrDirectory: File?) {
         try {
             if (fileOrDirectory != null) {
-                if (fileOrDirectory.isDirectory())
-                    for (File child : fileOrDirectory.listFiles())
-                        deleteRecursive(child);
-
-                fileOrDirectory.delete();
+                if (fileOrDirectory.isDirectory) for (child in fileOrDirectory.listFiles()) deleteRecursive(
+                    child
+                )
+                fileOrDirectory.delete()
             }
-        } catch (Exception e) {
+        } catch (e: Exception) {
             //Utils.getErrors(e);
         }
     }
 
-    public static String showOnlineOffline(Context context, int status) {
-        if (status == STATUS_ONLINE) {
-            return context.getString(R.string.strOnline);
-        }
-        return context.getString(R.string.strOffline);
+    fun showOnlineOffline(context: Context, status: Int): String {
+        return if (status == IConstants.STATUS_ONLINE) {
+            context.getString(R.string.strOnline)
+        } else context.getString(R.string.strOffline)
     }
 
-    public static Typeface getRegularFont(Context context) {
-        return ResourcesCompat.getFont(context, R.font.roboto_regular);
+    @JvmStatic
+    fun getRegularFont(context: Context?): Typeface? {
+        return ResourcesCompat.getFont(context!!, R.font.roboto_regular)
     }
 
-    public static Typeface getBoldFont(Context context) {
-        return ResourcesCompat.getFont(context, R.font.roboto_bold);
+    fun getBoldFont(context: Context?): Typeface? {
+        return ResourcesCompat.getFont(context!!, R.font.roboto_bold)
     }
 
-    public static boolean isTypeEmail(String strSignUpType) {
-        return (Utils.isEmpty(strSignUpType) || strSignUpType.equalsIgnoreCase(TYPE_EMAIL));
+    fun isTypeEmail(strSignUpType: String): Boolean {
+        return isEmpty(strSignUpType) || strSignUpType.equals(
+            IConstants.TYPE_EMAIL,
+            ignoreCase = true
+        )
     }
 }

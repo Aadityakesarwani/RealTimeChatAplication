@@ -1,114 +1,99 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ACTIVE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_CREATED_AT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_EMAIL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IMAGEURL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_PASSWORD;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SEARCH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SIGNUP_TYPE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USERNAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_VERSION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.IMG_DEFAULTS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_EMAIL;
 
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import com.google.firebase.BuildConfig;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.FirebaseDatabase;
+import android.widget.EditText
+import android.os.Bundle
+import com.innovativetools.firebase.chat.activities.R
+import android.widget.TextView
+import com.google.firebase.auth.FirebaseAuth
+import android.text.TextUtils
+import android.view.View
+import android.widget.Button
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.innovativetools.firebase.chat.activities.MainActivity
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnCanceledListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.BuildConfig
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import java.lang.Exception
+import java.util.*
 
-import java.util.HashMap;
-
-public class RegisterActivity extends BaseActivity implements View.OnClickListener {
-
-    private EditText mTxtEmail;
-    private EditText mTxtUsername;
-    private EditText mTxtPassword;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
-
-        mTxtEmail = findViewById(R.id.txtEmail);
-        mTxtUsername = findViewById(R.id.txtUsername);
-        mTxtPassword = findViewById(R.id.txtPassword);
-        final Button mBtnRegister = findViewById(R.id.btnRegister);
-        final TextView mTxtExistingUser = findViewById(R.id.txtExistingUser);
+class RegisterActivity : BaseActivity(), View.OnClickListener {
+    private var mTxtEmail: EditText? = null
+    private var mTxtUsername: EditText? = null
+    private var mTxtPassword: EditText? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_register)
+        mTxtEmail = findViewById(R.id.txtEmail)
+        mTxtUsername = findViewById(R.id.txtUsername)
+        mTxtPassword = findViewById(R.id.txtPassword)
+        val mBtnRegister = findViewById<Button>(R.id.btnRegister)
+        val mTxtExistingUser = findViewById<TextView>(R.id.txtExistingUser)
 
 //        mTxtExistingUser.setText(HtmlCompat.fromHtml(getString(R.string.strExistUser), HtmlCompat.FROM_HTML_MODE_LEGACY));
-        Utils.setHTMLMessage(mTxtExistingUser, getString(R.string.strExistUser));
-
-        mBtnRegister.setOnClickListener(this);
-        mTxtExistingUser.setOnClickListener(this);
-
-        auth = FirebaseAuth.getInstance();
+        Utils.setHTMLMessage(mTxtExistingUser, getString(R.string.strExistUser))
+        mBtnRegister.setOnClickListener(this)
+        mTxtExistingUser.setOnClickListener(this)
+        auth = FirebaseAuth.getInstance()
     }
 
-    @Override
-    public void onClick(View v) {
-        final int id = v.getId();
+    override fun onClick(v: View) {
+        val id = v.id
         if (id == R.id.btnRegister) {
-            String strEmail = mTxtEmail.getText().toString().trim();
-            String strUsername = mTxtUsername.getText().toString().trim();
-            String strPassword = mTxtPassword.getText().toString().trim();
-
-            if (TextUtils.isEmpty(strEmail) || TextUtils.isEmpty(strUsername) || TextUtils.isEmpty(strPassword)) {
-                screens.showToast(R.string.strAllFieldsRequired);
+            val strEmail = mTxtEmail!!.text.toString().trim { it <= ' ' }
+            val strUsername = mTxtUsername!!.text.toString().trim { it <= ' ' }
+            val strPassword = mTxtPassword!!.text.toString().trim { it <= ' ' }
+            if (TextUtils.isEmpty(strEmail) || TextUtils.isEmpty(strUsername) || TextUtils.isEmpty(
+                    strPassword
+                )
+            ) {
+                screens!!.showToast(R.string.strAllFieldsRequired)
             } else if (!Utils.isValidEmail(strEmail)) {
-                screens.showToast(R.string.strInvalidEmail);
+                screens!!.showToast(R.string.strInvalidEmail)
             } else {
-                register(strEmail, strUsername, strPassword);
+                register(strEmail, strUsername, strPassword)
             }
         } else if (id == R.id.txtExistingUser) {
-            finish();
+            finish()
         }
     }
 
-    private void register(final String email, final String username, final String password) {
-        showProgress();
-
-        auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
-
-            if (task.isSuccessful()) {
-                FirebaseUser firebaseUser = auth.getCurrentUser();
-                assert firebaseUser != null;
-                String userId = firebaseUser.getUid();
-
-                reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-
-                HashMap<String, Object> hashMap = new HashMap<>();
-                hashMap.put(EXTRA_ID, userId);
-                hashMap.put(EXTRA_EMAIL, email);
-                hashMap.put(EXTRA_USERNAME, Utils.getCapsWord(username));
-                hashMap.put(EXTRA_PASSWORD, password);
-                hashMap.put(EXTRA_IMAGEURL, IMG_DEFAULTS);
-                hashMap.put(EXTRA_ACTIVE, true);
-                hashMap.put(EXTRA_IS_ONLINE, STATUS_ONLINE);
-                hashMap.put(EXTRA_SEARCH, username.toLowerCase().trim());
-                hashMap.put(EXTRA_CREATED_AT, Utils.getDateTime());
-                hashMap.put(EXTRA_VERSION, BuildConfig.VERSION_NAME);
-                hashMap.put(EXTRA_SIGNUP_TYPE, TYPE_EMAIL);
-
-                reference.setValue(hashMap).addOnCompleteListener(task1 -> {
-                    hideProgress();
-                    screens.showClearTopScreen(MainActivity.class);
-                });
-            }
-        }).addOnFailureListener(e -> {
-            hideProgress();
-            screens.showToast(e.getMessage());
-        }).addOnCanceledListener(this::hideProgress);
+    private fun register(email: String, username: String, password: String) {
+        showProgress()
+        auth!!.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task: Task<AuthResult?> ->
+                if (task.isSuccessful) {
+                    val firebaseUser = auth!!.currentUser!!
+                    val userId = firebaseUser.uid
+                    reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+                        .child(userId)
+                    val hashMap = HashMap<String, Any>()
+                    hashMap[IConstants.EXTRA_ID] = userId
+                    hashMap[IConstants.EXTRA_EMAIL] = email
+                    hashMap[IConstants.EXTRA_USERNAME] = Utils.getCapsWord(username)
+                    hashMap[IConstants.EXTRA_PASSWORD] = password
+                    hashMap[IConstants.EXTRA_IMAGEURL] = IConstants.IMG_DEFAULTS
+                    hashMap[IConstants.EXTRA_ACTIVE] = true
+                    hashMap[IConstants.EXTRA_IS_ONLINE] = IConstants.STATUS_ONLINE
+                    hashMap[IConstants.EXTRA_SEARCH] =
+                        username.lowercase(Locale.getDefault()).trim { it <= ' ' }
+                    hashMap[IConstants.EXTRA_CREATED_AT] = Utils.dateTime
+                    hashMap[IConstants.EXTRA_VERSION] = BuildConfig.VERSION_NAME
+                    hashMap[IConstants.EXTRA_SIGNUP_TYPE] = IConstants.TYPE_EMAIL
+                    reference!!.setValue(hashMap).addOnCompleteListener { task1: Task<Void?>? ->
+                        hideProgress()
+                        screens!!.showClearTopScreen(MainActivity::class.java)
+                    }
+                }
+            }.addOnFailureListener { e: Exception ->
+            hideProgress()
+            screens!!.showToast(e.message)
+        }.addOnCanceledListener { hideProgress() }
     }
 }

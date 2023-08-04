@@ -1,176 +1,159 @@
-package com.innovativetools.firebase.chat.activities.managers;
+package com.innovativetools.firebase.chat.activities.managers
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_GROUP_NAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IMGPATH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_LINK;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_OBJ_GROUP;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_STATUS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USERNAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USER_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REQUEST_PARTICIPATE;
+import com.innovativetools.firebase.chat.activities.managers.Utils.isEmpty
+import com.innovativetools.firebase.chat.activities.managers.Utils.getRegularFont
+import com.innovativetools.firebase.chat.activities.managers.Utils.getErrors
+import android.content.Intent
+import android.widget.Toast
+import android.widget.LinearLayout
+import android.widget.TextView
+import com.innovativetools.firebase.chat.activities.OnBoardingActivity
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.innovativetools.firebase.chat.activities.ProfileDialogActivity
+import com.innovativetools.firebase.chat.activities.MessageActivity
+import com.innovativetools.firebase.chat.activities.ViewUserProfileActivity
+import com.innovativetools.firebase.chat.activities.GroupsMessagesActivity
+import com.innovativetools.firebase.chat.activities.GroupsParticipantsActivity
+import android.app.Activity
+import android.content.Context
+import android.os.Handler
+import com.innovativetools.firebase.chat.activities.ImageViewerActivity
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.SettingsActivity
+import com.innovativetools.firebase.chat.activities.WebViewBrowserActivity
+import android.os.Looper
+import android.provider.Settings
+import android.view.View
+import androidx.core.app.ActivityOptionsCompat
+import com.innovativetools.firebase.chat.activities.models.Groups
+import java.io.Serializable
+import java.lang.Exception
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
-import android.os.Looper;
-import android.provider.Settings;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.core.app.ActivityOptionsCompat;
-
-import com.innovativetools.firebase.chat.activities.GroupsMessagesActivity;
-import com.innovativetools.firebase.chat.activities.GroupsParticipantsActivity;
-import com.innovativetools.firebase.chat.activities.ImageViewerActivity;
-import com.innovativetools.firebase.chat.activities.MessageActivity;
-import com.innovativetools.firebase.chat.activities.OnBoardingActivity;
-import com.innovativetools.firebase.chat.activities.ProfileDialogActivity;
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.SettingsActivity;
-import com.innovativetools.firebase.chat.activities.ViewUserProfileActivity;
-import com.innovativetools.firebase.chat.activities.WebViewBrowserActivity;
-import com.innovativetools.firebase.chat.activities.constants.IConstants;
-import com.innovativetools.firebase.chat.activities.models.Groups;
-
-import java.io.Serializable;
-
-/**
- * @author : Prashant Adesara
- * @url https://www.bytesbee.com
- * Navigation to new activity
- */
-public class Screens {
-
-    private final Context context;
-
-    public Screens(Context con) {
-        context = con;
+class Screens(private val context: Context) {
+    fun showClearTopScreen(cls: Class<*>?) {
+        val intent = Intent(context, cls)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        context.startActivity(intent)
     }
 
-    public void showClearTopScreen(final Class<?> cls) {
-        final Intent intent = new Intent(context, cls);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        context.startActivity(intent);
+    fun showCustomScreen(cls: Class<*>?) {
+        val intent = Intent(context, cls)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
     }
 
-    public void showCustomScreen(final Class<?> cls) {
-        final Intent intent = new Intent(context, cls);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+    fun startHomeScreen() {
+        val startHome = Intent(Intent.ACTION_MAIN)
+        startHome.addCategory(Intent.CATEGORY_HOME)
+        startHome.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startHome.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(startHome)
     }
 
-    public void startHomeScreen() {
-        final Intent startHome = new Intent(Intent.ACTION_MAIN);
-        startHome.addCategory(Intent.CATEGORY_HOME);
-        startHome.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(startHome);
-    }
-
-    private Toast toastMessage;
-
-    public void showToast(final String strMsg) {
+    private var toastMessage: Toast? = null
+    fun showToast(strMsg: String?) {
         try {
             if (toastMessage != null) {
-                toastMessage.cancel();
+                toastMessage!!.cancel()
             }
-            if (!Utils.isEmpty(strMsg)) {
-                toastMessage = Toast.makeText(context, strMsg, Toast.LENGTH_LONG);
+            if (!isEmpty(strMsg)) {
+                toastMessage = Toast.makeText(context, strMsg, Toast.LENGTH_LONG)
                 try {
-                    @SuppressWarnings("deprecation") final LinearLayout toastLayout = (LinearLayout) toastMessage.getView();
-                    final TextView txtToast = (TextView) toastLayout.getChildAt(0);
-                    txtToast.setTypeface(Utils.getRegularFont(context));
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                    val toastLayout = toastMessage?.getView() as LinearLayout?
+                    val txtToast = toastLayout!!.getChildAt(0) as TextView
+                    txtToast.setTypeface(getRegularFont(context))
+                } catch (e: Exception) {
+                    getErrors(e)
                 }
-                toastMessage.show();
+                toastMessage?.show()
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public void showToast(final int strMsg) {
-        showToast(context.getString(strMsg));
+    fun showToast(strMsg: Int) {
+        showToast(context.getString(strMsg))
     }
 
-    public void openOnBoardingScreen(final boolean isTakeTour) {
-        final Intent intent = new Intent(context, OnBoardingActivity.class);
-        intent.putExtra(EXTRA_STATUS, isTakeTour);
-        context.startActivity(intent);
+    fun openOnBoardingScreen(isTakeTour: Boolean) {
+        val intent = Intent(context, OnBoardingActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_STATUS, isTakeTour)
+        context.startActivity(intent)
     }
 
-    public void openProfilePictureActivity(final Object object) {
-        final Intent intent = new Intent(context, ProfileDialogActivity.class);
-        intent.putExtra(EXTRA_OBJ_GROUP, (Serializable) object);
-        context.startActivity(intent);
+    fun openProfilePictureActivity(`object`: Any?) {
+        val intent = Intent(context, ProfileDialogActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_OBJ_GROUP, `object` as Serializable?)
+        context.startActivity(intent)
     }
 
-    public void openUserMessageActivity(final String userId) {
-        final Intent intent = new Intent(context, MessageActivity.class);
-        intent.putExtra(EXTRA_USER_ID, userId);
-        context.startActivity(intent);
+    fun openUserMessageActivity(userId: String?) {
+        val intent = Intent(context, MessageActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_USER_ID, userId)
+        context.startActivity(intent)
     }
 
-    public void openViewProfileActivity(final String userId) {
-        final Intent intent = new Intent(context, ViewUserProfileActivity.class);
-        intent.putExtra(EXTRA_USER_ID, userId);
-        context.startActivity(intent);
+    fun openViewProfileActivity(userId: String?) {
+        val intent = Intent(context, ViewUserProfileActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_USER_ID, userId)
+        context.startActivity(intent)
     }
 
-    public void openGroupMessageActivity(final Groups object) {
-        final Intent intent = new Intent(new Intent(context, GroupsMessagesActivity.class));
-        intent.putExtra(EXTRA_OBJ_GROUP, object);
-        context.startActivity(intent);
+    fun openGroupMessageActivity(`object`: Groups?) {
+        val intent = Intent(Intent(context, GroupsMessagesActivity::class.java))
+        intent.putExtra(IConstants.EXTRA_OBJ_GROUP, `object`)
+        context.startActivity(intent)
     }
 
-    public void openGroupParticipantActivity(final Groups groups) {
-        final Intent intent = new Intent(context, GroupsParticipantsActivity.class);
-        intent.putExtra(EXTRA_OBJ_GROUP, groups);
-        ((Activity) context).startActivityForResult(intent, REQUEST_PARTICIPATE);
+    fun openGroupParticipantActivity(groups: Groups?) {
+        val intent = Intent(context, GroupsParticipantsActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_OBJ_GROUP, groups)
+        (context as Activity).startActivityForResult(intent, IConstants.REQUEST_PARTICIPATE)
     }
 
-    public void openFullImageViewActivity(final View view, final String imgPath, final String username) {
-        openFullImageViewActivity(view, imgPath, "", username);
+    fun openFullImageViewActivity(view: View?, imgPath: String?, username: String?) {
+        openFullImageViewActivity(view, imgPath, "", username)
     }
 
-    public void openFullImageViewActivity(final View view, final String imgPath, final String groupName, final String username) {
-        final Intent intent = new Intent(context, ImageViewerActivity.class);
-        intent.putExtra(EXTRA_IMGPATH, imgPath);
-        intent.putExtra(EXTRA_GROUP_NAME, groupName);
-        intent.putExtra(EXTRA_USERNAME, username);
+    fun openFullImageViewActivity(
+        view: View?,
+        imgPath: String?,
+        groupName: String?,
+        username: String?
+    ) {
+        val intent = Intent(context, ImageViewerActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_IMGPATH, imgPath)
+        intent.putExtra(IConstants.EXTRA_GROUP_NAME, groupName)
+        intent.putExtra(IConstants.EXTRA_USERNAME, username)
         try {
-            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) context, view, context.getString(R.string.app_name));
-            context.startActivity(intent, options.toBundle());
-        } catch (Exception e) {
-            context.startActivity(intent);
+            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                (context as Activity), view!!, context.getString(R.string.app_name)
+            )
+            context.startActivity(intent, options.toBundle())
+        } catch (e: Exception) {
+            context.startActivity(intent)
         }
     }
 
-    public void openSettingsActivity() {
-        final Intent intent = new Intent(context, SettingsActivity.class);
-        context.startActivity(intent);
+    fun openSettingsActivity() {
+        val intent = Intent(context, SettingsActivity::class.java)
+        context.startActivity(intent)
     }
 
-    public void openWebViewActivity(final String title, final String path) {
-        final Intent intent = new Intent(context, WebViewBrowserActivity.class);
-        intent.putExtra(EXTRA_USERNAME, title);
-        intent.putExtra(EXTRA_LINK, path);
-        context.startActivity(intent);
+    fun openWebViewActivity(title: String?, path: String?) {
+        val intent = Intent(context, WebViewBrowserActivity::class.java)
+        intent.putExtra(IConstants.EXTRA_USERNAME, title)
+        intent.putExtra(IConstants.EXTRA_LINK, path)
+        context.startActivity(intent)
     }
 
-    public void openGPSSettingScreen() {
-        showToast(context.getString(R.string.msgGPSTurnOn));
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                final Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                context.startActivity(intent);
-            }
-        }, IConstants.CLICK_DELAY_TIME);
-
+    fun openGPSSettingScreen() {
+        showToast(context.getString(R.string.msgGPSTurnOn))
+        Handler(Looper.getMainLooper()).postDelayed({
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            context.startActivity(intent)
+        }, IConstants.CLICK_DELAY_TIME)
     }
 }

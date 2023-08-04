@@ -1,1134 +1,1123 @@
-package com.innovativetools.firebase.chat.activities;
+package com.innovativetools.firebase.chat.activities
 
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.BROADCAST_DOWNLOAD_EVENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.DELAY_ONE_SEC;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.DOWNLOAD_DATA;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EMPTY;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_DATA;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_DURATION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_FILE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_NAME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_PATH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_SIZE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ATTACH_TYPE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_DATETIME;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_IMGPATH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_MESSAGE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_RECEIVER;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SEEN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SENDER;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_TYPE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_TYPING;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_TYPINGWITH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_TYPING_DELAY;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_USER_ID;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXT_MP3;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXT_VCF;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FALSE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.FCM_URL;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ONE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.PERMISSION_AUDIO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.PERMISSION_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.PERMISSION_DOCUMENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.PERMISSION_VIDEO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_BLOCK_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHATS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHAT_ATTACHMENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHAT_PHOTO_UPLOAD;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_OTHERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_TOKENS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_USERS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_VIDEO_THUMBS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REQUEST_CODE_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REQUEST_CODE_PLAY_SERVICES;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REQUEST_PERMISSION_RECORD;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TRUE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TWO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_IMAGE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_RECORDING;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_TEXT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.VIBRATE_HUNDRED;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
+import com.innovativetools.firebase.chat.activities.fcm.RetroClient.getClient
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.DownloadManager;
-import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.AssetFileDescriptor;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.media.MediaRecorder;
-import android.media.ThumbnailUtils;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import com.innovativetools.firebase.chat.activities.views.files.PickerManagerCallbacks
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.innovativetools.firebase.chat.activities.adapters.MessageAdapters
+import com.innovativetools.firebase.chat.activities.fcm.APIService
+import com.google.firebase.storage.StorageTask
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import com.vanniktech.emoji.EmojiPopup
+import androidx.cardview.widget.CardView
+import com.vanniktech.emoji.EmojiEditText
+import com.innovativetools.firebase.chat.activities.views.files.PickerManager
+import android.media.MediaRecorder
+import com.devlomi.record_view.RecordView
+import com.devlomi.record_view.RecordButton
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.fcm.RetroClient
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import com.google.firebase.auth.FirebaseAuth
+import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener
+import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener
+import android.view.View.OnTouchListener
+import com.devlomi.record_view.OnRecordClickListener
+import com.devlomi.record_view.OnRecordListener
+import android.text.Editable
+import com.devlomi.record_view.RecordPermissionHandler
+import com.devlomi.record_view.OnBasketAnimationEnd
+import android.text.TextUtils
+import android.provider.MediaStore
+import com.wafflecopter.multicontactpicker.MultiContactPicker
+import com.wafflecopter.multicontactpicker.LimitColumn
+import com.google.android.gms.common.GoogleApiAvailability
+import android.annotation.SuppressLint
+import android.app.Activity
+import com.theartofdev.edmodo.cropper.CropImage
+import com.theartofdev.edmodo.cropper.CropImageView
+import com.google.android.libraries.places.api.model.Place
+import com.rtchagas.pingplacepicker.PingPlacePicker
+import com.google.android.gms.maps.model.LatLng
+import com.google.gson.Gson
+import com.innovativetools.firebase.chat.activities.constants.IDialogListener
+import com.innovativetools.firebase.chat.activities.fcmmodels.Sender
+import com.innovativetools.firebase.chat.activities.fcmmodels.MyResponse
+import android.text.TextWatcher
+import android.app.ProgressDialog
+import com.innovativetools.firebase.chat.activities.async.BaseTask
+import android.media.ThumbnailUtils
+import android.graphics.Bitmap
+import com.google.firebase.storage.UploadTask
+import com.innovativetools.firebase.chat.activities.models.AttachmentTypes.AttachmentType
+import com.innovativetools.firebase.chat.activities.managers.FirebaseUploader
+import com.innovativetools.firebase.chat.activities.managers.FirebaseUploader.UploadListener
+import com.wafflecopter.multicontactpicker.ContactResult
+import android.provider.ContactsContract
+import android.content.res.AssetFileDescriptor
+import android.content.pm.PackageManager
+import android.app.DownloadManager
+import android.content.*
+import com.innovativetools.firebase.chat.activities.managers.DownloadUtil
+import com.innovativetools.firebase.chat.activities.views.files.MediaFile.MediaFileType
+import com.innovativetools.firebase.chat.activities.views.files.MediaFile
+import android.net.Uri
+import android.os.*
+import android.view.*
+import android.widget.*
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.gms.tasks.*
+import com.google.android.gms.tasks.Continuation
+import com.google.firebase.database.*
+import com.innovativetools.firebase.chat.activities.async.CustomCallable
+import com.innovativetools.firebase.chat.activities.async.TaskRunner
+import com.innovativetools.firebase.chat.activities.databinding.ActivityMessageBinding
+import com.innovativetools.firebase.chat.activities.fcmmodels.Data
+import com.innovativetools.firebase.chat.activities.fcmmodels.Token
+import com.innovativetools.firebase.chat.activities.managers.SessionManager
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.*
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import com.innovativetools.firebase.chat.activities.views.files.FileUtils
+import de.hdodenhof.circleimageview.CircleImageView
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.*
+import java.util.*
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.view.ContextThemeWrapper;
-import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+class MessageActivity : BaseActivity(), View.OnClickListener, PickerManagerCallbacks {
+    private var mImageView: CircleImageView? = null
+    private var mTxtUsername: TextView? = null
+    private var txtTyping: TextView? = null
+    private var layoutManager: LinearLayoutManager? = null
 
-import com.innovativetools.firebase.chat.activities.adapters.MessageAdapters;
-import com.innovativetools.firebase.chat.activities.async.BaseTask;
-import com.innovativetools.firebase.chat.activities.async.TaskRunner;
-import com.innovativetools.firebase.chat.activities.fcm.APIService;
-import com.innovativetools.firebase.chat.activities.fcm.RetroClient;
-import com.innovativetools.firebase.chat.activities.fcmmodels.Data;
-import com.innovativetools.firebase.chat.activities.fcmmodels.MyResponse;
-import com.innovativetools.firebase.chat.activities.fcmmodels.Sender;
-import com.innovativetools.firebase.chat.activities.fcmmodels.Token;
-import com.innovativetools.firebase.chat.activities.managers.DownloadUtil;
-import com.innovativetools.firebase.chat.activities.managers.FirebaseUploader;
-import com.innovativetools.firebase.chat.activities.managers.SessionManager;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Attachment;
-import com.innovativetools.firebase.chat.activities.models.AttachmentTypes;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.DownloadFileEvent;
-import com.innovativetools.firebase.chat.activities.models.LocationAddress;
-import com.innovativetools.firebase.chat.activities.models.Others;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.innovativetools.firebase.chat.activities.views.files.FileUtils;
-import com.innovativetools.firebase.chat.activities.views.files.MediaFile;
-import com.innovativetools.firebase.chat.activities.views.files.PickerManager;
-import com.innovativetools.firebase.chat.activities.views.files.PickerManagerCallbacks;
-import com.devlomi.record_view.OnRecordListener;
-import com.devlomi.record_view.RecordButton;
-import com.devlomi.record_view.RecordView;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.libraries.places.api.model.Place;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageTask;
-import com.google.firebase.storage.UploadTask;
-import com.google.gson.Gson;
-import com.rtchagas.pingplacepicker.PingPlacePicker;
-import com.theartofdev.edmodo.cropper.CropImage;
-import com.theartofdev.edmodo.cropper.CropImageView;
-import com.vanniktech.emoji.EmojiEditText;
-import com.vanniktech.emoji.EmojiPopup;
-import com.wafflecopter.multicontactpicker.ContactResult;
-import com.wafflecopter.multicontactpicker.LimitColumn;
-import com.wafflecopter.multicontactpicker.MultiContactPicker;
+    private var mRecyclerView: RecyclerView? = null
+    private var currentId: String? = null
+    private var userId: String? = null
+    private var userName = "Sender"
+    private var strSender: String? = null
+    private var strReceiver: String? = null
 
-import org.jetbrains.annotations.NotNull;
+    private var mToolbar: Toolbar? = null
+    private var chats: ArrayList<Chat>? = null
+    private var messageAdapters: MessageAdapters? = null
+    private var seenListenerSender: ValueEventListener? = null
+    private var seenReferenceSender: Query? = null
+    private var apiService: APIService? = null
+    var notify = false
+    private var onlineStatus: String? = null
+    private var strUsername: String? = null
+    private var strCurrentImage: String? = null
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
-import de.hdodenhof.circleimageview.CircleImageView;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-public class MessageActivity extends BaseActivity implements View.OnClickListener, PickerManagerCallbacks {
-
-    private CircleImageView mImageView;
-    private TextView mTxtUsername, txtTyping;
-    private LinearLayoutManager layoutManager;
-    private RecyclerView mRecyclerView;
-    private String currentId, userId, userName = "Sender";
-    private String strSender, strReceiver;
-    private Toolbar mToolbar;
-    private ArrayList<Chat> chats;
-    private MessageAdapters messageAdapters;
-
-    private ValueEventListener seenListenerSender;
-    private Query seenReferenceSender;
-
-    private APIService apiService;
-
-    boolean notify = false;
-
-    private String onlineStatus, strUsername, strCurrentImage;
-
-    //    private ImageView imgAvatar;
-    private Uri imageUri = null;
-    private StorageTask uploadTask;
-    private FirebaseStorage storage;
-    private StorageReference storageReference, storageAttachment;
+    private var imgAvatar: ImageView? = null;
+    private var imageUri: Uri? = null
+    private var uploadTask: StorageTask<*>? = null
+    private var storage: FirebaseStorage? = null
+    private var storageReference: StorageReference? = null
+    private var storageAttachment: StorageReference? = null
 
     //New Component
-    private LinearLayout btnGoToBottom;
-    private EmojiPopup emojiIcon;
-    private CardView mainAttachmentLayout;
-    private View attachmentBGView;
-    private EmojiEditText newMessage;
-    private ImageView imgAddAttachment, imgAttachmentEmoji, imgCamera;
-    private RelativeLayout rootView;
+    private var btnGoToBottom: LinearLayout? = null
+    private var emojiIcon: EmojiPopup? = null
+    private var mainAttachmentLayout: CardView? = null
+    private var attachmentBGView: View? = null
+    private var newMessage: EmojiEditText? = null
+    private var imgAddAttachment: ImageView? = null
+    private var imgAttachmentEmoji: ImageView? = null
+    private var imgCamera: ImageView? = null
+    private var rootView: RelativeLayout? = null
 
     //Picker
-    private PickerManager pickerManager;
+    private var pickerManager: PickerManager? = null
 
     //Recording
-    private Handler recordWaitHandler, recordTimerHandler;
-    private Runnable recordRunnable, recordTimerRunnable;
-    private MediaRecorder mRecorder = null;
-    private String recordFilePath;
-    private RecordView recordView;
-    private RecordButton recordButton;
-    private boolean isStart = false;
-    private int firstVisible = -1;
+    private var recordWaitHandler: Handler? = null
+    private var recordTimerHandler: Handler? = null
+    private var recordRunnable: Runnable? = null
+    private var recordTimerRunnable: Runnable? = null
+    private var mRecorder: MediaRecorder? = null
+    private var recordFilePath: String? = null
+    private var recordView: RecordView? = null
+    private var recordButton: RecordButton? = null
+    private var isStart = false
+    private var firstVisible = -1
+    private var rlChatView: RelativeLayout? = null
+    private var vCardData: String? = null
+    private var displayName: String? = null
+    private var phoneNumber: String? = null
+    private var fileUri: File? = null
+    private var imgUri: Uri? = null
 
-    private RelativeLayout rlChatView;
-
-    private String vCardData, displayName, phoneNumber;
-    private File fileUri = null;
-    private Uri imgUri;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_message);
-
-        mActivity = this;
-
-        apiService = RetroClient.getClient(FCM_URL).create(APIService.class);
-
-        initUI();
-
-        txtTyping.setText(EMPTY);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_message)
 
         try {
-            setSupportActionBar(mToolbar);
-            Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle(EMPTY);
-        } catch (Exception ignored) {
-        }
-        mToolbar.setNavigationOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                onBackPressed();
+            mActivity = this
+            apiService = getClient(IConstants.FCM_URL)!!.create(APIService::class.java)
+            initUI()
+            txtTyping?.text = IConstants.EMPTY
+            try {
+                setSupportActionBar(mToolbar)
+                Objects.requireNonNull(supportActionBar)?.setDisplayHomeAsUpEnabled(true)
+                supportActionBar!!.title = IConstants.EMPTY
+            } catch (ignored: Exception) {
             }
-        });
-
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert firebaseUser != null;
-        currentId = firebaseUser.getUid();
-
-        reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(currentId);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.hasChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
-                    assert user != null;
-                    strUsername = user.getUsername();
-                    strCurrentImage = user.getImageURL();
+            mToolbar?.setNavigationOnClickListener(object : SingleClickListener() {
+                override fun onClickView(v: View?) {
+                    onBackPressed()
                 }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        Intent intent = getIntent();
-        userId = intent.getStringExtra(EXTRA_USER_ID);
-
-        strSender = currentId + SLASH + userId;
-        strReceiver = userId + SLASH + currentId;
-
-        storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReference(REF_CHAT_PHOTO_UPLOAD + SLASH + strSender);
-        storageAttachment = storage.getReference(REF_CHAT_ATTACHMENT + SLASH + strSender);
-
-        mRecyclerView.setHasFixedSize(true);
-        layoutManager = new LinearLayoutManager(mActivity);
-        layoutManager.setStackFromEnd(true);
-        mRecyclerView.setLayoutManager(layoutManager);
-        btnGoToBottom.setVisibility(View.GONE);
-
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull @NotNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                try {
-                    if (firstVisible == -1)
-                        firstVisible = layoutManager.findFirstCompletelyVisibleItemPosition();
-                    else
-                        firstVisible = messageAdapters.getItemCount() >= TWO ? messageAdapters.getItemCount() - TWO : ZERO;
-                } catch (Exception e) {
-                    firstVisible = ZERO;
-                }
-
-                if (layoutManager.findLastVisibleItemPosition() < firstVisible) {
-                    btnGoToBottom.setVisibility(View.VISIBLE);
-                } else {
-                    btnGoToBottom.setVisibility(View.GONE);
-                }
-            }
-        });
-
-        btnGoToBottom.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                try {
-                    if (firstVisible != -1) {
-                        mRecyclerView.smoothScrollToPosition(messageAdapters.getItemCount() - ONE);
+            })
+            firebaseUser = FirebaseAuth.getInstance().currentUser
+            assert(firebaseUser != null)
+            currentId = firebaseUser!!.uid
+            reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(
+                currentId!!
+            )
+            reference!!.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (dataSnapshot.hasChildren()) {
+                        val user = dataSnapshot.getValue(
+                            User::class.java
+                        )!!
+                        strUsername = user.username
+                        strCurrentImage = user.getImageURL()
                     }
-                    btnGoToBottom.setVisibility(View.GONE);
-                } catch (Exception ignored) {
-
                 }
-            }
-        });
 
-        rlChatView.setVisibility(View.VISIBLE);
-        recordButton.setVisibility(View.VISIBLE);
-
-        reference = FirebaseDatabase.getInstance().getReference(REF_USERS).child(userId);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.hasChildren()) {
-                    final User user = dataSnapshot.getValue(User.class);
-                    assert user != null;
-                    mTxtUsername.setText(user.getUsername());
-                    userName = user.getUsername();
-                    onlineStatus = Utils.showOnlineOffline(mActivity, user.getIsOnline());
-
-                    txtTyping.setText(onlineStatus);
-
-                    Utils.setProfileImage(getApplicationContext(), user.getImageURL(), mImageView);
-
-                    readMessages(user.getImageURL());
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+            val intent = intent
+            userId = intent.getStringExtra(IConstants.EXTRA_USER_ID)
+            strSender = currentId + IConstants.SLASH + userId
+            strReceiver = userId + IConstants.SLASH + currentId
+            storage = FirebaseStorage.getInstance()
+            storageReference =
+                storage!!.getReference(IConstants.REF_CHAT_PHOTO_UPLOAD + IConstants.SLASH + strSender)
+            storageAttachment =
+                storage!!.getReference(IConstants.REF_CHAT_ATTACHMENT + IConstants.SLASH + strSender)
+            mRecyclerView?.setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(mActivity)
+            layoutManager!!.stackFromEnd = true
+            mRecyclerView?.layoutManager = layoutManager
+            btnGoToBottom?.visibility = View.GONE
+            mRecyclerView?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    firstVisible = try {
+                        if (firstVisible == -1) layoutManager!!.findFirstCompletelyVisibleItemPosition() else if (messageAdapters!!.itemCount >= IConstants.TWO) messageAdapters!!.itemCount - IConstants.TWO else IConstants.ZERO
+                    } catch (e: Exception) {
+                        IConstants.ZERO
+                    }
+                    if (layoutManager!!.findLastVisibleItemPosition() < firstVisible) {
+                        btnGoToBottom?.visibility = View.VISIBLE
+                    } else {
+                        btnGoToBottom?.visibility = View.GONE
+                    }
                 }
+            })
+            btnGoToBottom?.setOnClickListener(object : SingleClickListener() {
+                override fun onClickView(v: View?) {
+                    try {
+                        if (firstVisible != -1) {
+                            mRecyclerView?.smoothScrollToPosition(messageAdapters!!.itemCount - IConstants.ONE)
+                        }
+                        btnGoToBottom?.visibility = View.GONE
+                    } catch (ignored: Exception) {
+                    }
+                }
+            })
+            rlChatView!!.visibility = View.VISIBLE
+            recordButton!!.visibility = View.VISIBLE
+            reference =
+                FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS).child(userId!!)
+            reference!!.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (dataSnapshot.hasChildren()) {
+                        val user = dataSnapshot.getValue(
+                            User::class.java
+                        )!!
+                        mTxtUsername?.text = user.username
+                        userName = user.username.toString()
+                        onlineStatus = Utils.showOnlineOffline(mActivity!!, user.isOnline)
+                        txtTyping?.text = onlineStatus
+                        user.getImageURL()?.let {
+                            Utils.setProfileImage(
+                                applicationContext, it, mImageView!!
+                            )
+                        }
+                        user.getImageURL()?.let { readMessages(it) }
+                    }
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+            val viewProfile = findViewById<LinearLayout>(R.id.viewProfile)
+            viewProfile.setOnClickListener(object : SingleClickListener() {
+                override fun onClickView(v: View?) {
+                    screens!!.openViewProfileActivity(userId)
+                }
+            })
+            emojiIcon = EmojiPopup.Builder.fromRootView(rootView!!).setOnEmojiPopupShownListener {
+                hideAttachmentView()
+                imgAttachmentEmoji?.setImageResource(R.drawable.ic_keyboard_24dp)
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                .setOnEmojiPopupDismissListener { imgAttachmentEmoji?.setImageResource(R.drawable.ic_insert_emoticon_gray) }
+                .setKeyboardAnimationStyle(R.style.emoji_fade_animation_style).build(
+                    newMessage!!
+                )
+            newMessage!!.setOnTouchListener { v: View?, event: MotionEvent? ->
+                hideAttachmentView()
+                false
             }
-        });
+            Utils.uploadTypingStatus()
+            typingListening()
+            readTyping()
+            seenMessage()
+            val handler = Handler(Looper.getMainLooper())
+            //This permission required because when you playing the recorded your voice, at that time audio wave effect shown.
+            handler.postDelayed({ permissionRecording() }, 800)
 
-        final LinearLayout viewProfile = findViewById(R.id.viewProfile);
-        viewProfile.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.openViewProfileActivity(userId);
-            }
-        });
+            Toast.makeText(mActivity, "MessageActivtu", Toast.LENGTH_SHORT).show()
 
-        emojiIcon = EmojiPopup.Builder.fromRootView(rootView).setOnEmojiPopupShownListener(() -> {
-            hideAttachmentView();
-            imgAttachmentEmoji.setImageResource(R.drawable.ic_keyboard_24dp);
-        }).setOnEmojiPopupDismissListener(() -> imgAttachmentEmoji.setImageResource(R.drawable.ic_insert_emoticon_gray)).setKeyboardAnimationStyle(R.style.emoji_fade_animation_style).build(newMessage);
+        } catch (e: Exception) {
+            Toast.makeText(mActivity, e.message, Toast.LENGTH_SHORT).show()
+        }
 
-        newMessage.setOnTouchListener((v, event) -> {
-            hideAttachmentView();
-            return false;
-        });
-        Utils.uploadTypingStatus();
-        typingListening();
-        readTyping();
-        seenMessage();
-
-        final Handler handler = new Handler(Looper.getMainLooper());
-        //This permission required because when you playing the recorded your voice, at that time audio wave effect shown.
-        handler.postDelayed(this::permissionRecording, 800);
     }
 
-    private void initUI() {
-        mImageView = findViewById(R.id.imageView);
-        txtTyping = findViewById(R.id.txtTyping);
-        mTxtUsername = findViewById(R.id.txtUsername);
-        mToolbar = findViewById(R.id.toolbar);
-        mRecyclerView = findViewById(R.id.recyclerView);
+    private fun initUI() {
+        mImageView = findViewById(R.id.imageView)
+        txtTyping = findViewById(R.id.txtTyping)
+        mTxtUsername = findViewById(R.id.txtUsername)
+        mToolbar = findViewById(R.id.toolbar)
+        mRecyclerView = findViewById(R.id.recyclerView)
 
         //New Component
-        rootView = findViewById(R.id.rootView);
-        rlChatView = findViewById(R.id.rlChatView);
-        btnGoToBottom = findViewById(R.id.btnBottom);
-        newMessage = findViewById(R.id.newMessage);
-        imgAddAttachment = findViewById(R.id.imgAddAttachment);
-        imgCamera = findViewById(R.id.imgCamera);
-        mainAttachmentLayout = findViewById(R.id.mainAttachmentLayout);
-        mainAttachmentLayout.setVisibility(View.GONE);
-        attachmentBGView = findViewById(R.id.attachmentBGView);
-        attachmentBGView.setVisibility(View.GONE);
-        attachmentBGView.setOnClickListener(this);
-
-        imgAttachmentEmoji = findViewById(R.id.imgAttachmentEmoji);
-
-        imgAddAttachment.setOnClickListener(this);
-        imgCamera.setOnClickListener(this);
-        imgAttachmentEmoji.setOnClickListener(this);
-        findViewById(R.id.btnAttachmentVideo).setOnClickListener(this);
-        findViewById(R.id.btnAttachmentContact).setOnClickListener(this);
-        findViewById(R.id.btnAttachmentGallery).setOnClickListener(this);
-        findViewById(R.id.btnAttachmentAudio).setOnClickListener(this);
-        findViewById(R.id.btnAttachmentLocation).setOnClickListener(this);
-        findViewById(R.id.btnAttachmentDocument).setOnClickListener(this);
-
-        recordView = findViewById(R.id.recordView);
-        recordButton = findViewById(R.id.recordButton);
-        recordButton.setRecordView(recordView);//IMPORTANT
-
-        initListener();
-
-        pickerManager = new PickerManager(this, this, this);
+        rootView = findViewById(R.id.rootView)
+        rlChatView = findViewById(R.id.rlChatView)
+        btnGoToBottom = findViewById(R.id.btnBottom)
+        newMessage = findViewById(R.id.newMessage)
+        imgAddAttachment = findViewById(R.id.imgAddAttachment)
+        imgCamera = findViewById(R.id.imgCamera)
+        mainAttachmentLayout = findViewById(R.id.mainAttachmentLayout)
+        mainAttachmentLayout?.setVisibility(View.GONE)
+        attachmentBGView = findViewById(R.id.attachmentBGView)
+        attachmentBGView?.setVisibility(View.GONE)
+        attachmentBGView?.setOnClickListener(this)
+        imgAttachmentEmoji = findViewById(R.id.imgAttachmentEmoji)
+        imgAddAttachment?.setOnClickListener(this)
+        imgCamera?.setOnClickListener(this)
+        imgAttachmentEmoji?.setOnClickListener(this)
+        findViewById<View>(R.id.btnAttachmentVideo).setOnClickListener(this)
+        findViewById<View>(R.id.btnAttachmentContact).setOnClickListener(this)
+        findViewById<View>(R.id.btnAttachmentGallery).setOnClickListener(this)
+        findViewById<View>(R.id.btnAttachmentAudio).setOnClickListener(this)
+        findViewById<View>(R.id.btnAttachmentLocation).setOnClickListener(this)
+        findViewById<View>(R.id.btnAttachmentDocument).setOnClickListener(this)
+        recordView = findViewById(R.id.recordView)
+        recordButton = findViewById(R.id.recordButton)
+        recordButton?.setRecordView(recordView) //IMPORTANT
+        initListener()
+        pickerManager = PickerManager(this, this, this)
     }
 
-    private void initListener() {
-        //ListenForRecord must be false ,otherwise onClick will not be called
-        recordButton.setOnRecordClickListener(v -> {
-            if (!blockUnblockCheckBeforeSend()) {
-                clickToSend();
-            }
-        });
+    private fun initListener() {
 
-        //Cancel Bounds is when the Slide To Cancel text gets before the timer . default is 8
-        final boolean isRTLOn = SessionManager.get().isRTLOn();
-        recordView.setRTLDirection(isRTLOn);
-        recordView.setSlideMarginRight(recordView.getSlideMargin());
-        recordView.setCancelBounds(8);
-        recordView.setSlideFont(Utils.getRegularFont(mActivity));
-        recordView.setCounterTimerFont(Utils.getBoldFont(mActivity));
-        //prevent recording under one Second
-        recordView.setLessThanSecondAllowed(false);
-        recordView.setSoundEnabled(true);
-        recordView.setTimeLimit(60000);//1000 = 1 second
-        recordView.setTrashIconColor(getResources().getColor(R.color.red_500));
 
-        recordView.setOnRecordListener(new OnRecordListener() {
-            @Override
-            public void onStart() {
+        try{
+
+            //ListenForRecord must be false ,otherwise onClick will not be called
+            recordButton!!.setOnRecordClickListener { v: View? ->
                 if (!blockUnblockCheckBeforeSend()) {
-                    hideAttachmentView();
-                    if (Objects.requireNonNull(newMessage.getText()).toString().trim().isEmpty()) {
-                        if (recordWaitHandler == null)
-                            recordWaitHandler = new Handler(Looper.getMainLooper());
-                        recordRunnable = () -> recordingStart();
-                        recordWaitHandler.postDelayed(recordRunnable, ONE);
+                    clickToSend()
+                }
+            }
+
+            //Cancel Bounds is when the Slide To Cancel text gets before the timer . default is 8
+            val isRTLOn = SessionManager.get()?.isRTLOn
+            recordView!!.setRTLDirection(isRTLOn!!)
+            recordView!!.setSlideMarginRight(recordView!!.slideMargin)
+            recordView!!.cancelBounds = 8f
+            recordView!!.setSlideFont(Utils.getRegularFont(mActivity))
+            recordView!!.setCounterTimerFont(Utils.getBoldFont(mActivity))
+            //prevent recording under one Second
+            recordView!!.setLessThanSecondAllowed(false)
+            recordView!!.setSoundEnabled(true)
+            recordView!!.timeLimit = 60000 //1000 = 1 second
+            recordView!!.setTrashIconColor(resources.getColor(R.color.red_500))
+            recordView!!.setOnRecordListener(object : OnRecordListener {
+                override fun onStart() {
+                    if (!blockUnblockCheckBeforeSend()) {
+                        hideAttachmentView()
+                        if (Objects.requireNonNull(newMessage!!.text).toString().trim { it <= ' ' }
+                                .isEmpty()) {
+                            if (recordWaitHandler == null) recordWaitHandler =
+                                Handler(Looper.getMainLooper())
+                            recordRunnable = Runnable { recordingStart() }
+                            recordWaitHandler!!.postDelayed(recordRunnable!!, IConstants.ONE.toLong())
+                        }
+                        hideEditTextLayout()
                     }
-                    hideEditTextLayout();
                 }
-            }
 
-            @Override
-            public void onCancel() {
-                if (mRecorder != null && Utils.isEmpty(Objects.requireNonNull(newMessage.getText()).toString().trim())) {
-                    recordingStop(FALSE);
-                    screens.showToast(R.string.recording_cancelled);
-                }
-            }
-
-            @Override
-            public void onFinish(long recordTime, boolean limitReached) {
-                try {
-                    if (recordWaitHandler != null && Objects.requireNonNull(newMessage.getText()).toString().trim().isEmpty())
-                        recordWaitHandler.removeCallbacks(recordRunnable);
-                    if (mRecorder != null && Objects.requireNonNull(newMessage.getText()).toString().trim().isEmpty()) {
-                        recordingStop(TRUE);
+                override fun onCancel() {
+                    if (mRecorder != null && Utils.isEmpty(
+                            Objects.requireNonNull(
+                                newMessage!!.text
+                            ).toString().trim { it <= ' ' })
+                    ) {
+                        recordingStop(IConstants.FALSE)
+                        screens!!.showToast(R.string.recording_cancelled)
                     }
-                } catch (Exception ignored) {
-
                 }
-                showEditTextLayout();
+
+                override fun onFinish(recordTime: Long, limitReached: Boolean) {
+                    try {
+                        if (recordWaitHandler != null && Objects.requireNonNull(
+                                newMessage!!.text
+                            ).toString().trim { it <= ' ' }.isEmpty()
+                        ) recordWaitHandler!!.removeCallbacks(
+                            recordRunnable!!
+                        )
+                        if (mRecorder != null && Objects.requireNonNull(newMessage!!.text).toString()
+                                .trim { it <= ' ' }
+                                .isEmpty()
+                        ) {
+                            recordingStop(IConstants.TRUE)
+                        }
+                    } catch (ignored: Exception) {
+                    }
+                    showEditTextLayout()
+                }
+
+                override fun onLessThanSecond() {
+                    showEditTextLayout()
+                }
+            })
+            recordView!!.setRecordPermissionHandler {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    return@setRecordPermissionHandler true
+                }
+                if (recordPermissionsAvailable()) {
+                    return@setRecordPermissionHandler true
+                } else {
+                    permissionRecording()
+                }
+                false
             }
+            recordView!!.setOnBasketAnimationEndListener { showEditTextLayout() }
 
-            @Override
-            public void onLessThanSecond() {
-                showEditTextLayout();
-            }
-        });
 
-        recordView.setRecordPermissionHandler(() -> {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                return true;
-            }
-            if (recordPermissionsAvailable()) {
-                return true;
-            } else {
-                permissionRecording();
-            }
-            return false;
-
-        });
-
-        recordView.setOnBasketAnimationEndListener(this::showEditTextLayout);
-
-    }
-
-    private void showEditTextLayout() {
-        if (isStart) {
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(() -> {
-                imgAttachmentEmoji.setVisibility(View.VISIBLE);
-                newMessage.setVisibility(View.VISIBLE);
-                imgAddAttachment.setVisibility(View.VISIBLE);
-                imgCamera.setVisibility(View.VISIBLE);
-            }, 10);
+        }catch (e: Exception){
+            Toast.makeText(mActivity, e.message, Toast.LENGTH_SHORT).show()
         }
-        isStart = false;
+
+
+
+
+
+
+
+
     }
 
-    private void hideEditTextLayout() {
-        isStart = true;
-        imgAttachmentEmoji.setVisibility(View.GONE);
-        newMessage.setVisibility(View.INVISIBLE);
-        imgAddAttachment.setVisibility(View.GONE);
-        imgCamera.setVisibility(View.GONE);
+    private fun showEditTextLayout() {
+        try {
+
+            if (isStart) {
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({
+                    imgAttachmentEmoji?.visibility = View.VISIBLE
+                    newMessage!!.visibility = View.VISIBLE
+                    imgAddAttachment?.visibility = View.VISIBLE
+                    imgCamera?.visibility = View.VISIBLE
+                }, 10)
+            }
+            isStart = false
+
+        }catch (e: Exception){
+                Toast.makeText(mActivity, "showEdittext"+e.message, Toast.LENGTH_SHORT).show()
+            }
     }
 
-    private void clickToSend() {
-        if (TextUtils.isEmpty(Objects.requireNonNull(newMessage.getText()).toString().trim())) {
-            screens.showToast(R.string.strEmptyMsg);
+    private fun hideEditTextLayout() {
+        try{
+        isStart = true
+        imgAttachmentEmoji?.visibility = View.GONE
+        newMessage!!.visibility = View.INVISIBLE
+        imgAddAttachment?.visibility = View.GONE
+        imgCamera?.visibility = View.GONE
+
+        }catch (e: Exception){
+            Toast.makeText(mActivity, "showEdittext"+e.message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun clickToSend() {
+
+        try{
+        if (TextUtils.isEmpty(
+                Objects.requireNonNull(newMessage!!.text).toString().trim { it <= ' ' })
+        ) {
+            screens!!.showToast(R.string.strEmptyMsg)
         } else {
-            sendMessage(TYPE_TEXT, Objects.requireNonNull(newMessage.getText()).toString().trim(), null);
+            sendMessage(
+                IConstants.TYPE_TEXT,
+                Objects.requireNonNull(newMessage!!.text).toString().trim { it <= ' ' },
+                null
+            )
         }
-        newMessage.setText(EMPTY);
+        newMessage!!.setText(IConstants.EMPTY)
+
+        }catch (e: Exception){
+            Toast.makeText(mActivity, "showEdittext"+e.message, Toast.LENGTH_SHORT).show()
+        }
     }
 
-    @Override
-    public void onClick(View view) {
-        final int id = view.getId();
+    override fun onClick(view: View) {
+
+        try{
+
+        val id = view.id
         if (id == R.id.recordButton) {
-            hideAttachmentView();
-            clickToSend();
+            hideAttachmentView()
+            clickToSend()
         } else if (id == R.id.imgAttachmentEmoji) {
-            emojiIcon.toggle();
+            emojiIcon!!.toggle()
         } else if (id == R.id.imgAddAttachment) {
             if (!blockUnblockCheckBeforeSend()) {
-                fileUri = null;
-                imgUri = null;
-                Utils.closeKeyboard(mActivity, view);
-                if (mainAttachmentLayout.getVisibility() == View.VISIBLE) {
-                    hideAttachmentView();
+                fileUri = null
+                imgUri = null
+                Utils.closeKeyboard(mActivity!!, view)
+                if (mainAttachmentLayout!!.visibility == View.VISIBLE) {
+                    hideAttachmentView()
                 } else {
-                    showAttachmentView();
+                    showAttachmentView()
                 }
             }
         } else if (id == R.id.imgCamera) {
             if (!blockUnblockCheckBeforeSend()) {
-                fileUri = null;
-                imgUri = null;
-                hideAttachmentView();
-                openCamera();
+                fileUri = null
+                imgUri = null
+                hideAttachmentView()
+                openCamera()
             }
         } else if (id == R.id.btnAttachmentGallery) {
-            hideAttachmentView();
-            openImage();
+            hideAttachmentView()
+            openImage()
         } else if (id == R.id.btnAttachmentAudio) {
-            hideAttachmentView();
-            openAudioPicker();
+            hideAttachmentView()
+            openAudioPicker()
         } else if (id == R.id.btnAttachmentLocation) {
-            hideAttachmentView();
-            openPlacePicker();
+            hideAttachmentView()
+            openPlacePicker()
         } else if (id == R.id.btnAttachmentVideo) {
-            hideAttachmentView();
-            openVideoPicker();
+            hideAttachmentView()
+            openVideoPicker()
         } else if (id == R.id.btnAttachmentDocument) {
-            hideAttachmentView();
-            openDocumentPicker();
+            hideAttachmentView()
+            openDocumentPicker()
         } else if (id == R.id.btnAttachmentContact) {
-            hideAttachmentView();
-            openContactPicker();
+            hideAttachmentView()
+            openContactPicker()
         } else if (id == R.id.attachmentBGView) {
-            hideAttachmentView();
+            hideAttachmentView()
         }
+
+    }catch (e: Exception){
+        Toast.makeText(mActivity, "view"+e.message, Toast.LENGTH_SHORT).show()
+    }
     }
 
-    private void openCamera() {
-        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+    private fun openCamera() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         try {
-            fileUri = Utils.createImageFile(mActivity);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Utils.getUriForFileProvider(mActivity, fileUri));
-        } catch (Exception ignored) {
-
+            fileUri = Utils.createImageFile(mActivity!!)
+            intent.putExtra(
+                MediaStore.EXTRA_OUTPUT,
+                Utils.getUriForFileProvider(mActivity!!, fileUri)
+            )
+        } catch (ignored: Exception) {
         }
-        intentLauncher.launch(intent);
+        intentLauncher.launch(intent)
     }
 
-    private void openImage() {
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        intentLauncher.launch(intent);
+    private fun openImage() {
+        val intent = Intent()
+        intent.action = Intent.ACTION_GET_CONTENT
+        intent.type = "image/*"
+        intentLauncher.launch(intent)
     }
 
-    private void openAudioPicker() {
+    private fun openAudioPicker() {
         if (permissionsAvailable(permissionsStorage)) {
-            Intent target = FileUtils.getAudioIntent();
-            Intent intent = Intent.createChooser(target, getString(R.string.choose_file));
+            val target = FileUtils.audioIntent
+            val intent = Intent.createChooser(target, getString(R.string.choose_file))
             try {
-                pickerLauncher.launch(intent);
-            } catch (Exception ignored) {
+                pickerLauncher.launch(intent)
+            } catch (ignored: Exception) {
             }
         } else {
-            ActivityCompat.requestPermissions(this, permissionsStorage, PERMISSION_AUDIO);
+            ActivityCompat.requestPermissions(this, permissionsStorage, IConstants.PERMISSION_AUDIO)
         }
     }
 
-    private void openVideoPicker() {
+    private fun openVideoPicker() {
         if (permissionsAvailable(permissionsStorage)) {
-            Intent target = FileUtils.getVideoIntent();
-            Intent intent = Intent.createChooser(target, getString(R.string.choose_file));
+            val target = FileUtils.videoIntent
+            val intent = Intent.createChooser(target, getString(R.string.choose_file))
             try {
-                pickerLauncher.launch(intent);
-            } catch (Exception ignored) {
+                pickerLauncher.launch(intent)
+            } catch (ignored: Exception) {
             }
         } else {
-            ActivityCompat.requestPermissions(this, permissionsStorage, PERMISSION_VIDEO);
+            ActivityCompat.requestPermissions(this, permissionsStorage, IConstants.PERMISSION_VIDEO)
         }
     }
 
-    public void openDocumentPicker() {
+    fun openDocumentPicker() {
         if (permissionsAvailable(permissionsStorage)) {
-            final Intent target = FileUtils.getDocumentIntent();
-            final Intent intent = Intent.createChooser(target, getString(R.string.choose_file));
+            val target = FileUtils.documentIntent
+            val intent = Intent.createChooser(target, getString(R.string.choose_file))
             try {
-                pickerLauncher.launch(intent);
-            } catch (ActivityNotFoundException ignored) {
+                pickerLauncher.launch(intent)
+            } catch (ignored: ActivityNotFoundException) {
             }
         } else {
-            ActivityCompat.requestPermissions(this, permissionsStorage, PERMISSION_DOCUMENT);
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsStorage,
+                IConstants.PERMISSION_DOCUMENT
+            )
         }
     }
 
-    private void openContactPicker() {
+    private fun openContactPicker() {
         if (permissionsAvailable(permissionsContact)) {
-            new MultiContactPicker.Builder(mActivity) //Activity/fragment context
-                    .theme(R.style.MyCustomPickerTheme)
-                    .setTitleText(getString(R.string.choose_contact))
-                    .setChoiceMode(MultiContactPicker.CHOICE_MODE_SINGLE) //Optional - default: CHOICE_MODE_MULTIPLE
-                    .handleColor(ContextCompat.getColor(mActivity, R.color.colorPrimaryDark)) //Optional - default: Azure Blue
-                    .bubbleColor(ContextCompat.getColor(mActivity, R.color.colorPrimaryDark)) //Optional - default: Azure Blue
-                    .setLoadingType(MultiContactPicker.LOAD_ASYNC) //Optional - default LOAD_ASYNC (wait till all loaded vs stream results)
-                    .limitToColumn(LimitColumn.PHONE) //Optional - default NONE (Include phone + email, limiting to one can improve loading time)
-                    .setActivityAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out) //Optional - default: No animation overrides
-                    .showPickerForResult(REQUEST_CODE_CONTACT);
+            MultiContactPicker.Builder(mActivity!!) //Activity/fragment context
+                .theme(R.style.MyCustomPickerTheme)
+                .setTitleText(getString(R.string.choose_contact))
+                .setChoiceMode(MultiContactPicker.CHOICE_MODE_SINGLE) //Optional - default: CHOICE_MODE_MULTIPLE
+                .handleColor(
+                    ContextCompat.getColor(
+                        mActivity!!,
+                        R.color.colorPrimaryDark
+                    )
+                ) //Optional - default: Azure Blue
+                .bubbleColor(
+                    ContextCompat.getColor(
+                        mActivity!!,
+                        R.color.colorPrimaryDark
+                    )
+                ) //Optional - default: Azure Blue
+                .setLoadingType(MultiContactPicker.LOAD_ASYNC) //Optional - default LOAD_ASYNC (wait till all loaded vs stream results)
+                .limitToColumn(LimitColumn.PHONE) //Optional - default NONE (Include phone + email, limiting to one can improve loading time)
+                .setActivityAnimations(
+                    android.R.anim.fade_in, android.R.anim.fade_out,
+                    android.R.anim.fade_in, android.R.anim.fade_out
+                ) //Optional - default: No animation overrides
+                .showPickerForResult(IConstants.REQUEST_CODE_CONTACT)
         } else {
-            ActivityCompat.requestPermissions(this, permissionsContact, PERMISSION_CONTACT);
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsContact,
+                IConstants.PERMISSION_CONTACT
+            )
         }
     }
 
-    private void openPlacePicker() {
-        if (!Utils.isGPSEnabled(mActivity)) {
-            screens.openGPSSettingScreen();
+    private fun openPlacePicker() {
+        if (!Utils.isGPSEnabled(mActivity!!)) {
+            screens!!.openGPSSettingScreen()
         } else {
-            final PingPlacePicker.IntentBuilder builder = new PingPlacePicker.IntentBuilder();
+            val builder = PingPlacePicker.IntentBuilder()
             builder.setAndroidApiKey(getString(R.string.key_android))
-                    .setMapsApiKey(getString(R.string.key_maps));
+                .setMapsApiKey(getString(R.string.key_maps))
             try {
-                Intent placeIntent = builder.build(mActivity);
-                placeLauncher.launch(placeIntent);
-            } catch (Exception ex) {
+                val placeIntent: Intent? = mActivity?.let { builder.build(it) }
+                placeLauncher.launch(placeIntent)
+            } catch (ex: Exception) {
                 // Google Play services is not available...
-                Utils.getErrors(ex);
+                Utils.getErrors(ex)
                 try {
-                    GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
-                    googleApiAvailability.showErrorDialogFragment(this, googleApiAvailability.isGooglePlayServicesAvailable(this), REQUEST_CODE_PLAY_SERVICES);
-                } catch (Exception ignored) {
+                    val googleApiAvailability = GoogleApiAvailability.getInstance()
+                    googleApiAvailability.showErrorDialogFragment(
+                        this,
+                        googleApiAvailability.isGooglePlayServicesAvailable(this),
+                        IConstants.REQUEST_CODE_PLAY_SERVICES
+                    )
+                } catch (ignored: Exception) {
                 }
             }
         }
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case PERMISSION_CONTACT:
-                if (permissionsAvailable(permissions))
-                    openContactPicker();
-                break;
-            case PERMISSION_AUDIO:
-                if (permissionsAvailable(permissions))
-                    openAudioPicker();
-                break;
-            case PERMISSION_DOCUMENT:
-                if (permissionsAvailable(permissions))
-                    openDocumentPicker();
-                break;
-            case PERMISSION_VIDEO:
-                if (permissionsAvailable(permissions))
-                    openVideoPicker();
-                break;
-            case REQUEST_PERMISSION_RECORD:
-                if (permissionsAvailable(permissions)) {
-                    try {
-                        if (messageAdapters != null)
-                            messageAdapters.notifyDataSetChanged();
-                    } catch (Exception ignored) {
-
-                    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            IConstants.PERMISSION_CONTACT -> if (permissionsAvailable(permissions)) openContactPicker()
+            IConstants.PERMISSION_AUDIO -> if (permissionsAvailable(permissions)) openAudioPicker()
+            IConstants.PERMISSION_DOCUMENT -> if (permissionsAvailable(permissions)) openDocumentPicker()
+            IConstants.PERMISSION_VIDEO -> if (permissionsAvailable(permissions)) openVideoPicker()
+            IConstants.REQUEST_PERMISSION_RECORD -> if (permissionsAvailable(permissions)) {
+                try {
+                    if (messageAdapters != null) messageAdapters!!.notifyDataSetChanged()
+                } catch (ignored: Exception) {
                 }
-                break;
+            }
         }
     }
 
     /*
      * Intent launcher to get Image Uri from storage
      * */
-    final ActivityResultLauncher<Intent> intentLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            if (result.getResultCode() == Activity.RESULT_OK) {
-                if (fileUri != null) { // Image Capture
-                    imgUri = Uri.fromFile(fileUri);
+    val intentLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                imgUri = if (fileUri != null) { // Image Capture
+                    Uri.fromFile(fileUri)
                 } else { // Pick from Gallery
-                    Intent data = result.getData();
-                    assert data != null;
-                    imgUri = data.getData();
+                    val data = result.data!!
+                    data.data
                 }
-
                 try {
                     CropImage.activity(imgUri)
-                            .setGuidelines(CropImageView.Guidelines.ON_TOUCH)
-                            .setCropShape(CropImageView.CropShape.RECTANGLE)
-                            .setFixAspectRatio(true)
-                            .start(mActivity);
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                        .setGuidelines(CropImageView.Guidelines.ON_TOUCH)
+                        .setCropShape(CropImageView.CropShape.RECTANGLE)
+                        .setFixAspectRatio(true)
+                        .start(mActivity!!)
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
             }
         }
-    });
-
-    final ActivityResultLauncher<Intent> pickerLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            if (result.getResultCode() == Activity.RESULT_OK) {
+    val pickerLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
                 // There are no request codes
-                final Intent data = result.getData();
-                assert data != null;
-                final Uri uriData = data.getData();
-                Utils.sout("PickerManager uri: " + uriData.toString());
-                pickerManager.getPath(uriData, Build.VERSION.SDK_INT); /* {@link PickerManagerOnCompleteListener }*/
-//                    newFileUploadTask(data.getDataString(), AttachmentTypes.DOCUMENT, null);
+                val data = result.data!!
+                val uriData = data.data
+                Utils.sout("PickerManager uri: " + uriData.toString())
+                if (uriData != null) {
+                    pickerManager!!.getPath(
+                        uriData,
+                        Build.VERSION.SDK_INT
+                    )
+                } /* {@link PickerManagerOnCompleteListener }*/
+                //                    newFileUploadTask(data.getDataString(), AttachmentTypes.DOCUMENT, null);
             }
         }
-    });
-
-    final ActivityResultLauncher<Intent> placeLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-        if (result.getResultCode() == Activity.RESULT_OK) {
-            try {
-                final Intent data = result.getData();
-                assert data != null;
-                final Place place = PingPlacePicker.getPlace(data);
-                assert place != null;
-                final String name = Utils.isEmpty(place.getName()) ? EMPTY : place.getName();
-                final LocationAddress locationAddress = new LocationAddress(name, place.getAddress(), Objects.requireNonNull(place.getLatLng()).latitude, Objects.requireNonNull(place.getLatLng()).longitude);
-                Attachment attachment = new Attachment();
-                attachment.setData(new Gson().toJson(locationAddress));
-                attachment.setFileName(name);
-                attachment.setName(name);
-                sendMessage(AttachmentTypes.getTypeName(AttachmentTypes.LOCATION), place.getAddress(), attachment);
-            } catch (Exception e) {
-                Utils.getErrors(e);
+    val placeLauncher =
+        registerForActivityResult<Intent, ActivityResult>(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK) {
+                try {
+                    val data = result.data!!
+                    val place = PingPlacePicker.getPlace(data)!!
+                    val name = if (Utils.isEmpty(
+                            place.name
+                        )
+                    ) IConstants.EMPTY else place.name!!
+                    val locationAddress = Objects.requireNonNull(place.latLng)?.let {
+                        Objects.requireNonNull(
+                            place.latLng
+                        )?.let { it1 ->
+                            place.address?.let { it2 ->
+                                LocationAddress(
+                                    name, it2, it1.latitude, it.longitude
+                                )
+                            }
+                        }
+                    }
+                    val attachment = Attachment()
+                    attachment.data = Gson().toJson(locationAddress)
+                    attachment.fileName = name
+                    attachment.name = name
+                    sendMessage(
+                        AttachmentTypes.getTypeName(AttachmentTypes.LOCATION),
+                        place.address,
+                        attachment
+                    )
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
+                }
             }
         }
-    });
 
-    private boolean blockUnblockCheckBeforeSend() {
-        boolean isBlock = false;
+    private fun blockUnblockCheckBeforeSend(): Boolean {
+        var isBlock = false
         if (isBlocked) {
             //screens.showToast(R.string.msgUnblockToSend);
-            Utils.showOKDialog(mActivity, EMPTY, getString(R.string.msgUnblockToSend, userName),
-                    R.string.strUnblock, R.string.strCancel, this::unblockUser);
-            isBlock = true;
+            Utils.showOKDialog(
+                mActivity!!, IConstants.EMPTY, getString(R.string.msgUnblockToSend, userName),
+                R.string.strUnblock, R.string.strCancel
+            ) { unblockUser() }
+            isBlock = true
         }
         if (isOppBlocked) {
             //screens.showToast(R.string.msgBlockForNotSend);
-            Utils.showOKDialog(mActivity, EMPTY, getString(R.string.msgBlockForNotSend), () -> {
-            });
-            isBlock = true;
+            Utils.showOKDialog(
+                mActivity!!,
+                IConstants.EMPTY,
+                getString(R.string.msgBlockForNotSend)
+            ) {}
+            isBlock = true
         }
         if (!isBlocked && !isOppBlocked) {
-            isBlock = false;
+            isBlock = false
         }
-        return isBlock;
+        return isBlock
     }
 
-    private void sendMessage(String type, String message, Attachment attachment) {
+    private fun sendMessage(type: String, message: String?, attachment: Attachment?) {
         if (blockUnblockCheckBeforeSend()) {
-            return;
+            return
         }
-        notify = true;
-        String defaultMsg;
-        final String sender = currentId;
-        final String receiver = userId;
-
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        HashMap<String, Object> hashMap = new HashMap<>();
-
-        hashMap.put(EXTRA_SENDER, sender);
-        hashMap.put(EXTRA_RECEIVER, receiver);
-        hashMap.put(EXTRA_MESSAGE, message);
-        hashMap.put(EXTRA_ATTACH_TYPE, type);
-//        hashMap.put(EXTRA_TYPE, type);
-        hashMap.put(EXTRA_TYPE, TYPE_TEXT);//This is for older version users(Default TEXT, all other set as IMAGE)
-
+        notify = true
+        val defaultMsg: String
+        val sender = currentId
+        val receiver = userId
+        val reference = FirebaseDatabase.getInstance().reference
+        val hashMap = HashMap<String, Any?>()
+        hashMap[IConstants.EXTRA_SENDER] = sender
+        hashMap[IConstants.EXTRA_RECEIVER] = receiver
+        hashMap[IConstants.EXTRA_MESSAGE] = message
+        hashMap[IConstants.EXTRA_ATTACH_TYPE] = type
+        //        hashMap.put(EXTRA_TYPE, type);
+        hashMap[IConstants.EXTRA_TYPE] =
+            IConstants.TYPE_TEXT //This is for older version users(Default TEXT, all other set as IMAGE)
         try {
-            if (!type.equalsIgnoreCase(TYPE_TEXT) && !type.equalsIgnoreCase(TYPE_IMAGE)) {
-                defaultMsg = Utils.getDefaultMessage();
-                hashMap.put(EXTRA_MESSAGE, defaultMsg);
+            if (!type.equals(
+                    IConstants.TYPE_TEXT,
+                    ignoreCase = true
+                ) && !type.equals(IConstants.TYPE_IMAGE, ignoreCase = true)
+            ) {
+                defaultMsg = Utils.defaultMessage
+                hashMap[IConstants.EXTRA_MESSAGE] = defaultMsg
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
-
         try {
-            if (type.equalsIgnoreCase(TYPE_TEXT)) {
+            if (type.equals(IConstants.TYPE_TEXT, ignoreCase = true)) {
                 //No need to do anything here.
-            } else if (type.equalsIgnoreCase(TYPE_IMAGE)) {
-                hashMap.put(EXTRA_TYPE, TYPE_IMAGE);
-                hashMap.put(EXTRA_IMGPATH, message);
+            } else if (type.equals(IConstants.TYPE_IMAGE, ignoreCase = true)) {
+                hashMap[IConstants.EXTRA_TYPE] = IConstants.TYPE_IMAGE
+                hashMap[IConstants.EXTRA_IMGPATH] = message
             } else {
-                hashMap.put(EXTRA_ATTACH_PATH, message);
+                hashMap[IConstants.EXTRA_ATTACH_PATH] = message
                 try {
                     if (attachment != null) {
-                        hashMap.put(EXTRA_ATTACH_NAME, attachment.getName());
-                        hashMap.put(EXTRA_ATTACH_FILE, attachment.getFileName());
-                        hashMap.put(EXTRA_ATTACH_SIZE, attachment.getBytesCount());
-                        if (attachment.getData() != null) {
-                            hashMap.put(EXTRA_ATTACH_DATA, attachment.getData());
+                        hashMap[IConstants.EXTRA_ATTACH_NAME] = attachment.name
+                        hashMap[IConstants.EXTRA_ATTACH_FILE] = attachment.fileName
+                        hashMap[IConstants.EXTRA_ATTACH_SIZE] = attachment.bytesCount
+                        if (attachment.data != null) {
+                            hashMap[IConstants.EXTRA_ATTACH_DATA] = attachment.data
                         }
-                        if (attachment.getDuration() != null) {
-                            hashMap.put(EXTRA_ATTACH_DURATION, attachment.getDuration());
+                        if (attachment.duration != null) {
+                            hashMap[IConstants.EXTRA_ATTACH_DURATION] = attachment.duration
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
-
-        hashMap.put(EXTRA_SEEN, FALSE);
-        hashMap.put(EXTRA_DATETIME, Utils.getDateTime());
-
-        final String key = Utils.getChatUniqueId();
-        reference.child(REF_CHATS).child(strSender).child(key).setValue(hashMap);
-        reference.child(REF_CHATS).child(strReceiver).child(key).setValue(hashMap);
-
-        Utils.chatSendSound(getApplicationContext());
-
+        hashMap[IConstants.EXTRA_SEEN] = IConstants.FALSE
+        hashMap[IConstants.EXTRA_DATETIME] = Utils.dateTime
+        val key = Utils.chatUniqueId
+        reference.child(IConstants.REF_CHATS).child(strSender!!).child(key!!).setValue(hashMap)
+        reference.child(IConstants.REF_CHATS).child(strReceiver!!).child(key).setValue(hashMap)
+        Utils.chatSendSound(applicationContext)
         try {
-            String msg = message;
-            if (!type.equalsIgnoreCase(TYPE_TEXT) && !type.equalsIgnoreCase(TYPE_IMAGE)) {
-                try {
-                    String firstCapital = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
+            var msg = message
+            if (!type.equals(
+                    IConstants.TYPE_TEXT,
+                    ignoreCase = true
+                ) && !type.equals(IConstants.TYPE_IMAGE, ignoreCase = true)
+            ) {
+                msg = try {
+                    val firstCapital =
+                        type.substring(0, 1).uppercase(Locale.getDefault()) + type.substring(1)
+                            .lowercase(
+                                Locale.getDefault()
+                            )
                     if (attachment != null) {
-                        msg = "New " + firstCapital + "(" + attachment.getName() + ")";
+                        "New " + firstCapital + "(" + attachment.name + ")"
                     } else {
-                        msg = firstCapital;
+                        firstCapital
                     }
-                } catch (Exception e) {
-                    msg = message;
+                } catch (e: Exception) {
+                    message
                 }
             }
-
             if (notify) {
-                sendNotification(receiver, strUsername, msg, type);
+                sendNotification(receiver, strUsername, msg, type)
             }
-            notify = false;
-        } catch (Exception ignored) {
+            notify = false
+        } catch (ignored: Exception) {
         }
     }
 
-    private void sendNotification(String receiver, final String username, final String message, final String type) {
-        DatabaseReference tokenRef = FirebaseDatabase.getInstance().getReference(REF_TOKENS);
-        Query query = tokenRef.orderByKey().equalTo(receiver);
-
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+    private fun sendNotification(
+        receiver: String?,
+        username: String?,
+        message: String?,
+        type: String
+    ) {
+        val tokenRef = FirebaseDatabase.getInstance().getReference(IConstants.REF_TOKENS)
+        val query = tokenRef.orderByKey().equalTo(receiver)
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        Token token = snapshot.getValue(Token.class);
+                    for (snapshot in dataSnapshot.children) {
+                        val token = snapshot.getValue(
+                            Token::class.java
+                        )
+                        val data =
+                            Data(
+                                currentId,
+                                R.drawable.ic_stat_ic_notification,
+                                username,
+                                message,
+                                getString(R.string.strNewMessage),
+                                userId,
+                                type
+                            )
 
-                        final Data data = new Data(currentId, R.drawable.ic_stat_ic_notification, username, message, getString(R.string.strNewMessage), userId, type);
+                        assert(token != null)
+                        val sender = token!!.token?.let { Sender(data, it) }
+                        apiService!!.sendNotification(sender)!!
+                            .enqueue(object : Callback<MyResponse?> {
+                                override fun onResponse(
+                                    call: Call<MyResponse?>,
+                                    response: Response<MyResponse?>
+                                ) {
+                                    assert(response.code() != 200 || response.body() != null)
+                                }
 
-                        assert token != null;
-                        final Sender sender = new Sender(data, token.getToken());
-
-                        apiService.sendNotification(sender).enqueue(new Callback<MyResponse>() {
-                            @Override
-                            public void onResponse(@NotNull Call<MyResponse> call, @NotNull Response<MyResponse> response) {
-                                assert response.code() != 200 || response.body() != null;
-                            }
-
-                            @Override
-                            public void onFailure(@NotNull Call<MyResponse> call, @NotNull Throwable t) {
-
-                            }
-                        });
-
+                                override fun onFailure(call: Call<MyResponse?>, t: Throwable) {}
+                            })
                     }
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void readMessages(final String imageUrl) {
-        chats = new ArrayList<>();
-
-        reference = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(strReceiver);
-        reference.keepSynced(true);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                chats.clear();
+    private fun readMessages(imageUrl: String) {
+        chats = ArrayList()
+        reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+            strReceiver!!
+        )
+        reference!!.keepSynced(true)
+        reference!!.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                chats!!.clear()
                 if (dataSnapshot.hasChildren()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    for (snapshot in dataSnapshot.children) {
                         try {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
-                            if (!Utils.isEmpty(chat.getMessage())) {
-                                chat.setId(snapshot.getKey());
-                                chats.add(chat);
+                            val chat = snapshot.getValue(Chat::class.java)!!
+                            if (!Utils.isEmpty(
+                                    chat.message
+                                )
+                            ) {
+                                chat.id = snapshot.key
+                                chats!!.add(chat)
                             }
-
-                        } catch (Exception ignored) {
+                        } catch (ignored: Exception) {
                         }
                     }
                 }
                 try {
-                    messageAdapters = new MessageAdapters(mActivity, chats, userName, strCurrentImage, imageUrl);
-                    mRecyclerView.setAdapter(messageAdapters);
-                } catch (Exception e) {
-                    Utils.getErrors(e);
+                    messageAdapters =
+                        MessageAdapters(mActivity!!, chats!!, userName, strCurrentImage!!, imageUrl)
+                    mRecyclerView?.adapter = messageAdapters
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void seenMessage() {
-        seenReferenceSender = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(strSender).orderByChild(EXTRA_SEEN).equalTo(false);
-        seenListenerSender = seenReferenceSender.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.hasChildren()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        try {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
-                            if (!Utils.isEmpty(chat.getMessage())) {
-                                HashMap<String, Object> hashMap = new HashMap<>();
-                                hashMap.put(EXTRA_SEEN, TRUE);
-                                snapshot.getRef().updateChildren(hashMap);
-                            }
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-    }
-
-    MenuItem itemBlockUnblock;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_groups, menu);
-        MenuItem itemViewUser = menu.findItem(R.id.itemGroupInfo);
-        itemBlockUnblock = menu.findItem(R.id.itemBlockUnblock);
-        MenuItem itemAdd = menu.findItem(R.id.itemAddGroup);
-        MenuItem itemEdit = menu.findItem(R.id.itemEditGroup);
-        MenuItem itemLeave = menu.findItem(R.id.itemLeaveGroup);
-        MenuItem itemDelete = menu.findItem(R.id.itemDeleteGroup);
-        itemAdd.setVisible(false);
-        itemEdit.setVisible(false);
-        itemLeave.setVisible(false);
-        itemDelete.setVisible(false);
-        itemViewUser.setTitle(R.string.strUserInfo);
-        checkUserIsBlock();
-        blockedByOpponent();
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        final int itemId = item.getItemId();
-        if (itemId == R.id.itemGroupInfo) {
-            screens.openViewProfileActivity(userId);
-        } else if (itemId == R.id.itemClearMyChats) {
-            Utils.showYesNoDialog(mActivity, R.string.strDelete, R.string.strDeleteOwnChats, this::deleteOwnChats);
-        } else if (itemId == R.id.itemBlockUnblock) {
-            if (itemBlockUnblock.getTitle().toString().equalsIgnoreCase(getString(R.string.strBlock))) {
-                blockUser();
-            } else {
-                unblockUser();
-            }
-        }
-        return true;
-    }
-
-    private boolean isBlocked = false, isOppBlocked = false;
-
-    private void checkUserIsBlock() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(REF_USERS);
-        ref.child(currentId).child(REF_BLOCK_USERS).orderByChild(EXTRA_ID).equalTo(userId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot ds : snapshot.getChildren()) {
-                            if (ds.exists()) {
-                                itemBlockUnblock.setTitle(R.string.strUnblock);
-                                isBlocked = true;
-                            } else {
-                                isBlocked = false;
-                                itemBlockUnblock.setTitle(R.string.strBlock);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-    }
-
-    private void blockedByOpponent() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(REF_USERS);
-        ref.child(userId).child(REF_BLOCK_USERS).orderByChild(EXTRA_ID).equalTo(currentId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot ds : snapshot.getChildren()) {
-                            isOppBlocked = ds.exists();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-    }
-
-    private void blockUser() {
-        try {
-            showProgress();
-            HashMap<String, String> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_ID, userId);
-
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference(REF_USERS);
-            ref.child(currentId).child(REF_BLOCK_USERS).child(userId).setValue(hashMap)
-                    .addOnSuccessListener(aVoid -> {
-                        hideProgress();
-                        isBlocked = true;
-                        screens.showToast(R.string.msgBlockSuccessfully);
-                        itemBlockUnblock.setTitle(R.string.strUnblock);
-                    }).addOnFailureListener(e -> {
-                        hideProgress();
-                        screens.showToast(e.getMessage());
-                    });
-        } catch (Exception e) {
-            hideProgress();
-            Utils.getErrors(e);
-        }
-    }
-
-    private void unblockUser() {
-        try {
-            showProgress();
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference(REF_USERS);
-            ref.child(currentId).child(REF_BLOCK_USERS).orderByChild(EXTRA_ID).equalTo(userId)
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                if (dataSnapshot.exists()) {
-                                    hideProgress();
-                                    dataSnapshot.getRef().removeValue()
-                                            .addOnSuccessListener(aVoid -> {
-                                                isBlocked = false;
-                                                screens.showToast(R.string.msgUnblockSuccessfully);
-                                                itemBlockUnblock.setTitle(R.string.strBlock);
-                                            })
-                                            .addOnFailureListener(e -> screens.showToast(e.getMessage()));
+    private fun seenMessage() {
+        seenReferenceSender =
+            FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+                strSender!!
+            ).orderByChild(IConstants.EXTRA_SEEN).equalTo(false)
+        seenListenerSender =
+            seenReferenceSender!!.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (dataSnapshot.hasChildren()) {
+                        for (snapshot in dataSnapshot.children) {
+                            try {
+                                val chat = snapshot.getValue(Chat::class.java)!!
+                                if (!Utils.isEmpty(
+                                        chat.message
+                                    )
+                                ) {
+                                    val hashMap = HashMap<String, Any>()
+                                    hashMap[IConstants.EXTRA_SEEN] = IConstants.TRUE
+                                    snapshot.ref.updateChildren(hashMap)
                                 }
+                            } catch (ignored: Exception) {
                             }
                         }
+                    }
+                }
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            hideProgress();
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+    }
+
+    var itemBlockUnblock: MenuItem? = null
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_groups, menu)
+        val itemViewUser = menu.findItem(R.id.itemGroupInfo)
+        itemBlockUnblock = menu.findItem(R.id.itemBlockUnblock)
+        val itemAdd = menu.findItem(R.id.itemAddGroup)
+        val itemEdit = menu.findItem(R.id.itemEditGroup)
+        val itemLeave = menu.findItem(R.id.itemLeaveGroup)
+        val itemDelete = menu.findItem(R.id.itemDeleteGroup)
+        itemAdd.isVisible = false
+        itemEdit.isVisible = false
+        itemLeave.isVisible = false
+        itemDelete.isVisible = false
+        itemViewUser.setTitle(R.string.strUserInfo)
+        checkUserIsBlock()
+        blockedByOpponent()
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val itemId = item.itemId
+        if (itemId == R.id.itemGroupInfo) {
+            screens!!.openViewProfileActivity(userId)
+        } else if (itemId == R.id.itemClearMyChats) {
+            Utils.showYesNoDialog(
+                mActivity!!,
+                R.string.strDelete,
+                R.string.strDeleteOwnChats
+            ) { deleteOwnChats() }
+        } else if (itemId == R.id.itemBlockUnblock) {
+            if (itemBlockUnblock!!.title.toString()
+                    .equals(getString(R.string.strBlock), ignoreCase = true)
+            ) {
+                blockUser()
+            } else {
+                unblockUser()
+            }
+        }
+        return true
+    }
+
+    private var isBlocked = false
+    private var isOppBlocked = false
+    private fun checkUserIsBlock() {
+        val ref = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+        ref.child(currentId!!).child(IConstants.REF_BLOCK_USERS).orderByChild(IConstants.EXTRA_ID)
+            .equalTo(userId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (ds in snapshot.children) {
+                        if (ds.exists()) {
+                            itemBlockUnblock!!.setTitle(R.string.strUnblock)
+                            isBlocked = true
+                        } else {
+                            isBlocked = false
+                            itemBlockUnblock!!.setTitle(R.string.strBlock)
                         }
-                    });
-        } catch (Exception e) {
-            hideProgress();
-            Utils.getErrors(e);
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
+    private fun blockedByOpponent() {
+        val ref = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+        ref.child(userId!!).child(IConstants.REF_BLOCK_USERS).orderByChild(IConstants.EXTRA_ID)
+            .equalTo(currentId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (ds in snapshot.children) {
+                        isOppBlocked = ds.exists()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
+    private fun blockUser() {
+        try {
+            showProgress()
+            val hashMap = HashMap<String, String?>()
+            hashMap[IConstants.EXTRA_ID] = userId
+            val ref = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+            ref.child(currentId!!).child(IConstants.REF_BLOCK_USERS).child(userId!!)
+                .setValue(hashMap)
+                .addOnSuccessListener { aVoid: Void? ->
+                    hideProgress()
+                    isBlocked = true
+                    screens!!.showToast(R.string.msgBlockSuccessfully)
+                    itemBlockUnblock!!.setTitle(R.string.strUnblock)
+                }.addOnFailureListener { e: Exception ->
+                    hideProgress()
+                    screens!!.showToast(e.message)
+                }
+        } catch (e: Exception) {
+            hideProgress()
+            Utils.getErrors(e)
+        }
+    }
+
+    private fun unblockUser() {
+        try {
+            showProgress()
+            val ref = FirebaseDatabase.getInstance().getReference(IConstants.REF_USERS)
+            ref.child(currentId!!).child(IConstants.REF_BLOCK_USERS)
+                .orderByChild(IConstants.EXTRA_ID).equalTo(userId)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (dataSnapshot in snapshot.children) {
+                            if (dataSnapshot.exists()) {
+                                hideProgress()
+                                dataSnapshot.ref.removeValue()
+                                    .addOnSuccessListener { aVoid: Void? ->
+                                        isBlocked = false
+                                        screens!!.showToast(R.string.msgUnblockSuccessfully)
+                                        itemBlockUnblock!!.setTitle(R.string.strBlock)
+                                    }
+                                    .addOnFailureListener { e: Exception -> screens!!.showToast(e.message) }
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        hideProgress()
+                    }
+                })
+        } catch (e: Exception) {
+            hideProgress()
+            Utils.getErrors(e)
         }
     }
 
@@ -1136,138 +1125,128 @@ public class MessageActivity extends BaseActivity implements View.OnClickListene
      * False means don't close current screen, just delete my own chats
      * True  means close current screen, cause first we leave from group and than delete own chats
      */
-    private void deleteOwnChats() {
-        showProgress();
-        final Query chatsSender = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(strSender).orderByChild(EXTRA_SENDER).equalTo(currentId);
-        chatsSender.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+    private fun deleteOwnChats() {
+        showProgress()
+        val chatsSender = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+            strSender!!
+        ).orderByChild(IConstants.EXTRA_SENDER).equalTo(currentId)
+        chatsSender.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.exists()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
-                            if (!Utils.isEmpty(chat.getAttachmentType())) {
-                                Utils.deleteUploadedFilesFromCloud(storage, chat);
-                                snapshot.getRef().removeValue();
+                        for (snapshot in dataSnapshot.children) {
+                            val chat = snapshot.getValue(Chat::class.java)!!
+                            if (!Utils.isEmpty(
+                                    chat.attachmentType
+                                )
+                            ) {
+                                storage?.let { Utils.deleteUploadedFilesFromCloud(it, chat) }
+                                snapshot.ref.removeValue()
                             }
                         }
                     }
-                    hideProgress();
-                } catch (Exception ignored) {
+                    hideProgress()
+                } catch (ignored: Exception) {
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-
-        final Query chatsReceiver = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(strReceiver).orderByChild(EXTRA_SENDER).equalTo(currentId);
-        chatsReceiver.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+        val chatsReceiver = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+            strReceiver!!
+        ).orderByChild(IConstants.EXTRA_SENDER).equalTo(currentId)
+        chatsReceiver.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.exists()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
-                            if (!Utils.isEmpty(chat.getAttachmentType())) {
-                                Utils.deleteUploadedFilesFromCloud(storage, chat);
+                        for (snapshot in dataSnapshot.children) {
+                            val chat = snapshot.getValue(Chat::class.java)!!
+                            if (!Utils.isEmpty(
+                                    chat.attachmentType
+                                )
+                            ) {
+                                storage?.let { Utils.deleteUploadedFilesFromCloud(it, chat) }
                             }
-                            snapshot.getRef().removeValue();
+                            snapshot.ref.removeValue()
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void readTyping() {
-        reference = FirebaseDatabase.getInstance().getReference(REF_OTHERS).child(currentId);
-        reference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+    private fun readTyping() {
+        reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_OTHERS).child(
+            currentId!!
+        )
+        reference!!.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try {
                     if (dataSnapshot.hasChildren()) {
-                        Others user = dataSnapshot.getValue(Others.class);
-                        assert user != null;
-                        if (user.isTyping() && user.getTypingwith().equalsIgnoreCase(userId)) {
-                            txtTyping.setText(getString(R.string.strTyping));
+                        val user = dataSnapshot.getValue(Others::class.java)!!
+                        if (user.isTyping && user.typingwith.equals(userId, ignoreCase = true)) {
+                            txtTyping?.text = getString(R.string.strTyping)
                         } else {
-                            txtTyping.setText(onlineStatus);
+                            txtTyping?.text = onlineStatus
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (ignored: Exception) {
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
     }
 
-    private void typingListening() {
-        newMessage.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+    private fun typingListening() {
+        newMessage!!.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 try {
-                    if (s.length() == 0) {
-                        stopTyping();
-                        recordButton.setListenForRecord(true);
-                        recordButton.setImageResource(R.drawable.recv_ic_mic_white);
-                    } else if (s.length() > 0) {
-                        startTyping();
-                        idleTyping(s.length());
-                        recordButton.setListenForRecord(false);
-                        recordButton.setImageResource(R.drawable.ic_send);
+                    if (s.length == 0) {
+                        stopTyping()
+                        recordButton!!.isListenForRecord = true
+                        recordButton!!.setImageResource(R.drawable.recv_ic_mic_white)
+                    } else if (s.length > 0) {
+                        startTyping()
+                        idleTyping(s.length)
+                        recordButton!!.isListenForRecord = false
+                        recordButton!!.setImageResource(R.drawable.ic_send)
                     }
-                } catch (Exception e) {
-                    stopTyping();
-                    recordButton.setListenForRecord(true);
-                    recordButton.setImageResource(R.drawable.recv_ic_mic_white);
+                } catch (e: Exception) {
+                    stopTyping()
+                    recordButton!!.isListenForRecord = true
+                    recordButton!!.setImageResource(R.drawable.recv_ic_mic_white)
                 }
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
+            override fun afterTextChanged(s: Editable) {}
+        })
     }
 
-    private void idleTyping(final int currentLen) {
+    private fun idleTyping(currentLen: Int) {
         try {
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(() -> {
-                int newLen = Objects.requireNonNull(newMessage.getText()).length();
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({
+                val newLen = Objects.requireNonNull(newMessage!!.text)?.length
                 if (currentLen == newLen) {
-                    stopTyping();
+                    stopTyping()
                 }
-
-            }, EXTRA_TYPING_DELAY);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            }, IConstants.EXTRA_TYPING_DELAY.toLong())
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    private void startTyping() {
-        typingStatus(TRUE);
+    private fun startTyping() {
+        typingStatus(IConstants.TRUE)
     }
 
-    private void stopTyping() {
-        typingStatus(FALSE);
+    private fun stopTyping() {
+        typingStatus(IConstants.FALSE)
     }
 
     /**
@@ -1275,497 +1254,509 @@ public class MessageActivity extends BaseActivity implements View.OnClickListene
      * isTyping = True means 'startTyping' method called
      * isTyping = False means 'stopTyping' method called
      */
-    private void typingStatus(boolean isTyping) {
+    private fun typingStatus(isTyping: Boolean) {
         try {
-            reference = FirebaseDatabase.getInstance().getReference(REF_OTHERS).child(userId);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put(EXTRA_TYPINGWITH, currentId);
-            hashMap.put(EXTRA_TYPING, isTyping);
-            reference.updateChildren(hashMap);
-        } catch (Exception ignored) {
+            reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_OTHERS).child(
+                userId!!
+            )
+            val hashMap = HashMap<String, Any?>()
+            hashMap[IConstants.EXTRA_TYPINGWITH] = currentId
+            hashMap[IConstants.EXTRA_TYPING] = isTyping
+            reference!!.updateChildren(hashMap)
+        } catch (ignored: Exception) {
         }
     }
 
-//    private File myFile = null;
-
-    private void uploadImage() {
-        final ProgressDialog pd = new ProgressDialog(mActivity);
-        pd.setMessage(getString(R.string.msg_image_upload));
-        pd.show();
-
+    //    private File myFile = null;
+    private fun uploadImage() {
+        val pd = ProgressDialog(mActivity)
+        pd.setMessage(getString(R.string.msg_image_upload))
+        pd.show()
         if (imageUri != null) {
-            final StorageReference fileReference = storageReference.child(System.currentTimeMillis() + "." + Utils.getExtension(mActivity, imageUri));
-            uploadTask = fileReference.putFile(imageUri);
-
-            uploadTask.continueWithTask((Continuation<UploadTask.TaskSnapshot, Task<Uri>>) task -> {
-                        if (!task.isSuccessful()) {
-                            throw Objects.requireNonNull(task.getException());
-                        }
-
-                        return fileReference.getDownloadUrl();
-                    })
-                    .addOnCompleteListener((OnCompleteListener<Uri>) task -> {
-                        if (task.isSuccessful()) {
-                            final Uri downloadUri = task.getResult();
-                            final String mUrl = downloadUri.toString();
-                            sendMessage(TYPE_IMAGE, mUrl, null);
-//                                Utils.deleteRecursive(myFile);
-                        } else {
-                            screens.showToast(R.string.msgFailedToUpload);
-                        }
-                        pd.dismiss();
-                    }).addOnFailureListener(e -> {
-                        Utils.getErrors(e);
-                        screens.showToast(e.getMessage());
-                        pd.dismiss();
-                    });
+            val fileReference = storageReference!!.child(
+                System.currentTimeMillis().toString() + "." + Utils.getExtension(
+                    mActivity!!,
+                    imageUri
+                )
+            )
+            uploadTask = fileReference.putFile(imageUri!!)
+            (uploadTask as UploadTask).continueWithTask(Continuation { task: Task<UploadTask.TaskSnapshot?> ->
+                if (!task.isSuccessful) {
+                    throw Objects.requireNonNull(task.exception)!!
+                }
+                fileReference.downloadUrl
+            } as Continuation<UploadTask.TaskSnapshot?, Task<Uri>>)
+                .addOnCompleteListener((OnCompleteListener { task: Task<Uri> ->
+                    if (task.isSuccessful) {
+                        val downloadUri = task.result
+                        val mUrl = downloadUri.toString()
+                        sendMessage(IConstants.TYPE_IMAGE, mUrl, null)
+                        //                                Utils.deleteRecursive(myFile);
+                    } else {
+                        screens!!.showToast(R.string.msgFailedToUpload)
+                    }
+                    pd.dismiss()
+                } as OnCompleteListener<Uri>)).addOnFailureListener { e: Exception ->
+                    Utils.getErrors(e)
+                    screens!!.showToast(e.message)
+                    pd.dismiss()
+                }
         } else {
-            screens.showToast(R.string.msgNoImageSelected);
+            screens!!.showToast(R.string.msgNoImageSelected)
         }
     }
 
-    private void uploadThumbnail(final String filePath) {
-        if (mainAttachmentLayout.getVisibility() == View.VISIBLE) {
-            mainAttachmentLayout.setVisibility(View.GONE);
-            attachmentBGView.setVisibility(View.GONE);
-            imgAddAttachment.animate().setDuration(400).rotationBy(-45).start();
+    private fun uploadThumbnail(filePath: String?) {
+        if (mainAttachmentLayout!!.visibility == View.VISIBLE) {
+            mainAttachmentLayout!!.visibility = View.GONE
+            attachmentBGView!!.visibility = View.GONE
+            imgAddAttachment?.animate()?.setDuration(400)?.rotationBy(-45f)?.start()
         }
-
-        final ProgressDialog pd = new ProgressDialog(mActivity);
-        pd.setMessage(getString(R.string.msg_image_upload));
-        pd.show();
-
-        File file = new File(filePath);
-        final StorageReference storageReference = storageAttachment.child(AttachmentTypes.getTypeName(AttachmentTypes.VIDEO) + SLASH + REF_VIDEO_THUMBS).child(currentId + "_" + file.getName() + ".jpg");
-        storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
+        val pd = ProgressDialog(mActivity)
+        pd.setMessage(getString(R.string.msg_image_upload))
+        pd.show()
+        val file = File(filePath)
+        val storageReference =
+            storageAttachment!!.child(AttachmentTypes.getTypeName(AttachmentTypes.VIDEO) + IConstants.SLASH + IConstants.REF_VIDEO_THUMBS)
+                .child(currentId + "_" + file.name + ".jpg")
+        storageReference.downloadUrl.addOnSuccessListener { uri: Uri ->
             //If thumbnail exists
-            pd.dismiss();
-            final Attachment attachment = new Attachment();
-            attachment.setData(uri.toString());
-            myFileUploadTask(filePath, AttachmentTypes.VIDEO, attachment);
-            Utils.deleteRecursive(Utils.getCacheFolder(mActivity));
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                final BaseTask baseTask = new BaseTask() {
-                    @Override
-                    public void setUiForLoading() {
-                        super.setUiForLoading();
-                    }
+            pd.dismiss()
+            val attachment = Attachment()
+            attachment.data = uri.toString()
+            myFileUploadTask(filePath, AttachmentTypes.VIDEO, attachment)
+            Utils.deleteRecursive(Utils.getCacheFolder(mActivity!!))
+        }.addOnFailureListener {
+            val baseTask: BaseTask<*> = object : BaseTask<Any?>() {
+                override fun setUiForLoading() {
+                    super.setUiForLoading()
+                }
 
-                    @Override
-                    public Object call() {
-                        return ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.MINI_KIND);
-                    }
+                override fun call(): Any? {
+                    return ThumbnailUtils.createVideoThumbnail(
+                        filePath!!,
+                        MediaStore.Video.Thumbnails.MINI_KIND
+                    )
+                }
 
-                    @Override
-                    public void setDataAfterLoading(Object result) {
-                        final Bitmap bitmap = (Bitmap) result;
-                        if (bitmap != null) {
-                            //Upload thumbnail and then upload video
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                            byte[] data = baos.toByteArray();
-                            UploadTask uploadTask = storageReference.putBytes(data);
-                            uploadTask.continueWithTask(task -> {
-                                if (!task.isSuccessful()) {
-                                    throw Objects.requireNonNull(task.getException());
-                                }
-                                // Continue with the task to get the download URL
-                                return storageReference.getDownloadUrl();
-                            }).addOnCompleteListener(task -> {
-                                pd.dismiss();
-                                if (task.isSuccessful()) {
-                                    final Uri downloadUri = task.getResult();
-                                    final Attachment attachment = new Attachment();
-                                    attachment.setData(downloadUri.toString());
-                                    myFileUploadTask(filePath, AttachmentTypes.VIDEO, attachment);
-                                } else {
-                                    myFileUploadTask(filePath, AttachmentTypes.VIDEO, null);
-                                }
-                                Utils.deleteRecursive(Utils.getCacheFolder(mActivity));
-                            }).addOnFailureListener(e1 -> {
-                                pd.dismiss();
-                                myFileUploadTask(filePath, AttachmentTypes.VIDEO, null);
-                                Utils.deleteRecursive(Utils.getCacheFolder(mActivity));
-                            });
-                        } else {
-                            pd.dismiss();
-                            myFileUploadTask(filePath, AttachmentTypes.VIDEO, null);
-                            Utils.deleteRecursive(Utils.getCacheFolder(mActivity));
+                override fun setDataAfterLoading(result: Any?) {
+                    val bitmap = result as Bitmap
+                    if (bitmap != null) {
+                        //Upload thumbnail and then upload video
+                        val baos = ByteArrayOutputStream()
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+                        val data = baos.toByteArray()
+                        val uploadTask = storageReference.putBytes(data)
+                        uploadTask.continueWithTask { task: Task<UploadTask.TaskSnapshot?> ->
+                            if (!task.isSuccessful) {
+                                throw Objects.requireNonNull(task.exception)!!
+                            }
+                            storageReference.downloadUrl
+                        }.addOnCompleteListener { task: Task<Uri> ->
+                            pd.dismiss()
+                            if (task.isSuccessful) {
+                                val downloadUri = task.result
+                                val attachment = Attachment()
+                                attachment.data = downloadUri.toString()
+                                myFileUploadTask(filePath, AttachmentTypes.VIDEO, attachment)
+                            } else {
+                                myFileUploadTask(filePath, AttachmentTypes.VIDEO, null)
+                            }
+                            Utils.deleteRecursive(Utils.getCacheFolder(mActivity!!))
+                        }.addOnFailureListener { e1: Exception? ->
+                            pd.dismiss()
+                            myFileUploadTask(filePath, AttachmentTypes.VIDEO, null)
+                            Utils.deleteRecursive(Utils.getCacheFolder(mActivity!!))
                         }
+                    } else {
+                        pd.dismiss()
+                        myFileUploadTask(filePath, AttachmentTypes.VIDEO, null)
+                        Utils.deleteRecursive(Utils.getCacheFolder(mActivity!!))
                     }
-
-                };
-
-                final TaskRunner thumbnailTask = new TaskRunner();
-                thumbnailTask.executeAsync(baseTask);
+                }
             }
-        });
+            val thumbnailTask = TaskRunner()
+            thumbnailTask.executeAsync(baseTask as CustomCallable<R?>)
+        }
     }
 
-    private void myFileUploadTask(String filePath, @AttachmentTypes.AttachmentType final int attachmentType, final Attachment attachment) {
-        hideAttachmentView();
-
-        final ProgressDialog pd = new ProgressDialog(mActivity);
-        pd.setMessage(getString(R.string.msg_image_upload));
-        pd.setCancelable(false);
-        pd.show();
-
-        final File mFileUpload = new File(filePath);
-        final String fileName = Utils.getUniqueFileName(mFileUpload, attachmentType);
-        final File fileToUpload = new File(Objects.requireNonNull(Utils.moveFileToFolder(mActivity, true, fileName, mFileUpload, attachmentType)).toString(), fileName);
-
-        Utils.sout("newFileUploadTask::: " + fileName + " :Exist: " + fileToUpload.exists() + " >>> " + fileToUpload);
-        final StorageReference storageReference = storageAttachment.child(AttachmentTypes.getTypeName(attachmentType)).child(currentId + "_" + fileName);
-        storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
+    private fun myFileUploadTask(
+        filePath: String?,
+        @AttachmentType attachmentType: Int,
+        attachment: Attachment?
+    ) {
+        hideAttachmentView()
+        val pd = ProgressDialog(mActivity)
+        pd.setMessage(getString(R.string.msg_image_upload))
+        pd.setCancelable(false)
+        pd.show()
+        val mFileUpload = File(filePath)
+        val fileName = Utils.getUniqueFileName(mFileUpload, attachmentType)
+        val fileToUpload = File(
+            Objects.requireNonNull(
+                Utils.moveFileToFolder(
+                    mActivity!!,
+                    true,
+                    fileName,
+                    mFileUpload,
+                    attachmentType
+                )
+            ).toString(), fileName
+        )
+        Utils.sout("newFileUploadTask::: " + fileName + " :Exist: " + fileToUpload.exists() + " >>> " + fileToUpload)
+        val storageReference =
+            storageAttachment!!.child(AttachmentTypes.getTypeName(attachmentType))
+                .child(currentId + "_" + fileName)
+        storageReference.downloadUrl.addOnSuccessListener { uri: Uri ->
             //If file is already uploaded
-            Attachment myAttachment = null;
+            var myAttachment: Attachment? = null
             try {
-                myAttachment = attachment;
-                if (myAttachment == null) myAttachment = new Attachment();
+                myAttachment = attachment
+                if (myAttachment == null) myAttachment = Attachment()
                 if (attachmentType == AttachmentTypes.CONTACT) {
                 } else {
-                    myAttachment.setName(fileToUpload.getName());
-                    myAttachment.setFileName(fileName);
-                    myAttachment.setDuration(Utils.getVideoDuration(mActivity, fileToUpload));
+                    myAttachment.name = fileToUpload.name
+                    myAttachment.fileName = fileName
+                    myAttachment.duration = Utils.getVideoDuration(mActivity!!, fileToUpload)
                 }
-                myAttachment.setUrl(uri.toString());
-                myAttachment.setBytesCount(fileToUpload.length());
-            } catch (Exception ignored) {
+                myAttachment.url = uri.toString()
+                myAttachment.bytesCount = fileToUpload.length()
+            } catch (ignored: Exception) {
             }
-            sendMessage(AttachmentTypes.getTypeName(attachmentType), uri.toString(), myAttachment);
-            pd.dismiss();
+            sendMessage(AttachmentTypes.getTypeName(attachmentType), uri.toString(), myAttachment)
+            pd.dismiss()
             //Utils.deleteRecursive(new File(dir));
-            Utils.deleteRecursive(Utils.getCacheFolder(mActivity));
-        }).addOnFailureListener(exception -> {
+            Utils.deleteRecursive(Utils.getCacheFolder(mActivity!!))
+        }.addOnFailureListener { exception: Exception? ->
             //Else upload and then send message
-            FirebaseUploader firebaseUploader = new FirebaseUploader(storageReference, new FirebaseUploader.UploadListener() {
-                @Override
-                public void onUploadFail(String message) {
-                    Utils.sout("onUploadFail::: " + message);
-                    pd.dismiss();
+            val firebaseUploader = FirebaseUploader(storageReference, object : UploadListener {
+                override fun onUploadFail(message: String?) {
+                    Utils.sout("onUploadFail::: $message")
+                    pd.dismiss()
                 }
 
-                @Override
-                public void onUploadSuccess(String downloadUrl) {
-                    Attachment myAttachment = null;
+                override fun onUploadSuccess(downloadUrl: String?) {
+                    var myAttachment: Attachment? = null
                     try {
-                        myAttachment = attachment;
-                        if (myAttachment == null) myAttachment = new Attachment();
+                        myAttachment = attachment
+                        if (myAttachment == null) myAttachment = Attachment()
                         if (attachmentType == AttachmentTypes.CONTACT) {
                         } else {
-                            myAttachment.setName(mFileUpload.getName());
-                            myAttachment.setFileName(fileName); // fileToUpload.getName()
+                            myAttachment!!.name = mFileUpload.name
+                            myAttachment!!.fileName = fileName // fileToUpload.getName()
                             try {
-                                myAttachment.setDuration(Utils.getVideoDuration(mActivity, fileToUpload));
-                            } catch (Exception e) {
-                                Utils.getErrors(e);
+                                myAttachment!!.duration =
+                                    Utils.getVideoDuration(mActivity!!, fileToUpload)
+                            } catch (e: Exception) {
+                                Utils.getErrors(e)
                             }
                         }
-                        myAttachment.setUrl(downloadUrl);
-                        myAttachment.setBytesCount(fileToUpload.length());
-                    } catch (Exception e) {
-                        Utils.getErrors(e);
+                        myAttachment!!.url = downloadUrl
+                        myAttachment!!.bytesCount = fileToUpload.length()
+                    } catch (e: Exception) {
+                        Utils.getErrors(e)
                     }
-                    sendMessage(AttachmentTypes.getTypeName(attachmentType), downloadUrl, myAttachment);
-                    pd.dismiss();
+                    sendMessage(
+                        AttachmentTypes.getTypeName(attachmentType),
+                        downloadUrl,
+                        myAttachment
+                    )
+                    pd.dismiss()
                     try {
-                        Utils.deleteRecursive(Utils.getCacheFolder(mActivity));
-                    } catch (Exception e) {
-                        Utils.getErrors(e);
+                        Utils.deleteRecursive(Utils.getCacheFolder(mActivity!!))
+                    } catch (e: Exception) {
+                        Utils.getErrors(e)
                     }
                 }
 
-                @Override
-                public void onUploadProgress(int progress) {
+                override fun onUploadProgress(progress: Int) {
                     try {
-                        pd.setMessage("Uploading " + progress + "%...");
-                    } catch (Exception ignored) {
+                        pd.setMessage("Uploading $progress%...")
+                    } catch (ignored: Exception) {
                     }
                 }
 
-                @Override
-                public void onUploadCancelled() {
-                    pd.dismiss();
+                override fun onUploadCancelled() {
+                    pd.dismiss()
                 }
-            });
-            firebaseUploader.uploadFile(fileToUpload);
-        });
+            })
+            firebaseUploader.uploadFile(fileToUpload)
+        }
     }
 
-    private void getSendVCard(final List<ContactResult> results) {
+    private fun getSendVCard(results: List<ContactResult>) {
         try {
-            displayName = results.get(0).getDisplayName();
-            phoneNumber = results.get(0).getPhoneNumbers().get(0).getNumber();
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            displayName = results[0].displayName
+            phoneNumber = results[0].phoneNumbers[0].number
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
-
-        final BaseTask baseTask = new BaseTask() {
-            @Override
-            public void setUiForLoading() {
-                super.setUiForLoading();
+        val baseTask: BaseTask<*> = object : BaseTask<Any?>() {
+            override fun setUiForLoading() {
+                super.setUiForLoading()
             }
 
-            @Override
-            public Object call() {
-                Cursor cursor = Utils.contactsCursor(mActivity, phoneNumber);
-                File toSend = Utils.getSentDirectory(mActivity, TYPE_CONTACT);//Looks like this : AppName/Contact/.sent/
-                if (cursor != null && !cursor.isClosed()) {
-                    cursor.getCount();
+            override fun call(): Any? {
+                val cursor = Utils.contactsCursor(mActivity!!, phoneNumber)
+                var toSend = Utils.getSentDirectory(
+                    mActivity!!,
+                    IConstants.TYPE_CONTACT
+                ) //Looks like this : AppName/Contact/.sent/
+                if (cursor != null && !cursor.isClosed) {
+                    cursor.count
                     if (cursor.moveToFirst()) {
-                        @SuppressLint("Range") String lookupKey = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY));
-                        Uri uri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_VCARD_URI, lookupKey);
+                        @SuppressLint("Range") val lookupKey =
+                            cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY))
+                        val uri = Uri.withAppendedPath(
+                            ContactsContract.Contacts.CONTENT_VCARD_URI,
+                            lookupKey
+                        )
                         try {
-                            AssetFileDescriptor assetFileDescriptor = getContentResolver().openAssetFileDescriptor(uri, "r");
+                            val assetFileDescriptor =
+                                contentResolver.openAssetFileDescriptor(uri, "r")
                             if (assetFileDescriptor != null) {
-                                FileInputStream inputStream = assetFileDescriptor.createInputStream();
-                                boolean dirExists = toSend.exists();
-                                if (!dirExists)
-                                    dirExists = toSend.mkdirs();
+                                val inputStream = assetFileDescriptor.createInputStream()
+                                var dirExists = toSend.exists()
+                                if (!dirExists) dirExists = toSend.mkdirs()
                                 if (dirExists) {
                                     try {
-                                        toSend = Utils.getSentFile(toSend, EXT_VCF);
-                                        boolean fileExists = toSend.exists();
-                                        if (!fileExists)
-                                            fileExists = toSend.createNewFile();
+                                        toSend = Utils.getSentFile(toSend, IConstants.EXT_VCF)
+                                        var fileExists = toSend.exists()
+                                        if (!fileExists) fileExists = toSend.createNewFile()
                                         if (fileExists) {
-                                            OutputStream stream = new BufferedOutputStream(new FileOutputStream(toSend, false));
-                                            byte[] buffer = Utils.readAsByteArray(inputStream);
-                                            vCardData = new String(buffer);
-                                            stream.write(buffer);
-                                            stream.close();
+                                            val stream: OutputStream = BufferedOutputStream(
+                                                FileOutputStream(toSend, false)
+                                            )
+                                            val buffer = Utils.readAsByteArray(inputStream)
+                                            vCardData = String(buffer)
+                                            stream.write(buffer)
+                                            stream.close()
                                         }
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
+                                    } catch (e: IOException) {
+                                        e.printStackTrace()
                                     }
                                 }
                             }
-                        } catch (Exception e) {
-                            Utils.getErrors(e);
+                        } catch (e: Exception) {
+                            Utils.getErrors(e)
                         } finally {
-                            cursor.close();
+                            cursor.close()
                         }
                     }
                 }
-                return toSend;
+                return toSend
             }
 
-            @Override
-            public void setDataAfterLoading(Object result) {
-                final File f = (File) result;
+            override fun setDataAfterLoading(result: Any?) {
+                val f = result as File
                 if (f != null && !TextUtils.isEmpty(vCardData)) {
-                    Attachment attachment = new Attachment();
-                    attachment.setData(vCardData);
+                    val attachment = Attachment()
+                    attachment.data = vCardData
                     try {
-                        attachment.setName(displayName);
-                        attachment.setFileName(displayName);
-                        attachment.setDuration(phoneNumber);
-                    } catch (Exception ignored) {
+                        attachment.name = displayName
+                        attachment.fileName = displayName
+                        attachment.duration = phoneNumber
+                    } catch (ignored: Exception) {
                     }
-                    myFileUploadTask(f.getAbsolutePath(), AttachmentTypes.CONTACT, attachment);
+                    myFileUploadTask(f.absolutePath, AttachmentTypes.CONTACT, attachment)
                 }
             }
-        };
-
-        TaskRunner taskRunner = new TaskRunner();
-        taskRunner.executeAsync(baseTask);
+        }
+        val taskRunner = TaskRunner()
+        taskRunner.executeAsync(baseTask as CustomCallable<R?>)
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            val result = CropImage.getActivityResult(data)
             if (resultCode == RESULT_OK) {
-                assert result != null;
-                imageUri = result.getUri();
-                if (uploadTask != null && uploadTask.isInProgress()) {
-                    screens.showToast(R.string.msgUploadInProgress);
+                assert(result != null)
+                imageUri = result!!.uri
+                if (uploadTask != null && uploadTask!!.isInProgress) {
+                    screens!!.showToast(R.string.msgUploadInProgress)
                 } else {
-                    uploadImage();
+                    uploadImage()
                 }
             }
         }
-
         if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case REQUEST_CODE_CONTACT:
-                    try {
-                        assert data != null;
-                        List<ContactResult> results = MultiContactPicker.obtainResult(data);
-                        getSendVCard(results);
-                    } catch (Exception e) {
-                        Utils.getErrors(e);
-                    }
-                    break;
-
-                case REQUEST_CODE_PLAY_SERVICES:
-                    openPlacePicker();
+            when (requestCode) {
+                IConstants.REQUEST_CODE_CONTACT -> try {
+                    assert(data != null)
+                    val results: List<ContactResult> = MultiContactPicker.obtainResult(data)
+                    getSendVCard(results)
+                } catch (e: Exception) {
+                    Utils.getErrors(e)
+                }
+                IConstants.REQUEST_CODE_PLAY_SERVICES -> openPlacePicker()
             }
         }
     }
 
-    private void hideAttachmentView() {
-        if (mainAttachmentLayout.getVisibility() == View.VISIBLE) {
-            mainAttachmentLayout.setVisibility(View.GONE);
-            attachmentBGView.setVisibility(View.GONE);
-            imgAddAttachment.animate().setDuration(400).rotationBy(-45).start();
+    private fun hideAttachmentView() {
+        if (mainAttachmentLayout!!.visibility == View.VISIBLE) {
+            mainAttachmentLayout!!.visibility = View.GONE
+            attachmentBGView!!.visibility = View.GONE
+            imgAddAttachment?.animate()?.setDuration(400)?.rotationBy(-45f)?.start()
         }
     }
 
-    private void showAttachmentView() {
-        mainAttachmentLayout.setVisibility(View.VISIBLE);
-        attachmentBGView.setVisibility(View.VISIBLE);
-        imgAddAttachment.animate().setDuration(400).rotationBy(45).start();
-        emojiIcon.dismiss();
+    private fun showAttachmentView() {
+        mainAttachmentLayout!!.visibility = View.VISIBLE
+        attachmentBGView!!.visibility = View.VISIBLE
+        imgAddAttachment?.animate()?.setDuration(400)?.rotationBy(45f)?.start()
+        emojiIcon!!.dismiss()
     }
 
-    private void recordingStop(boolean send) {
-        try {
-            mRecorder.stop();
-            mRecorder.release();
-            mRecorder = null;
-        } catch (Exception ex) {
-            mRecorder = null;
+    private fun recordingStop(send: Boolean) {
+        mRecorder = try {
+            mRecorder!!.stop()
+            mRecorder!!.release()
+            null
+        } catch (ex: Exception) {
+            null
         }
-        recordTimerStop();
+        recordTimerStop()
         if (send) {
-            myFileUploadTask(recordFilePath, AttachmentTypes.RECORDING, null);
+            myFileUploadTask(recordFilePath, AttachmentTypes.RECORDING, null)
         } else {
             try {
-                new File(recordFilePath).delete();
-            } catch (Exception ignored) {
+                File(recordFilePath).delete()
+            } catch (ignored: Exception) {
             }
         }
     }
 
-    private void permissionRecording() {
+    private fun permissionRecording() {
         if (!recordPermissionsAvailable()) {
-            ActivityCompat.requestPermissions(mActivity, permissionsRecord, REQUEST_PERMISSION_RECORD);
+            ActivityCompat.requestPermissions(
+                mActivity!!,
+                permissionsRecord,
+                IConstants.REQUEST_PERMISSION_RECORD
+            )
         }
     }
 
-    private void recordingStart() {
+    private fun recordingStart() {
         if (blockUnblockCheckBeforeSend()) {
-            return;
+            return
         }
         if (recordPermissionsAvailable()) {
-            File recordFile = Utils.getSentDirectory(mActivity, TYPE_RECORDING);//Looks like this : AppName/RECORDING/Sent/
-            boolean dirExists = recordFile.exists();
-            if (!dirExists)
-                dirExists = recordFile.mkdirs();
-
+            var recordFile = Utils.getSentDirectory(
+                mActivity!!,
+                IConstants.TYPE_RECORDING
+            ) //Looks like this : AppName/RECORDING/Sent/
+            var dirExists = recordFile.exists()
+            if (!dirExists) dirExists = recordFile.mkdirs()
             if (dirExists) {
                 try {
-                    recordFile = Utils.getSentFile(getCacheDir(), EXT_MP3);
-                    if (!recordFile.exists())
-                        recordFile.createNewFile();
-                    recordFilePath = recordFile.getAbsolutePath();
-                    Utils.sout("RecordingStart Path: " + recordFilePath);
-                    mRecorder = new MediaRecorder();
-                    mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                    mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-                    mRecorder.setOutputFile(recordFilePath);
-                    mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-                    mRecorder.prepare();
-                    mRecorder.start();
-                    recordTimerStart();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    mRecorder = null;
+                    recordFile = Utils.getSentFile(
+                        cacheDir, IConstants.EXT_MP3
+                    )
+                    if (!recordFile.exists()) recordFile.createNewFile()
+                    recordFilePath = recordFile.absolutePath
+                    Utils.sout("RecordingStart Path: $recordFilePath")
+                    mRecorder = MediaRecorder()
+                    mRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+                    mRecorder!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    mRecorder!!.setOutputFile(recordFilePath)
+                    mRecorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    mRecorder!!.prepare()
+                    mRecorder!!.start()
+                    recordTimerStart()
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                    mRecorder = null
                 }
             }
         } else {
-            permissionRecording();
+            permissionRecording()
         }
     }
 
-    private void recordTimerStart() {
-        screens.showToast(R.string.recording);
+    private fun recordTimerStart() {
+        screens!!.showToast(R.string.recording)
         try {
-            recordTimerRunnable = new Runnable() {
-                public void run() {
-                    recordTimerHandler.postDelayed(this, DELAY_ONE_SEC);
+            recordTimerRunnable = object : Runnable {
+                override fun run() {
+                    recordTimerHandler!!.postDelayed(this, IConstants.DELAY_ONE_SEC.toLong())
                 }
-            };
-            if (recordTimerHandler == null)
-                recordTimerHandler = new Handler(Looper.getMainLooper());
-
-            recordTimerHandler.post(recordTimerRunnable);
-        } catch (Exception ignored) {
+            }
+            if (recordTimerHandler == null) recordTimerHandler = Handler(Looper.getMainLooper())
+            recordTimerHandler!!.post(recordTimerRunnable as Runnable)
+        } catch (ignored: Exception) {
         }
-        Utils.setVibrate(mActivity, VIBRATE_HUNDRED);
+        Utils.setVibrate(mActivity!!, IConstants.VIBRATE_HUNDRED.toLong())
     }
 
-    private void recordTimerStop() {
+    private fun recordTimerStop() {
         try {
-            recordTimerHandler.removeCallbacks(recordTimerRunnable);
-            Utils.setVibrate(mActivity, VIBRATE_HUNDRED);
-        } catch (Exception ignored) {
+            recordTimerHandler!!.removeCallbacks(recordTimerRunnable!!)
+            Utils.setVibrate(mActivity!!, IConstants.VIBRATE_HUNDRED.toLong())
+        } catch (ignored: Exception) {
         }
     }
 
-    private boolean recordPermissionsAvailable() {
-        boolean available = true;
-        for (String permission : permissionsRecord) {
-            if (ActivityCompat.checkSelfPermission(this, permission) != PERMISSION_GRANTED) {
-                available = false;
-                break;
+    private fun recordPermissionsAvailable(): Boolean {
+        var available = true
+        for (permission in permissionsRecord) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                available = false
+                break
             }
         }
-        return available;
+        return available
     }
 
-    private final ArrayList<Integer> positionList = new ArrayList<>();
+    private val positionList = ArrayList<Int>()
 
     //Download complete listener
-    private final BroadcastReceiver downloadCompleteReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            if (intent != null && intent.getAction() != null)
-                if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
-                    if (positionList.size() > ZERO && messageAdapters != null) {
-                        for (int pos : positionList) {
-                            if (pos != -1) {
+    private val downloadCompleteReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent != null && intent.action != null) if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
+                if (positionList.size > IConstants.ZERO && messageAdapters != null) {
+                    for (pos in positionList) {
+                        if (pos != -1) {
 //                                Uncomment to play recording directly once download completed
 //                                But before that please stop the current playing audio if playing
 //                                try {
 //                                    chats.get(pos).setDownloadProgress(COMPLETED);
 //                                } catch (Exception ignored) {
 //                                }
-                                messageAdapters.notifyItemChanged(pos);
-                            }
+                            messageAdapters!!.notifyItemChanged(pos)
                         }
                     }
-                    positionList.clear();
                 }
+                positionList.clear()
+            }
         }
-    };
+    }
 
-    public void downloadFile(DownloadFileEvent downloadFileEvent) {
+    fun downloadFile(downloadFileEvent: DownloadFileEvent) {
         if (permissionsAvailable(permissionsStorage)) {
-            new DownloadUtil().loading(this, downloadFileEvent);
-            positionList.add(downloadFileEvent.getPosition());
+            DownloadUtil().loading(this, downloadFileEvent)
+            positionList.add(downloadFileEvent.position)
         } else {
-            ActivityCompat.requestPermissions(this, permissionsStorage, 47);
+            ActivityCompat.requestPermissions(this, permissionsStorage, 47)
         }
     }
 
     //Download event listener
-    private final BroadcastReceiver downloadEventReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            DownloadFileEvent downloadFileEvent = (DownloadFileEvent) intent.getSerializableExtra(DOWNLOAD_DATA);
+    private val downloadEventReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val downloadFileEvent =
+                intent.getSerializableExtra(IConstants.DOWNLOAD_DATA) as DownloadFileEvent?
             try {
-                if (downloadFileEvent != null) {
-                    downloadFile(downloadFileEvent);
-                }
-            } catch (Exception ignored) {
+                downloadFileEvent?.let { downloadFile(it) }
+            } catch (ignored: Exception) {
             }
         }
-    };
+    }
 
     //
     //  PickerManager Listeners
@@ -1788,173 +1779,194 @@ public class MessageActivity extends BaseActivity implements View.OnClickListene
     //  If the selected file was from Dropbox/Google Drive or OnDrive, then this will be called after the file was created.
     //  If the selected file was a local file then this will be called directly, returning the path as a String
     //  Additionally, a boolean will be returned letting you know if the file selected was from Dropbox/Google Drive or OnDrive.
-
-    private TextView percentText;
-    private ProgressBar mProgressBar;
-    private AlertDialog mdialog;
-    private ProgressDialog progressBar;
-
-    @Override
-    public void PickerManagerOnUriReturned() {
-        progressBar = new ProgressDialog(this);
-        progressBar.setMessage(getString(R.string.msgWaitingForFile));
-        progressBar.setCancelable(false);
-        progressBar.show();
+    private var percentText: TextView? = null
+    private var mProgressBar: ProgressBar? = null
+    private var mdialog: AlertDialog? = null
+    private var progressBar: ProgressDialog? = null
+    override fun PickerManagerOnUriReturned() {
+        progressBar = ProgressDialog(this)
+        progressBar!!.setMessage(getString(R.string.msgWaitingForFile))
+        progressBar!!.setCancelable(false)
+        progressBar!!.show()
     }
 
-    @Override
-    public void PickerManagerOnStartListener() {
-        final Handler mPickHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message message) {
+    override fun PickerManagerOnStartListener() {
+        val mPickHandler: Handler = object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(message: Message) {
                 // This is where you do your work in the UI thread. Your worker tells you in the message what to do.
-                if (progressBar.isShowing()) {
-                    progressBar.cancel();
+                if (progressBar!!.isShowing) {
+                    progressBar!!.cancel()
                 }
-                final AlertDialog.Builder mPro = new AlertDialog.Builder(new ContextThemeWrapper(mActivity, R.style.myDialog));
-                @SuppressLint("InflateParams") final View mPView = LayoutInflater.from(mActivity).inflate(R.layout.dailog_layout, null);
-                percentText = mPView.findViewById(R.id.percentText);
-
-                percentText.setOnClickListener(new SingleClickListener() {
-                    @Override
-                    public void onClickView(View view) {
-                        pickerManager.cancelTask();
-                        if (mdialog != null && mdialog.isShowing()) {
-                            mdialog.cancel();
+                val mPro = AlertDialog.Builder(ContextThemeWrapper(mActivity, R.style.myDialog))
+                @SuppressLint("InflateParams") val mPView =
+                    LayoutInflater.from(mActivity).inflate(R.layout.dailog_layout, null)
+                percentText = mPView.findViewById(R.id.percentText)
+                percentText?.setOnClickListener(object : SingleClickListener() {
+                    override fun onClickView(view: View?) {
+                        pickerManager!!.cancelTask()
+                        if (mdialog != null && mdialog!!.isShowing) {
+                            mdialog!!.cancel()
                         }
                     }
-                });
-
-                mProgressBar = mPView.findViewById(R.id.mProgressBar);
-                mProgressBar.setMax(100);
-                mPro.setView(mPView);
-                mdialog = mPro.create();
-                mdialog.show();
+                })
+                mProgressBar = mPView.findViewById(R.id.mProgressBar)
+                mProgressBar?.setMax(100)
+                mPro.setView(mPView)
+                mdialog = mPro.create()
+                mdialog!!.show()
             }
-        };
-        mPickHandler.sendEmptyMessage(ZERO);
+        }
+        mPickHandler.sendEmptyMessage(IConstants.ZERO)
     }
 
-    @Override
-    public void PickerManagerOnProgressUpdate(int progress) {
+    override fun PickerManagerOnProgressUpdate(progress: Int) {
         try {
-            Handler mHandler = new Handler(Looper.getMainLooper()) {
-                @Override
-                public void handleMessage(Message message) {
-                    final String progressPlusPercent = progress + "%";
-                    percentText.setText(progressPlusPercent);
-                    mProgressBar.setProgress(progress);
+            val mHandler: Handler = object : Handler(Looper.getMainLooper()) {
+                override fun handleMessage(message: Message) {
+                    val progressPlusPercent = "$progress%"
+                    percentText!!.text = progressPlusPercent
+                    mProgressBar!!.progress = progress
                 }
-            };
-            mHandler.sendEmptyMessage(ZERO);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            }
+            mHandler.sendEmptyMessage(IConstants.ZERO)
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
     //REQUEST_PICK_AUDIO, REQUEST_PICK_VIDEO, REQUEST_PICK_DOCUMENT
-    @Override
-    public void PickerManagerOnCompleteListener(String path, boolean wasDriveFile, boolean wasUnknownProvider, boolean wasSuccessful, String reason) {
-        if (mdialog != null && mdialog.isShowing()) {
-            mdialog.cancel();
-        }
-        Utils.sout("Picker Path :: " + new File(path).exists() + " >> " + path + " :drive: " + wasDriveFile + " :<Success>: " + wasSuccessful);
+    override fun PickerManagerOnCompleteListener(
+        path: String?,
+        wasDriveFile: Boolean,
+        wasUnknownProvider: Boolean,
+        wasSuccessful: Boolean,
+        Reason: String?
+    ) {
 
-        int fileType = 0;
+        try{
+
+        if (mdialog != null && mdialog!!.isShowing) {
+            mdialog!!.cancel()
+        }
+        Utils.sout("Picker Path :: " + File(path).exists() + " >> " + path + " :drive: " + wasDriveFile + " :<Success>: " + wasSuccessful)
+        var fileType = 0
         try {
-            fileType = Objects.requireNonNull(MediaFile.getFileType(path)).fileType;
-        } catch (Exception e) {
+            fileType = Objects.requireNonNull(path?.let { MediaFile.getFileType(it) })?.fileType!!
+        } catch (e: Exception) {
             //Utils.getErrors(e);
         }
-
         if (wasSuccessful) {
             //Utils.sout("Was Successfully::: " + wasSuccessful);
-            final int file_size = Integer.parseInt(String.valueOf(new File(path).length() / 1024));
-
+            val file_size = (File(path).length() / 1024).toString().toInt()
             if (MediaFile.isAudioFileType(fileType)) {
-                if (file_size > Utils.getAudioSizeLimit()) {
-                    screens.showToast(String.format(getString(R.string.msgFileTooBig), Utils.MAX_SIZE_AUDIO));
+                if (file_size > Utils.audioSizeLimit) {
+                    screens!!.showToast(
+                        String.format(
+                            getString(R.string.msgFileTooBig),
+                            Utils.MAX_SIZE_AUDIO
+                        )
+                    )
                 } else {
-                    myFileUploadTask(path, AttachmentTypes.AUDIO, null);
+                    myFileUploadTask(path, AttachmentTypes.AUDIO, null)
                 }
             } else if (MediaFile.isVideoFileType(fileType)) {
-                if (file_size > Utils.getVideoSizeLimit()) {
-                    screens.showToast(String.format(getString(R.string.msgFileTooBig), Utils.MAX_SIZE_VIDEO));
+                if (file_size > Utils.videoSizeLimit) {
+                    screens!!.showToast(
+                        String.format(
+                            getString(R.string.msgFileTooBig),
+                            Utils.MAX_SIZE_VIDEO
+                        )
+                    )
                 } else {
-                    uploadThumbnail(Uri.parse(path).getPath());
+                    uploadThumbnail(Uri.parse(path).path)
                 }
             } else {
-                if (file_size > Utils.getDocumentSizeLimit()) {
-                    screens.showToast(String.format(getString(R.string.msgFileTooBig), Utils.MAX_SIZE_DOCUMENT));
+                if (file_size > Utils.documentSizeLimit) {
+                    screens!!.showToast(
+                        String.format(
+                            getString(R.string.msgFileTooBig),
+                            Utils.MAX_SIZE_DOCUMENT
+                        )
+                    )
                 } else {
-                    myFileUploadTask(path, AttachmentTypes.DOCUMENT, null);
+                    myFileUploadTask(path, AttachmentTypes.DOCUMENT, null)
                 }
             }
-
         } else {
-            screens.showToast(R.string.msgChooseFileFromOtherLocation);
+            screens!!.showToast(R.string.msgChooseFileFromOtherLocation)
+        }
+
+
+    }catch (e: Exception){
+        Toast.makeText(mActivity, "pickermanag"+e.message, Toast.LENGTH_SHORT).show()
+    }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        try {
+            registerReceiver(
+                downloadCompleteReceiver,
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+            )
+            LocalBroadcastManager.getInstance(this).registerReceiver(
+                downloadEventReceiver,
+                IntentFilter(IConstants.BROADCAST_DOWNLOAD_EVENT)
+            )
+        } catch (ignored: Exception) {
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        try {
-            registerReceiver(downloadCompleteReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-            LocalBroadcastManager.getInstance(this).registerReceiver(downloadEventReceiver, new IntentFilter(BROADCAST_DOWNLOAD_EVENT));
-        } catch (Exception ignored) {
+    override fun onStart() {
+        super.onStart()
+        try{
+
+        Utils.readStatus(IConstants.STATUS_ONLINE)
+        }catch (e: Exception){
+            Toast.makeText(mActivity, "start"+e.message, Toast.LENGTH_SHORT).show()
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Utils.readStatus(STATUS_ONLINE);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+    override fun onPause() {
+        super.onPause()
         try {
-            unregisterReceiver(downloadCompleteReceiver);
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(downloadEventReceiver);
-        } catch (Exception ignored) {
+            unregisterReceiver(downloadCompleteReceiver)
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(downloadEventReceiver)
+        } catch (ignored: Exception) {
         }
         try {
             if (messageAdapters != null) {
-                messageAdapters.stopAudioFile();
+                messageAdapters!!.stopAudioFile()
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 
-    @Override
-    public void onBackPressed() {
+    override fun onBackPressed() {
         try {
-            pickerManager.deleteTemporaryFile(this);
-        } catch (Exception ignored) {
+            pickerManager!!.deleteTemporaryFile(this)
+        } catch (ignored: Exception) {
         }
-        if (mainAttachmentLayout.getVisibility() == View.VISIBLE) {
-            hideAttachmentView();
+        if (mainAttachmentLayout!!.visibility == View.VISIBLE) {
+            hideAttachmentView()
         } else {
-            finish();
-            super.onBackPressed();
+            finish()
+            super.onBackPressed()
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    override fun onDestroy() {
+        super.onDestroy()
         try {
-            seenReferenceSender.removeEventListener(seenListenerSender);
-            stopTyping();
-        } catch (Exception ignored) {
+            seenReferenceSender!!.removeEventListener(seenListenerSender!!)
+            stopTyping()
+        } catch (ignored: Exception) {
         }
         try {
-            if (!isChangingConfigurations()) {
-                pickerManager.deleteTemporaryFile(this);
+            if (!isChangingConfigurations) {
+                pickerManager!!.deleteTemporaryFile(this)
             }
-        } catch (Exception ignored) {
+        } catch (ignored: Exception) {
         }
     }
 }

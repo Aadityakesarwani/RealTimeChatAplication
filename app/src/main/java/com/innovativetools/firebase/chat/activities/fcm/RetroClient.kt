@@ -1,18 +1,19 @@
-package com.innovativetools.firebase.chat.activities.fcm;
+package com.innovativetools.firebase.chat.activities.fcm
 
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.Retrofit
+import com.innovativetools.firebase.chat.activities.fcm.RetroClient
+import retrofit2.converter.gson.GsonConverterFactory
 
-public class RetroClient {
-    private static Retrofit retrofit = null;
-
-    public static Retrofit getClient(final String url) {
+object RetroClient {
+    private var retrofit: Retrofit? = null
+    @JvmStatic
+    fun getClient(url: String?): Retrofit? {
         if (retrofit == null) {
-            retrofit = new Retrofit.Builder()
-                    .baseUrl(url)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
+            retrofit = Retrofit.Builder()
+                .baseUrl(url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
         }
-        return retrofit;
+        return retrofit
     }
 }

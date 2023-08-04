@@ -1,52 +1,52 @@
-package com.innovativetools.firebase.chat.activities.views.files;
+package com.innovativetools.firebase.chat.activities.views.files
 
-import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.net.Uri;
-import android.util.Log;
-import android.webkit.MimeTypeMap;
+import com.innovativetools.firebase.chat.activities.managers.Utils.sout
+import com.innovativetools.firebase.chat.activities.managers.Utils.getErrors
+import com.innovativetools.firebase.chat.activities.views.files.PickerManagerCallbacks
+import android.app.Activity
+import com.innovativetools.firebase.chat.activities.views.files.CallBackTask
+import com.innovativetools.firebase.chat.activities.views.files.UUtils
+import android.webkit.MimeTypeMap
+import android.content.ContentResolver
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import com.innovativetools.firebase.chat.activities.async.TaskRunner
+import com.innovativetools.firebase.chat.activities.views.files.DownloadBaseTask
+import java.io.File
+import java.lang.Exception
+import java.util.*
 
-import com.innovativetools.firebase.chat.activities.async.TaskRunner;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
+class PickerManager(
+    private val context: Context,
+    private val pickerManagerCallbacks: PickerManagerCallbacks,
+    activity: Activity?
+) : CallBackTask {
+    private var isDriveFile = false
+    private var isFromUnknownProvider = false
 
-import java.io.File;
-
-//https://github.com/HBiSoft/PickerManager
-
-public class PickerManager implements CallBackTask {
-    private final Context context;
-    private final PickerManagerCallbacks pickerManagerCallbacks;
-    private boolean isDriveFile = false;
-    private boolean isFromUnknownProvider = false;
     //    private DownloadAsyncTask asyntask;
-    private boolean unknownProviderCalledBefore = false;
-
-    public PickerManager(Context context, PickerManagerCallbacks listener, Activity activity) {
-        this.context = context;
-        this.pickerManagerCallbacks = listener;
-    }
-
-    public void getPath(Uri uri, int APILevel) {
-        String returnedPath;
+    private var unknownProviderCalledBefore = false
+    fun getPath(uri: Uri, APILevel: Int) {
+        val returnedPath: String?
         if (APILevel >= 19) {
             // Drive file was selected
             if (isOneDrive(uri) || isDropBox(uri) || isGoogleDrive(uri)) {
-                isDriveFile = true;
-                downloadFile(uri);
-            }
-            // Local file was selected
-            else {
-                returnedPath = UUtils.getRealPathFromURI_API19(context, uri);
-                Utils.sout("~ ~ ~ ~ ~ RETURNED :::: " + returnedPath);
+                isDriveFile = true
+                downloadFile(uri)
+            } else {
+                returnedPath = UUtils.getRealPathFromURI_API19(context, uri)
+                sout("~ ~ ~ ~ ~ RETURNED :::: $returnedPath")
 
                 //Get the file extension
-                final MimeTypeMap mime = MimeTypeMap.getSingleton();
-                String subStringExtension = String.valueOf(returnedPath).substring(String.valueOf(returnedPath).lastIndexOf(".") + 1);
-                String extensionFromMime = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
+                val mime = MimeTypeMap.getSingleton()
+                val subStringExtension =
+                    returnedPath.toString().substring(returnedPath.toString().lastIndexOf(".") + 1)
+                val extensionFromMime =
+                    mime.getExtensionFromMimeType(context.contentResolver.getType(uri))
 
                 // Path is null
-                if (returnedPath == null || returnedPath.equals("")) {
+                if (returnedPath == null || returnedPath == "") {
                     // This can be caused by two situations
                     // 1. The file was selected from a third party app and the data column returned null (for example EZ File Explorer)
                     // Some file providers (like EZ File Explorer) will return a URI as shown below:
@@ -58,32 +58,38 @@ public class PickerManager implements CallBackTask {
 
                     //We first check if it was called before, avoiding multiple calls
                     if (!unknownProviderCalledBefore) {
-                        unknownProviderCalledBefore = true;
-                        if (uri.getScheme() != null && uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+                        unknownProviderCalledBefore = true
+                        if (uri.scheme != null && uri.scheme == ContentResolver.SCHEME_CONTENT) {
                             //Then we check if the _data colomn returned null
-                            if (UUtils.errorReason() != null && UUtils.errorReason().equals("dataReturnedNull")) {
-                                isFromUnknownProvider = true;
+                            if (UUtils.errorReason() != null && UUtils.errorReason() == "dataReturnedNull") {
+                                isFromUnknownProvider = true
                                 //Copy the file to the temporary folder
-                                downloadFile(uri);
-                                return;
-                            } else if (UUtils.errorReason() != null && UUtils.errorReason().contains("column '_data' does not exist")) {
-                                isFromUnknownProvider = true;
+                                downloadFile(uri)
+                                return
+                            } else if (UUtils.errorReason() != null && UUtils.errorReason()
+                                    ?.contains("column '_data' does not exist") == true
+                            ) {
+                                isFromUnknownProvider = true
                                 //Copy the file to the temporary folder
-                                downloadFile(uri);
-                                return;
-                            } else if (UUtils.errorReason() != null && UUtils.errorReason().equals("uri")) {
-                                isFromUnknownProvider = true;
+                                downloadFile(uri)
+                                return
+                            } else if (UUtils.errorReason() != null && UUtils.errorReason() == "uri") {
+                                isFromUnknownProvider = true
                                 //Copy the file to the temporary folder
-                                downloadFile(uri);
-                                return;
+                                downloadFile(uri)
+                                return
                             }
                         }
                     }
                     //Else an error occurred, get/set the reason for the error
-                    pickerManagerCallbacks.PickerManagerOnCompleteListener(returnedPath, false, false, false, UUtils.errorReason());
-                }
-                // Path is not null
-                else {
+                    pickerManagerCallbacks.PickerManagerOnCompleteListener(
+                        returnedPath,
+                        false,
+                        false,
+                        false,
+                        UUtils.errorReason()
+                    )
+                } else {
                     // This can be caused by two situations
                     // 1. The file was selected from an unknown provider (for example a file that was downloaded from a third party app)
                     // 2. getExtensionFromMimeType returned an unknown mime type for example "audio/mp4"
@@ -92,127 +98,146 @@ public class PickerManager implements CallBackTask {
                     // We provide a name by getting the text after the last "/"
                     // Remember if the extension can't be found, it will not be added, but you will still be able to use the file
                     //Todo: Add checks for unknown file extensions
-
-                    if (!subStringExtension.equals("jpeg") && !subStringExtension.equals(extensionFromMime) && uri.getScheme() != null && uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-                        isFromUnknownProvider = true;
-                        downloadFile(uri);
-                        return;
+                    if (subStringExtension != "jpeg" && subStringExtension != extensionFromMime && uri.scheme != null && uri.scheme == ContentResolver.SCHEME_CONTENT) {
+                        isFromUnknownProvider = true
+                        downloadFile(uri)
+                        return
                     }
 
                     // Path can be returned, no need to make a "copy"
                     //Wrong PATH : Prashant Adesara
-                    pickerManagerCallbacks.PickerManagerOnCompleteListener(returnedPath, false, false, true, "");
+                    pickerManagerCallbacks.PickerManagerOnCompleteListener(
+                        returnedPath,
+                        false,
+                        false,
+                        true,
+                        ""
+                    )
                 }
             }
         } else {
             //Todo: Test API <19
-            returnedPath = UUtils.getRealPathFromURI_BelowAPI19(context, uri);
-            pickerManagerCallbacks.PickerManagerOnCompleteListener(returnedPath, false, false, true, "");
+            returnedPath = UUtils.getRealPathFromURI_BelowAPI19(context, uri)
+            pickerManagerCallbacks.PickerManagerOnCompleteListener(
+                returnedPath,
+                false,
+                false,
+                true,
+                ""
+            )
         }
-
     }
 
     // Create a new file from the Uri that was selected
-    private void downloadFile(Uri uri) {
+    private fun downloadFile(uri: Uri) {
 //        asyntask = new DownloadAsyncTask(uri, context, this, mActivity);
 //        asyntask.execute();
-
-        TaskRunner runner = new TaskRunner();
-        runner.executeAsync(new DownloadBaseTask(uri, context, this));
+        val runner = TaskRunner()
+        runner.executeAsync(DownloadBaseTask(uri, context, this))
     }
 
     // End the "copying" of the file
-    public void cancelTask() {
+    fun cancelTask() {
 //        if (asyntask!=null){
 //            asyntask.cancel(true);
 //            deleteTemporaryFile(context);
 //        }
         try {
-            deleteTemporaryFile(context);
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            deleteTemporaryFile(context)
+        } catch (e: Exception) {
+            getErrors(e)
         }
     }
 
-    public boolean wasLocalFileSelected(Uri uri) {
-        return !isDropBox(uri) && !isGoogleDrive(uri) && !isOneDrive(uri);
+    fun wasLocalFileSelected(uri: Uri): Boolean {
+        return !isDropBox(uri) && !isGoogleDrive(uri) && !isOneDrive(uri)
     }
 
     // Check different providers
-    private boolean isDropBox(Uri uri) {
-        return String.valueOf(uri).toLowerCase().contains("content://com.dropbox.");
+    private fun isDropBox(uri: Uri): Boolean {
+        return uri.toString().lowercase(Locale.getDefault()).contains("content://com.dropbox.")
     }
 
-    private boolean isGoogleDrive(Uri uri) {
-        return String.valueOf(uri).toLowerCase().contains("com.google.android.apps");
+    private fun isGoogleDrive(uri: Uri): Boolean {
+        return uri.toString().lowercase(Locale.getDefault()).contains("com.google.android.apps")
     }
 
-    private boolean isOneDrive(Uri uri) {
-        return String.valueOf(uri).toLowerCase().contains("com.microsoft.skydrive.content");
+    private fun isOneDrive(uri: Uri): Boolean {
+        return uri.toString().lowercase(Locale.getDefault())
+            .contains("com.microsoft.skydrive.content")
     }
 
     // PickerManager callback Listeners
-    @Override
-    public void PickerManagerOnUriReturned() {
-        pickerManagerCallbacks.PickerManagerOnUriReturned();
+    override fun PickerManagerOnUriReturned() {
+        pickerManagerCallbacks.PickerManagerOnUriReturned()
     }
 
-    @Override
-    public void PickerManagerOnPreExecute() {
-        pickerManagerCallbacks.PickerManagerOnStartListener();
+    override fun PickerManagerOnPreExecute() {
+        pickerManagerCallbacks.PickerManagerOnStartListener()
     }
 
-    @Override
-    public void PickerManagerOnProgressUpdate(int progress) {
-        pickerManagerCallbacks.PickerManagerOnProgressUpdate(progress);
+    override fun PickerManagerOnProgressUpdate(progress: Int) {
+        pickerManagerCallbacks.PickerManagerOnProgressUpdate(progress)
     }
 
-    @Override
-    public void PickerManagerOnPostExecute(String path, boolean wasDriveFile, boolean wasSuccessful, String reason) {
-        unknownProviderCalledBefore = false;
+    override fun PickerManagerOnPostExecute(
+        path: String?,
+        wasDriveFile: Boolean,
+        wasSuccessful: Boolean,
+        reason: String?
+    ) {
+        unknownProviderCalledBefore = false
         if (wasSuccessful) {
             if (isDriveFile) {
-                pickerManagerCallbacks.PickerManagerOnCompleteListener(path, true, false, true, "");
+                pickerManagerCallbacks.PickerManagerOnCompleteListener(path, true, false, true, "")
             } else if (isFromUnknownProvider) {
-                pickerManagerCallbacks.PickerManagerOnCompleteListener(path, false, true, true, "");
+                pickerManagerCallbacks.PickerManagerOnCompleteListener(path, false, true, true, "")
             }
         } else {
             if (isDriveFile) {
-                pickerManagerCallbacks.PickerManagerOnCompleteListener(path, true, false, false, reason);
+                pickerManagerCallbacks.PickerManagerOnCompleteListener(
+                    path,
+                    true,
+                    false,
+                    false,
+                    reason
+                )
             } else if (isFromUnknownProvider) {
-                pickerManagerCallbacks.PickerManagerOnCompleteListener(path, false, true, false, reason);
+                pickerManagerCallbacks.PickerManagerOnCompleteListener(
+                    path,
+                    false,
+                    true,
+                    false,
+                    reason
+                )
             }
         }
     }
 
     // Delete the temporary folder
-    public void deleteTemporaryFile(Context context) {
-        File folder = context.getExternalFilesDir("Temp");
+    fun deleteTemporaryFile(context: Context) {
+        val folder = context.getExternalFilesDir("Temp")
         if (folder != null) {
             if (deleteDirectory(folder)) {
-                Log.i("PickerManager ", "Prashant  deleteDirectory was called");
+                Log.i("PickerManager ", "Prashant  deleteDirectory was called")
             }
         }
     }
 
-    private boolean deleteDirectory(File path) {
+    private fun deleteDirectory(path: File): Boolean {
         if (path.exists()) {
-            File[] files = path.listFiles();
-            if (files == null) {
-                return false;
-            }
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    deleteDirectory(file);
+            val files = path.listFiles() ?: return false
+            for (file in files) {
+                if (file.isDirectory) {
+                    deleteDirectory(file)
                 } else {
-                    boolean wasSuccessful = file.delete();
+                    val wasSuccessful = file.delete()
                     if (wasSuccessful) {
-                        Log.i("Deleted ", "Prashant successfully");
+                        Log.i("Deleted ", "Prashant successfully")
                     }
                 }
             }
         }
-        return (path.delete());
+        return path.delete()
     }
-
 }

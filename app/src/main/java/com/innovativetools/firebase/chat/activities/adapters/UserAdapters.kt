@@ -1,319 +1,307 @@
-package com.innovativetools.firebase.chat.activities.adapters;
+package com.innovativetools.firebase.chat.activities.adapters
 
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EMPTY;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.EXTRA_SEEN;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ONE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.REF_CHATS;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.SLASH;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.STATUS_ONLINE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_AUDIO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_CONTACT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_DOCUMENT;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_IMAGE;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_LOCATION;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_RECORDING;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.TYPE_VIDEO;
-import static com.innovativetools.firebase.chat.activities.constants.IConstants.ZERO;
+import androidx.recyclerview.widget.RecyclerView
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView.SectionedAdapter
+import com.google.firebase.auth.FirebaseUser
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import com.google.firebase.auth.FirebaseAuth
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.constants.IConstants
+import android.app.Activity
+import android.content.Context
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
+import com.google.firebase.database.*
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.Chat
+import com.innovativetools.firebase.chat.activities.models.User
+import com.innovativetools.firebase.chat.activities.views.SingleClickListener
+import java.lang.Exception
+import java.util.ArrayList
 
-import android.app.Activity;
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
+class UserAdapters(private val mContext: Context, usersList: ArrayList<User>?, isChat: Boolean) :
+    RecyclerView.Adapter<UserAdapters.ViewHolder>(), SectionedAdapter {
+    private val mUsers: ArrayList<User>
+    private val isChat: Boolean
+    private val firebaseUser: FirebaseUser?
+    private var theLastMsg: String? = null
+    private var txtLastDate: String? = null
+    private var isMsgSeen = false
+    private var unReadCount = 0
+    private val screens: Screens
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.Chat;
-import com.innovativetools.firebase.chat.activities.models.User;
-import com.innovativetools.firebase.chat.activities.views.SingleClickListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-
-public class UserAdapters extends RecyclerView.Adapter<UserAdapters.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
-
-    private final Context mContext;
-    private final ArrayList<User> mUsers;
-    private final boolean isChat;
-    private final FirebaseUser firebaseUser;
-    private String theLastMsg, txtLastDate;
-    private boolean isMsgSeen = false;
-    private int unReadCount = 0;
-    private final Screens screens;
-
-    public UserAdapters(Context mContext, ArrayList<User> usersList, boolean isChat) {
-        this.mContext = mContext;
-        this.mUsers = Utils.removeDuplicates(usersList);
-        this.isChat = isChat;
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        screens = new Screens(mContext);
+    init {
+        mUsers = Utils.removeDuplicates<String>(usersList)!!
+        this.isChat = isChat
+        firebaseUser = FirebaseAuth.getInstance().currentUser
+        screens = Screens(mContext)
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.list_users, viewGroup, false);
-        return new ViewHolder(view);
+    override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): ViewHolder {
+        val view = LayoutInflater.from(mContext).inflate(R.layout.list_users, viewGroup, false)
+        return ViewHolder(view)
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
-        final User user = mUsers.get(i);
-        final String strAbout = user.getAbout();
-
-        viewHolder.txtUsername.setText(user.getUsername());
-        Utils.setProfileImage(mContext, user.getImageURL(), viewHolder.imageView);
-
-        viewHolder.txtLastMsg.setVisibility(View.VISIBLE);
-        viewHolder.imgPhoto.setVisibility(View.GONE);
+    override fun onBindViewHolder(viewHolder: ViewHolder, i: Int) {
+        val user = mUsers[i]
+        val strAbout = user.about
+        viewHolder.txtUsername.text = user.username
+        user.getImageURL()?.let { Utils.setProfileImage(mContext, it, viewHolder.imageView) }
+        viewHolder.txtLastMsg.visibility = View.VISIBLE
+        viewHolder.imgPhoto.visibility = View.GONE
         if (isChat) {
-            viewHolder.txtUnreadCounter.setVisibility(View.INVISIBLE);
-
-            lastMessage(user.getId(), viewHolder.txtLastMsg, viewHolder.txtLastDate, viewHolder.imgPhoto);
-
-            lastMessageCount(user.getId(), viewHolder.txtUnreadCounter);
-
-            viewHolder.txtLastDate.setVisibility(View.VISIBLE);
+            viewHolder.txtUnreadCounter.visibility = View.INVISIBLE
+            user.id?.let { lastMessage(it, viewHolder.txtLastMsg, viewHolder.txtLastDate, viewHolder.imgPhoto) }
+            user.id?.let { lastMessageCount(it, viewHolder.txtUnreadCounter) }
+            viewHolder.txtLastDate.visibility = View.VISIBLE
         } else {
-            viewHolder.txtUnreadCounter.setVisibility(View.GONE);
-            viewHolder.txtLastDate.setVisibility(View.GONE);
-
+            viewHolder.txtUnreadCounter.visibility = View.GONE
+            viewHolder.txtLastDate.visibility = View.GONE
             if (Utils.isEmpty(strAbout)) {
-                viewHolder.txtLastMsg.setText(mContext.getString(R.string.strAboutStatus));
+                viewHolder.txtLastMsg.text = mContext.getString(R.string.strAboutStatus)
             } else {
-                viewHolder.txtLastMsg.setText(strAbout);
+                viewHolder.txtLastMsg.text = strAbout
             }
         }
-
-        if (user.getIsOnline() == STATUS_ONLINE) {
-            viewHolder.imgOn.setVisibility(View.VISIBLE);
-            viewHolder.imgOff.setVisibility(View.GONE);
+        if (user.isOnline == IConstants.STATUS_ONLINE) {
+            viewHolder.imgOn.visibility = View.VISIBLE
+            viewHolder.imgOff.visibility = View.GONE
         } else {
-            viewHolder.imgOn.setVisibility(View.GONE);
-            viewHolder.imgOff.setVisibility(View.VISIBLE);
+            viewHolder.imgOn.visibility = View.GONE
+            viewHolder.imgOff.visibility = View.VISIBLE
         }
-
-        viewHolder.imageView.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.openProfilePictureActivity(user);
+        viewHolder.imageView.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens.openProfilePictureActivity(user)
             }
-        });
-
-        viewHolder.itemView.setOnClickListener(new SingleClickListener() {
-            @Override
-            public void onClickView(View v) {
-                screens.openUserMessageActivity(user.getId());
+        })
+        viewHolder.itemView.setOnClickListener(object : SingleClickListener() {
+            override fun onClickView(v: View?) {
+                screens.openUserMessageActivity(user.id)
             }
-        });
-
-        viewHolder.itemView.setOnLongClickListener(v -> {
+        })
+        viewHolder.itemView.setOnLongClickListener { v: View? ->
             if (isChat) {
-                Utils.setVibrate(mContext);
-                final String receiverId = user.getId();
-                final String currentUser = firebaseUser.getUid();
-
-                Utils.showYesNoDialog(((Activity) mContext), R.string.strDelete, R.string.strDeleteConversion, () -> {
-                    Query queryCurrent = FirebaseDatabase.getInstance().getReference().child(REF_CHATS).child(currentUser + SLASH + receiverId);
-                    queryCurrent.getRef().removeValue();
-                    Query queryReceiver = FirebaseDatabase.getInstance().getReference().child(REF_CHATS).child(receiverId + SLASH + currentUser);
-                    queryReceiver.getRef().removeValue();
-                });
-
+                Utils.setVibrate(mContext)
+                val receiverId = user.id
+                val currentUser = firebaseUser!!.uid
+                Utils.showYesNoDialog(
+                    mContext as Activity,
+                    R.string.strDelete,
+                    R.string.strDeleteConversion
+                ) {
+                    val queryCurrent: Query =
+                        FirebaseDatabase.getInstance().reference.child(IConstants.REF_CHATS)
+                            .child(currentUser + IConstants.SLASH + receiverId)
+                    queryCurrent.ref.removeValue()
+                    val queryReceiver: Query =
+                        FirebaseDatabase.getInstance().reference.child(IConstants.REF_CHATS)
+                            .child(receiverId + IConstants.SLASH + currentUser)
+                    queryReceiver.ref.removeValue()
+                }
             }
-            return true;
-        });
+            true
+        }
     }
 
-    private void lastMessage(final String userId, final TextView lastMsg, final TextView lastDate, final ImageView imgPath) {
-
-        theLastMsg = "default";
-        txtLastDate = "Now";
-
+    private fun lastMessage(
+        userId: String,
+        lastMsg: TextView,
+        lastDate: TextView,
+        imgPath: ImageView
+    ) {
+        theLastMsg = "default"
+        txtLastDate = "Now"
         try {
-            Query reference = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(firebaseUser.getUid() + SLASH + userId).limitToLast(1);
-            reference.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+                firebaseUser!!.uid + IConstants.SLASH + userId
+            ).limitToLast(1)
+            reference.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
                     if (dataSnapshot.hasChildren()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            final Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
+                        for (snapshot in dataSnapshot.children) {
+                            val chat = snapshot.getValue(Chat::class.java)!!
                             try {
-                                if (Utils.isEmpty(chat.getAttachmentType())) {
-                                    if (!Utils.isEmpty(chat.getMessage())) {
-                                        theLastMsg = chat.getMessage();
-                                        txtLastDate = chat.getDatetime();
+                                if (Utils.isEmpty(
+                                        chat.attachmentType
+                                    )
+                                ) {
+                                    if (!Utils.isEmpty(
+                                            chat.message
+                                        )
+                                    ) {
+                                        theLastMsg = chat.message
+                                        txtLastDate = chat.datetime
                                     }
                                 } else {
-                                    imgPath.setVisibility(View.VISIBLE);
-                                    if (chat.getAttachmentType().equalsIgnoreCase(TYPE_IMAGE)) {
-                                        theLastMsg = mContext.getString(R.string.lblImage);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_photo);
-                                    } else if (chat.getAttachmentType().equalsIgnoreCase(TYPE_AUDIO)) {
-                                        theLastMsg = mContext.getString(R.string.lblAudio);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_audio);
-                                    } else if (chat.getAttachmentType().equalsIgnoreCase(TYPE_VIDEO)) {
-                                        theLastMsg = mContext.getString(R.string.lblVideo);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_video);
-                                    } else if (chat.getAttachmentType().equalsIgnoreCase(TYPE_DOCUMENT)) {
-                                        theLastMsg = mContext.getString(R.string.lblDocument);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_document);
-                                    } else if (chat.getAttachmentType().equalsIgnoreCase(TYPE_CONTACT)) {
-                                        theLastMsg = mContext.getString(R.string.lblContact);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_contact);
-                                    } else if (chat.getAttachmentType().equalsIgnoreCase(TYPE_LOCATION)) {
-                                        theLastMsg = mContext.getString(R.string.lblLocation);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_location);
-                                    } else if (chat.getAttachmentType().equalsIgnoreCase(TYPE_RECORDING)) {
-                                        theLastMsg = mContext.getString(R.string.lblVoiceRecording);
-                                        txtLastDate = chat.getDatetime();
-                                        imgPath.setImageResource(R.drawable.ic_small_recording);
+                                    imgPath.visibility = View.VISIBLE
+                                    if (chat.attachmentType.equals(
+                                            IConstants.TYPE_IMAGE,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblImage)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_photo)
+                                    } else if (chat.attachmentType.equals(
+                                            IConstants.TYPE_AUDIO,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblAudio)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_audio)
+                                    } else if (chat.attachmentType.equals(
+                                            IConstants.TYPE_VIDEO,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblVideo)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_video)
+                                    } else if (chat.attachmentType.equals(
+                                            IConstants.TYPE_DOCUMENT,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblDocument)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_document)
+                                    } else if (chat.attachmentType.equals(
+                                            IConstants.TYPE_CONTACT,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblContact)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_contact)
+                                    } else if (chat.attachmentType.equals(
+                                            IConstants.TYPE_LOCATION,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblLocation)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_location)
+                                    } else if (chat.attachmentType.equals(
+                                            IConstants.TYPE_RECORDING,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        theLastMsg = mContext.getString(R.string.lblVoiceRecording)
+                                        txtLastDate = chat.datetime
+                                        imgPath.setImageResource(R.drawable.ic_small_recording)
                                     } else {
-                                        imgPath.setVisibility(View.GONE);
-                                        theLastMsg = chat.getMessage();
-                                        txtLastDate = chat.getDatetime();
+                                        imgPath.visibility = View.GONE
+                                        theLastMsg = chat.message
+                                        txtLastDate = chat.datetime
                                     }
-
                                 }
-
-                            } catch (Exception ignored) {
+                            } catch (ignored: Exception) {
                             }
                         }
-
-                        if ("default".equals(theLastMsg)) {
-                            lastMsg.setText(R.string.msgNoMessage);
-                            lastDate.setText(EMPTY);
+                        if ("default" == theLastMsg) {
+                            lastMsg.setText(R.string.msgNoMessage)
+                            lastDate.text = IConstants.EMPTY
                         } else {
-                            lastMsg.setText(theLastMsg);
+                            lastMsg.text = theLastMsg
                             try {
-                                lastDate.setText(Utils.formatDateTime(mContext, txtLastDate));
-                            } catch (Exception ignored) {
+                                lastDate.text = Utils.formatDateTime(
+                                    mContext, txtLastDate
+                                )
+                            } catch (ignored: Exception) {
                             }
                         }
-
-                        theLastMsg = "default";
+                        theLastMsg = "default"
                     }
                 }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-        } catch (Exception ignored) {
-
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+        } catch (ignored: Exception) {
         }
     }
 
-    private void lastMessageCount(final String userId, final TextView txtUnreadCounter) {
-
-        isMsgSeen = false;
-        unReadCount = 0;
-
+    private fun lastMessageCount(userId: String, txtUnreadCounter: TextView) {
+        isMsgSeen = false
+        unReadCount = 0
         try {
-            Query reference = FirebaseDatabase.getInstance().getReference(REF_CHATS).child(firebaseUser.getUid() + SLASH + userId).orderByChild(EXTRA_SEEN).equalTo(false);
-            reference.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            val reference = FirebaseDatabase.getInstance().getReference(IConstants.REF_CHATS).child(
+                firebaseUser!!.uid + IConstants.SLASH + userId
+            ).orderByChild(IConstants.EXTRA_SEEN).equalTo(false)
+            reference.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
                     if (dataSnapshot.hasChildren()) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Chat chat = snapshot.getValue(Chat.class);
-                            assert chat != null;
+                        for (snapshot in dataSnapshot.children) {
+                            val chat = snapshot.getValue(Chat::class.java)!!
                             try {
-                                if (!Utils.isEmpty(chat.getMessage())) {
-                                    if (chat.getSender().equalsIgnoreCase(firebaseUser.getUid())) {
-                                        isMsgSeen = true;
+                                if (!Utils.isEmpty(
+                                        chat.message
+                                    )
+                                ) {
+                                    if (chat.sender.equals(firebaseUser.uid, ignoreCase = true)) {
+                                        isMsgSeen = true
                                     } else {
-                                        isMsgSeen = chat.isMsgseen();
+                                        isMsgSeen = chat.isMsgseen
                                         if (!isMsgSeen) {
-                                            unReadCount++;
+                                            unReadCount++
                                         }
                                     }
                                 }
-                            } catch (Exception ignored) {
+                            } catch (ignored: Exception) {
                             }
                         }
                     }
-                    if (isMsgSeen || unReadCount == ZERO) {
-                        txtUnreadCounter.setVisibility(View.INVISIBLE);
+                    if (isMsgSeen || unReadCount == IConstants.ZERO) {
+                        txtUnreadCounter.visibility = View.INVISIBLE
                     } else {
-                        final String readCount = unReadCount > 99 ? "99+" : String.valueOf(unReadCount);
-                        txtUnreadCounter.setVisibility(View.VISIBLE);
-                        txtUnreadCounter.setText(readCount);
+                        val readCount = if (unReadCount > 99) "99+" else unReadCount.toString()
+                        txtUnreadCounter.visibility = View.VISIBLE
+                        txtUnreadCounter.text = readCount
                     }
-                    unReadCount = 0;
+                    unReadCount = 0
                 }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-        } catch (Exception ignored) {
-
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+        } catch (ignored: Exception) {
         }
     }
 
-    @NonNull
-    @NotNull
-    @Override
-    public String getSectionName(final int position) {
-        if (!Utils.isEmpty(mUsers)) {
-            return mUsers.get(position).getUsername().substring(ZERO, ONE);
+    override fun getSectionName(position: Int): String {
+        return if (!Utils.isEmpty(mUsers)) {
+            mUsers[position].username!!.substring(IConstants.ZERO, IConstants.ONE)
         } else {
-            return null;
+            " "
         }
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imageView: ImageView
+        val txtUsername: TextView
+        val imgOn: ImageView
+        val imgOff: ImageView
+        val txtLastMsg: TextView
+        val txtLastDate: TextView
+        val txtUnreadCounter: TextView
+        val imgPhoto: ImageView
 
-        public final ImageView imageView;
-        public final TextView txtUsername;
-        private final ImageView imgOn;
-        private final ImageView imgOff;
-        private final TextView txtLastMsg;
-        private final TextView txtLastDate;
-        private final TextView txtUnreadCounter;
-        private final ImageView imgPhoto;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            imageView = itemView.findViewById(R.id.imageView);
-            txtUsername = itemView.findViewById(R.id.txtUsername);
-            imgOn = itemView.findViewById(R.id.imgOn);
-            imgOff = itemView.findViewById(R.id.imgOff);
-            txtLastMsg = itemView.findViewById(R.id.txtLastMsg);
-            txtLastDate = itemView.findViewById(R.id.txtLastDate);
-            txtUnreadCounter = itemView.findViewById(R.id.txtUnreadCounter);
-            imgPhoto = itemView.findViewById(R.id.imgPhoto);
+        init {
+            imageView = itemView.findViewById(R.id.imageView)
+            txtUsername = itemView.findViewById(R.id.txtUsername)
+            imgOn = itemView.findViewById(R.id.imgOn)
+            imgOff = itemView.findViewById(R.id.imgOff)
+            txtLastMsg = itemView.findViewById(R.id.txtLastMsg)
+            txtLastDate = itemView.findViewById(R.id.txtLastDate)
+            txtUnreadCounter = itemView.findViewById(R.id.txtUnreadCounter)
+            imgPhoto = itemView.findViewById(R.id.imgPhoto)
         }
     }
 
-    @Override
-    public int getItemCount() {
-        return mUsers.size();
+    override fun getItemCount(): Int {
+        return mUsers.size
     }
 }

@@ -1,61 +1,60 @@
-package com.innovativetools.firebase.chat.activities.fragments;
+package com.innovativetools.firebase.chat.activities.fragments
 
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.os.Bundle;
+import androidx.recyclerview.widget.RecyclerView
+import com.innovativetools.firebase.chat.activities.adapters.UserAdapters
+import com.innovativetools.firebase.chat.activities.managers.Screens
+import android.app.Activity
+import android.os.Bundle
+import android.app.ProgressDialog
+import android.content.Context
+import androidx.fragment.app.Fragment
+import com.innovativetools.firebase.chat.activities.R
+import com.innovativetools.firebase.chat.activities.managers.Utils
+import com.innovativetools.firebase.chat.activities.models.User
+import java.lang.Exception
+import java.util.ArrayList
 
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.innovativetools.firebase.chat.activities.R;
-import com.innovativetools.firebase.chat.activities.adapters.UserAdapters;
-import com.innovativetools.firebase.chat.activities.managers.Screens;
-import com.innovativetools.firebase.chat.activities.managers.Utils;
-import com.innovativetools.firebase.chat.activities.models.User;
-
-import java.util.ArrayList;
-
-public class BaseFragment extends Fragment {
-
-    public RecyclerView mRecyclerView;
-    public ArrayList<User> mUsers;
-    public UserAdapters userAdapters;
-    public Screens screens;
-    public Activity mActivity;
-    public Context mContext;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mActivity = getActivity();
-        screens = new Screens(getActivity());
-        mContext = getContext();
+open class BaseFragment : Fragment() {
+    @JvmField
+    var mRecyclerView: RecyclerView? = null
+    @JvmField
+    var mUsers: ArrayList<User>? = null
+    @JvmField
+    var userAdapters: UserAdapters? = null
+    @JvmField
+    var screens: Screens? = null
+    @JvmField
+    var mActivity: Activity? = null
+    @JvmField
+    var mContext: Context? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        mActivity = activity
+        screens = Screens(requireActivity())
+        mContext = context
     }
 
-    private ProgressDialog pd = null;
-
-    public void showProgress() {
+    private var pd: ProgressDialog? = null
+    fun showProgress() {
         try {
             if (pd == null) {
-                pd = new ProgressDialog(mActivity);
+                pd = ProgressDialog(mActivity)
             }
-            pd.setMessage(getString(R.string.msg_please_wait));
-            pd.show();
-        } catch (Exception e) {
-            Utils.getErrors(e);
+            pd!!.setMessage(getString(R.string.msg_please_wait))
+            pd!!.show()
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 
-    public void hideProgress() {
+    fun hideProgress() {
         try {
             if (pd != null) {
-                pd.dismiss();
-                pd = null;
+                pd!!.dismiss()
+                pd = null
             }
-        } catch (Exception e) {
-            Utils.getErrors(e);
+        } catch (e: Exception) {
+            Utils.getErrors(e)
         }
     }
 }
