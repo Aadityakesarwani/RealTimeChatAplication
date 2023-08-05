@@ -1,11 +1,5 @@
 package com.innovativetools.firebase.chat.activities.models
 
-/**
- * Created by BytesBee.
- *
- * @author BytesBee
- * @link http://bytesbee.com
- */
 class Setting {
     var force_version_code //This must be integer and updated versionCode from build.gradle
             = 0
@@ -19,7 +13,6 @@ class Setting {
             : String? = null
     var force_apk_link: String? = null
 
-    //    private int max_gD:\Projects\Android\BytesBee\CodeCanyon\FirebaseChat\4. Publish-Release\Release_v2.1roup_size = 10;
     var max_group_msg = ""
     var update_app_text = ""
     var max_size_audio = 10

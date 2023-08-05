@@ -134,10 +134,10 @@ public interface IConstants {
     String TYPE_RECORDING = "RECORDING";
 
     String DOWNLOAD_DATA = "download_data";
-    String BROADCAST_DOWNLOAD_EVENT = "com.bytesbee.firebase.chat.activities.DOWNLOAD_EVENT";
+    String BROADCAST_DOWNLOAD_EVENT = "com.innovativetools.firebase.chat.activities.DOWNLOAD_EVENT";
 
     String PLAYING_DATA = "playing_data";
-    String BROADCAST_PLAY_RECORDING_EVENT = "com.bytesbee.firebase.chat.activities.PLAY_RECORDING_EVENT";
+    String BROADCAST_PLAY_RECORDING_EVENT = "com.innovativetools.firebase.chat.activities.PLAY_RECORDING_EVENT";
 
     int STARTED = 0;
     int COMPLETED = 1;

@@ -46,7 +46,7 @@ class SessionManager(context: Context) {
 
     companion object {
         // Shared preferences file name
-        private const val PREF_NAME = "BytesBeeChatV1"
+        private const val PREF_NAME = "ChatV1"
         private const val KEY_ON_OFF_NOTIFICATION = "onOffNotification"
         private const val KEY_ON_OFF_RTL = "onOffRTL"
         private const val KEY_ONBOARDING = "isOnBoardingDone"

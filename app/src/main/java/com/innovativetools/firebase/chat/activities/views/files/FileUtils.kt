@@ -119,7 +119,7 @@ object FileUtils {
         ) else "application/octet-stream"
     }
 
-    const val AUTHORITY = "com.bytesbee.filechoser.documents"
+    const val AUTHORITY = "com.innovativetools.filechoser.documents"
 
     /**
      * @param uri The Uri to check.

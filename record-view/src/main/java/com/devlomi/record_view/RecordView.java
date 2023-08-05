@@ -26,9 +26,7 @@ import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
 
-/**
- * Created by Devlomi on 24/08/2017.
- */
+
 
 public class RecordView extends RelativeLayout {
 
@@ -36,7 +34,6 @@ public class RecordView extends RelativeLayout {
     private ImageView smallBlinkingMic, basketImg;
     private Chronometer counterTime;
     private TextView txtSlideToCancel;
-    //    private ShimmerLayout slideToCancelLayout;
     private ShimmerFrameLayout slideToCancelLayout;
     private ImageView arrow;
     private float initialX, basketInitialY, difX = 0;
